@@ -1,27 +1,133 @@
 ---
-title: "Proje 01 — Yalnız Prompt vs Kural Öncelikli"
-description: "Bir ajanın yalın prompt ile ve temel kural seti ile davranışını yan yana ölç."
+title: "01 — Kural Öncelikli"
+description: "Aynı görev, iki düzenek seviyesi. Yalın prompt'tan AGENTS.md + Makefile + smoke test'e geçişin etkisini kendi reponuzda ölçün."
 ---
 
-## Amaç
+Yeni klonladığın repoyu açıyorsun. Karşında iki satırlık bir `task.md` ve neredeyse boş bir `app.py` var: bir `FastAPI()` örneği ve bir `TODO` yorumu. Yığını söyleyen dosya yok, "tamamlandı"nın ne demek olduğunu söyleyen bir komut yok, doğrulamayı kim yapacak belirsiz. Bir ajan olsan tahmin etmeye başlardın: Python sürümü, depolama, token kaynağı, hata mesajları. Sohbete dönüp soru sorar, cevap gelmeyince varsayım koyar, ve nihayetinde "bitti" derdin — kimse aksini söyleyemediği için.
 
-Düzeneğin (harness) varlığının ölçülebilir bir fark yarattığını **kendi gözünle** göstermek. Aynı görevi iki kez çalıştır: önce yalnız prompt ile, sonra minimum bir kural seti (rules-first) ile.
+Bu proje aynı sahneyi iki kez kuruyor. Bir kez **yalın prompt** ile (`projeler/01/starter/`), bir kez **minimum kural seti** ile (`projeler/01/solution/`). Görev aynı: Notes API'a Bearer kimlik doğrulaması ekle. `task.md` aynı. Tek değişen düzenek (harness) — modeli kuşatan talimat, ortam ve geri bildirim aparatları. Amaç, bu iki klasörün diff'inin kendi başına bir argüman olduğunu göstermek.
 
-## Çıktı
+## Bu projede ne öğreneceksin
 
-- İki çalıştırmanın yan yana karşılaştırması
-- Tamamlanma oranı, tekrar gereksinimi, hata türleri
-- "Kural seti" olarak eklenecek minimum kalemler listesi
+- Yalın prompt koşumunun neden yapısal olarak güvenilmez olduğunu kendi gözünle gör — sohbet penceresinin neden bir düzenek yerine geçmediğini deneyimle.
+- Minimum bir düzeneğin (talimat router'ı + dört Makefile hedefi + smoke test) hangi başarısızlık modlarını kapattığını işaretlemeyi öğren.
+- "Tamamlandı"nın bir kanaat değil, koşulabilir bir komut olduğunu pratikle kavra: `make check` yeşilse iş bitmiştir, değilse değildir.
+- AGENTS.md'nin neden bir ansiklopedi değil, kısa bir router olması gerektiğini örnek üzerinden anla.
+- Ablasyon refleksini kazan: bir aparatı (Makefile, smoke test, AGENTS.md) sökmenin başarı oranına etkisini ölç ve raporla.
 
 ## Yapı
 
+İki klasör aynı görev tanımını paylaşır; tek fark, solution'a eklenmiş düzenek aparatlarıdır.
+
 ```
 projeler/01/
-├── starter/    # boş düzenek, sadece prompt
-└── solution/   # minimum kural seti uygulanmış referans
+├── starter/
+│   ├── README.md         # neden bilinçli olarak eksik
+│   ├── task.md           # iki satırlık ham görev
+│   └── app.py            # boş FastAPI() + TODO
+└── solution/
+    ├── README.md         # kural öncelikli kurulumun anlatımı
+    ├── AGENTS.md         # talimat router'ı (sıkı kısıtlar + doğrulama sözleşmesi)
+    ├── Makefile          # setup / dev / test / check
+    ├── pyproject.toml    # Python 3.11+ sürüm sözleşmesi
+    ├── requirements.txt  # bağımlılıklar
+    ├── app.py            # Bearer auth + SQLite Notes API uygulaması
+    └── tests/
+        └── test_smoke.py # 4 senaryo — "tamamlandı"nın operasyonel tanımı
 ```
 
-## Ön koşul
+Starter'da görev bir kağıt parçası; solution'da görev bir sözleşmedir.
 
-- [Ders 01](/dersler/01-yetkin-ajanlar-neden-basarisiz) — neden başarısızlığın yapısal olduğu
-- [Ders 02](/dersler/02-duzenek-gercekte-nedir) — düzeneğin beş aparatı
+## starter ile solution arasındaki fark
+
+Diff bir prompt değişikliği değil, **repo düzeyinde bir sözleşmedir**. Üç katmanı yan yana koymak yetiyor.
+
+**Talimat aparatı.** Starter'da AGENTS.md yok. Solution'da repo köküne konmuş bir `AGENTS.md` var ve içeride beş başlık yaşar: "Sıkı kısıtlar", "Dev Environment Tips", "Testing Instructions", "PR Instructions", "Doğrulama komutları". Dosya bir router'dır: yığını (Python 3.11, FastAPI, SQLite), sıkı kısıtları (`Authorization: Bearer <API_TOKEN>` zorunlu; SQL parametrize; `make check` yeşil olmadan teslim yok) ve doğrulama sözleşmesini söyler. Ajan bu repoya girdiğinde "tamam" demenin koşullarını öğrenir — sohbete sormak zorunda kalmaz.
+
+**Ortam aparatı.** Starter'da bağımlılık tanımı yok, kurulum komutu yok, sunucuyu nasıl başlatacağın yazılı değil. Solution'da `Makefile` dört kanonik hedef sunar:
+
+```makefile
+setup:  pip install -r requirements.txt
+dev:    uvicorn app:app --reload
+test:   pytest tests/ -x
+check:  ruff + mypy (varsa) + pytest
+```
+
+Ders 02'de tarif edilen dört hedef burada birebir karşılanır. Ajan ortamı sohbete sormaz; `make setup` yazıp koşar.
+
+**Geri bildirim aparatı.** En kritik fark burada. Starter'da test yok; "çalışıyor" demenin kanıtı yalnızca ajanın iddiasıdır. Solution'da `tests/test_smoke.py` dört davranış kanıtı taşır:
+
+```python
+def test_missing_token_returns_401(client): ...
+def test_post_with_valid_token_returns_201(client): ...
+def test_get_by_id_returns_same_body(client): ...
+def test_list_contains_created_note(client): ...
+```
+
+Bu dört test bir referans değil, "tamamlandı"nın **operasyonel tanımıdır**. Her biri yeşilse görev bitmiştir; bir tanesi kırmızıysa ajanın "bitti" demesi yapısal olarak yanlıştır. Sözleşme `AGENTS.md` içinde tek satıra düşer: *"`make check` yeşil olmadan teslim yapılmaz."*
+
+## Adım adım
+
+Aşağıdaki yürüyüş, başarısızlığı ve çözümü yan yana gözleyebilmen için tasarlandı.
+
+1. Repoyu klonla ve proje klasörüne in: `git clone <repo-url> && cd harness-docs/projeler/01`.
+2. Önce starter'a gir: `cd starter`. İçerikte yalnızca `task.md` ve `app.py` olduğunu doğrula.
+3. Bu klasörü kendi ajan istemcinde aç (Claude Code, Cursor, ya da tercih ettiğin koşumcu) ve `task.md`'yi prompt olarak ver. Ajanın davranışını gözlemle: hangi soruları soruyor, hangi varsayımları koyuyor, kodu koşturuyor mu, neyin "tamam" sayılacağına nasıl karar veriyor?
+4. Üretilen kodu çalıştırmaya çalış. Çoğu koşumda şu kalıpları göreceksin: Python sürümü tutmuyor; bağımlılık listesi bulunamıyor; "401" davranışı belirsiz; ajan testsiz teslim ediyor; sen kontrol etmedikçe geri bildirim akmıyor. Bu Ders 01'in *doğrulama boşluğu* (verification gap) örüntüsünün canlı kopyasıdır.
+5. Şimdi solution'a geç: `cd ../solution`. `AGENTS.md`, `Makefile`, `pyproject.toml`, `tests/test_smoke.py` artık yerinde.
+6. Tek komutla doğrulamayı koştur: `make setup && make check`. `pytest tests/ -x` çıktısının dört yeşil noktayla bittiğini gör. `Makefile` `check` hedefi `ruff` ve `mypy` varsa onları da koşar; yoksa graceful atlar ve `pytest` yeter.
+7. Solution klasörünü aynı ajan istemcinde aç ve yine `task.md`'yi prompt olarak ver. Bu sefer ajanın davranışı kategorik olarak farklıdır: `AGENTS.md`'yi okur, kısıtları kabul eder, `make check` koşar, çıktıyı raporlar. "Tamam"ı söyleyen artık ajan değil, dört yeşil test.
+8. İki koşumun farkını üç başlıkta yaz: *hangi başarısızlık modu hangi aparatla kapandı, hangi aparat olmasaydı yine başarısız olunurdu, ablasyonu nasıl ölçerdin?* Bu yazılı diff bu projenin teslim çıktısıdır.
+
+## Beklenen sonuçlar
+
+Solution tarafında `make check` koşulduğunda terminalde şu görüntü beklenir:
+
+```
+============== 4 passed in 0.42s ==============
+```
+
+Dört smoke testi yeşil olmadan iş tamamlanmış sayılmaz. Starter tarafında üretilen koddan aynı testler **koşulmadığı için** "tamamlandı" iddiası sözeldir; solution tarafında aynı iddia ölçülmüştür. Aradaki fark, müfredatın temel argümanını tek bir terminal çıktısına indirir: model sabit, prompt sabit, çıktı kategorik olarak farklı. Tek değişen düzenektir.
+
+Belgelenecek somut çıktılar:
+
+- Starter'da ajanın sorduğu soruların ve koyduğu varsayımların listesi.
+- Solution'da `make check`'in tam terminal çıktısı (4/4 yeşil).
+- "Hangi aparat hangi başarısızlığı kapattı" eşlemesi: talimat → belirsiz tanım; ortam → kurulum sürtünmesi; geri bildirim → doğrulama boşluğu.
+- (Opsiyonel) ablasyon notu: `tests/test_smoke.py` silinerek solution yeniden koşturulduğunda davranışın nasıl değiştiği.
+
+## Yerel çalıştırma
+
+```bash
+git clone <repo-url> harness-docs
+cd harness-docs/projeler/01
+
+# Starter — bilinçli olarak çıplak. Kurulum/test komutu yok.
+cd starter
+cat task.md
+cat app.py
+# Buradan itibaren kendi ajanınla deneyimle: kuralsız koşumun davranışını gözle.
+
+# Solution — minimum düzenek.
+cd ../solution
+make setup     # pip install -r requirements.txt
+make test      # pytest tests/ -x
+make check     # ruff (varsa) + mypy (varsa) + pytest
+
+# Canlı denemek için:
+API_TOKEN=dev-token make dev
+# başka bir terminalde:
+curl -i http://localhost:8000/notes                                    # 401 bekle
+curl -i -H "Authorization: Bearer dev-token" http://localhost:8000/notes  # 200 bekle
+```
+
+Smoke testler izole bir SQLite dosyası ve sabit `API_TOKEN=test-token` ile koşar; canlı sunucuya ihtiyaç duymaz, dış servis çağırmaz. Bu izolasyon, doğrulamanın tekrarlanabilir olmasını garanti eder — Ders 02'nin "kendini açıklayan ortam" prensibinin pratikteki karşılığı.
+
+## İlgili dersler
+
+- [Ders 01 — Yetkin Ajanlar Neden Başarısız Olur](/dersler/01-yetkin-ajanlar-neden-basarisiz): doğrulama boşluğunun ne olduğu ve neden bir model değil bir konfigürasyon problemi olduğu.
+- [Ders 02 — Düzeneğin Anatomisi](/dersler/02-duzenek-gercekte-nedir): beş aparat (talimat, araç, ortam, durum, geri bildirim). Bu projedeki diff üç aparatı somutlaştırır.
+
+## Sıradaki proje
+
+- [Proje 02 — Bilgi Mimarisi](/projeler/02-ajan-okunabilir-calisma-alani): bu projede gördüğün router AGENTS.md'yi şişmiş bir monolitten yönlendirici + konu dokümanları mimarisine taşır; "kısa ama yönlendirici" dengesini pratiğe döker.

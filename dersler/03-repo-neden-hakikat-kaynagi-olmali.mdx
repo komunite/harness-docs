@@ -19,6 +19,98 @@ Karar, sözleşme, ilerleme ve gerekçe — hepsi git ile takip edilen dosyalard
 
 Bu ilke, Claude Code dokümantasyonunun da temelidir: "`CLAUDE.md` projenizin köküne eklediğiniz, Claude Code'un her oturumun başında okuduğu bir markdown dosyasıdır" ([code.claude.com/docs](https://code.claude.com/docs)). Oturumlar arası süreklilik buradan çıkar; ajanın "hafızası" hafıza değildir, repodur.
 
+## Bilginin yeri
+
+<svg
+  viewBox="0 0 900 380"
+  role="img"
+  aria-label="Dağıtık bilgi vs repo: hakikat kaynağı. Solda Confluence, Slack, Jira ve kafa içinde dağılmış bilgi parçaları ajana ulaşamıyor; sağda tek bir repo konteyneri AGENTS.md, PROGRESS.md, DECISIONS.md ve ARCHITECTURE.md dosyalarını barındırıyor ve ajan soğuk başlangıç testini geçiyor."
+  xmlns="http://www.w3.org/2000/svg"
+  font-family="ui-sans-serif, system-ui, -apple-system, sans-serif"
+  width="100%"
+>
+  <rect x="0" y="0" width="900" height="380" fill="#E8E8E3" />
+
+  <text x="110" y="34" fill="#0E1417" font-size="14" font-weight="600">Dağıtık bilgi</text>
+  <text x="110" y="52" fill="#80807A" font-size="11">anti-örüntü</text>
+
+  <text x="610" y="34" fill="#0E1417" font-size="14" font-weight="600">Repo: hakikat kaynağı</text>
+  <text x="610" y="52" fill="#80807A" font-size="11">hedef</text>
+
+  <line x1="450" y1="20" x2="450" y2="360" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 4" />
+
+  <g>
+    <rect x="40" y="80" width="110" height="38" fill="#F0F0EB" stroke="#80807A" stroke-width="1.5" rx="3" />
+    <text x="95" y="103" fill="#20333C" font-size="12" text-anchor="middle">Confluence</text>
+
+    <rect x="180" y="120" width="90" height="38" fill="#F0F0EB" stroke="#80807A" stroke-width="1.5" rx="3" />
+    <text x="225" y="143" fill="#20333C" font-size="12" text-anchor="middle">Slack</text>
+
+    <rect x="60" y="180" width="90" height="38" fill="#F0F0EB" stroke="#80807A" stroke-width="1.5" rx="3" />
+    <text x="105" y="203" fill="#20333C" font-size="12" text-anchor="middle">Jira</text>
+
+    <rect x="200" y="220" width="100" height="38" fill="#F0F0EB" stroke="#80807A" stroke-width="1.5" rx="3" />
+    <text x="250" y="243" fill="#20333C" font-size="12" text-anchor="middle">Kafa</text>
+  </g>
+
+  <g stroke="#80807A" fill="none">
+    <path d="M 150 99 Q 280 110 380 175" stroke-width="1.5" />
+    <path d="M 270 139 Q 330 150 380 178" stroke-width="1" stroke-dasharray="4 3" />
+    <path d="M 150 199 Q 270 195 380 182" stroke-width="1.5" />
+    <path d="M 300 239 Q 340 215 380 188" stroke-width="1" stroke-dasharray="4 3" />
+  </g>
+
+  <g stroke="#20333C" stroke-width="1.5">
+    <line x1="320" y1="140" x2="330" y2="150" />
+    <line x1="330" y1="140" x2="320" y2="150" />
+    <line x1="335" y1="225" x2="345" y2="235" />
+    <line x1="345" y1="225" x2="335" y2="235" />
+  </g>
+
+  <text x="220" y="310" fill="#20333C" font-size="13" text-anchor="middle" font-style="italic">yüzde X görünmez</text>
+  <text x="220" y="328" fill="#80807A" font-size="11" text-anchor="middle">bağlam penceresine düşmeyen kararlar</text>
+
+  <g>
+    <circle cx="425" cy="185" r="22" fill="#F0F0EB" stroke="#0E1417" stroke-width="2" />
+    <circle cx="418" cy="182" r="2" fill="#0E1417" />
+    <circle cx="432" cy="182" r="2" fill="#0E1417" />
+    <path d="M 416 193 Q 425 198 434 193" stroke="#0E1417" stroke-width="1.5" fill="none" />
+    <text x="425" y="232" fill="#80807A" font-size="10" text-anchor="middle">ajan</text>
+  </g>
+
+  <path d="M 380 185 L 403 185" stroke="#80807A" stroke-width="1.5" fill="none" />
+  <polygon points="403,185 396,181 396,189" fill="#80807A" />
+
+  <g>
+    <rect x="490" y="80" width="370" height="220" fill="#F0F0EB" stroke="#0E1417" stroke-width="2" rx="6" />
+    <text x="510" y="105" fill="#0E1417" font-size="13" font-weight="600">Repo</text>
+    <line x1="510" y1="114" x2="840" y2="114" stroke="#C5C5C0" stroke-width="1" />
+
+    <g font-size="12" fill="#20333C">
+      <rect x="510" y="128" width="320" height="30" fill="#E8E8E3" stroke="#C5C5C0" stroke-width="1" rx="2" />
+      <text x="522" y="148">AGENTS.md</text>
+
+      <rect x="510" y="166" width="320" height="30" fill="#E8E8E3" stroke="#C5C5C0" stroke-width="1" rx="2" />
+      <text x="522" y="186">PROGRESS.md</text>
+
+      <rect x="510" y="204" width="320" height="30" fill="#E8E8E3" stroke="#C5C5C0" stroke-width="1" rx="2" />
+      <text x="522" y="224">DECISIONS.md</text>
+
+      <rect x="510" y="242" width="320" height="30" fill="#E8E8E3" stroke="#C5C5C0" stroke-width="1" rx="2" />
+      <text x="522" y="262">ARCHITECTURE.md</text>
+    </g>
+  </g>
+
+  <path d="M 447 185 L 488 185" stroke="#0E1417" stroke-width="2" fill="none" />
+  <polygon points="488,185 480,180 480,190" fill="#0E1417" />
+
+  <g>
+    <circle cx="780" cy="325" r="8" fill="#E5FF59" stroke="#0E1417" stroke-width="1.5" />
+    <path d="M 776 325 L 779 328 L 784 322" stroke="#1A2300" stroke-width="2" fill="none" />
+    <text x="795" y="329" fill="#0E1417" font-size="12">soğuk başlangıç testi</text>
+  </g>
+</svg>
+
 ## Anti-örüntü: Bilgi Görünürlüğü Boşluğu
 
 Bir projeyi taradığında pratikte sorulan ilk soru şu: proje hakkında bildiğin şeylerin yüzde kaçı repoda yazılı? Geri kalan kısma **Bilgi Görünürlüğü Boşluğu (Knowledge Visibility Gap)** denir. Boşluk büyüdükçe ajan hata yapar; çünkü her boşluk, ajanın tahmin etmek zorunda kalacağı bir kısıttır.
@@ -165,4 +257,4 @@ Veritabanı dünyasından ödünç, düzenek için doğrudan geçerli bir çerç
 
 [Ders 02](/dersler/02-duzenek-gercekte-nedir) düzeneğin beş aparatını açtı; bu ders onlara bir adres verdi: hepsi repoda yaşamak zorunda. Bilgi Görünürlüğü Boşluğu, soğuk başlangıç testi ve ratchet kuralları, repoyu hakikat kaynağı tutmanın saha araçlarıdır. [Ders 04 — Şişmiş Talimat Sendromu](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) reponun içinde talimat dosyasının yapılandırılma sırasını ele alır: tek dev `AGENTS.md` neden çöker.
 
-Pratik karşılığı: [Proje 02 — Ajan-Okunabilir Çalışma Alanı](/projeler/02-ajan-okunabilir-calisma-alani). Boş bir repodan `AGENTS.md` + konu dokümanları + ilerleme dosyaları + referans çapa yapısını uçtan uca kurarsınız.
+Pratik karşılığı: [Proje 02 — Bilgi Mimarisi](/projeler/02-ajan-okunabilir-calisma-alani). Boş bir repodan `AGENTS.md` + konu dokümanları + ilerleme dosyaları + referans çapa yapısını uçtan uca kurarsınız.

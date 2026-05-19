@@ -25,6 +25,74 @@ Sebep mimaridir: birim test **izolasyon için tasarlanır**. İzolasyon, kusurla
 
 Doğrulayıcı, üretici tarafından okunan bir sözleşmedir. Ajan farklı doğrulamaya bakarak farklı kod yazar.
 
+## Test yeterlilik gradiyenti
+
+<svg viewBox="0 0 800 480" role="img" aria-label="Test yeterlilik gradiyenti: birim'den e2e'ye kapsam genişler; yalnız birim 0/5 kusur, birim+entegrasyon 1/5 kusur, birim+entegrasyon+e2e 5/5 kusur yakalar. Atlanan zorunlu seviye NOT COMPLETE sayılır." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="800" height="480" fill="#E8E8E3"/>
+
+  <text x="40" y="44" font-size="13" fill="#80807A" letter-spacing="2">NOT</text>
+  <text x="40" y="64" font-size="14" fill="#20333C">Atlanan zorunlu seviye = NOT COMPLETE</text>
+  <line x1="40" y1="78" x2="760" y2="78" stroke="#C5C5C0" stroke-width="1"/>
+
+  <text x="40" y="108" font-size="12" fill="#80807A" letter-spacing="2">SOL — KATMAN GRADIYENTI</text>
+
+  <rect x="40" y="130" width="400" height="60" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
+  <text x="56" y="156" font-size="14" fill="#0E1417" font-weight="600">Lint + Type</text>
+  <text x="56" y="176" font-size="11" fill="#80807A">en geniş kapsam, en hızlı</text>
+  <text x="424" y="166" font-size="13" fill="#20333C" text-anchor="end">~2 sn</text>
+
+  <rect x="100" y="210" width="280" height="60" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
+  <text x="116" y="236" font-size="14" fill="#0E1417" font-weight="600">Unit + Integration</text>
+  <text x="116" y="256" font-size="11" fill="#80807A">bileşen içi davranış</text>
+  <text x="364" y="246" font-size="13" fill="#20333C" text-anchor="end">~8 sn</text>
+
+  <rect x="160" y="290" width="160" height="60" fill="#20333C" stroke="#0E1417" stroke-width="1.5"/>
+  <text x="176" y="316" font-size="14" fill="#E8E8E3" font-weight="600">E2E</text>
+  <text x="176" y="336" font-size="11" fill="#A5A59F">en dar, en yavaş, en kapsamlı</text>
+  <text x="304" y="326" font-size="13" fill="#E8E8E3" text-anchor="end">~15 sn</text>
+
+  <path d="M 40 380 L 440 380" stroke="#A5A59F" stroke-width="1"/>
+  <path d="M 40 380 L 48 376 M 40 380 L 48 384" stroke="#A5A59F" stroke-width="1" fill="none"/>
+  <path d="M 440 380 L 432 376 M 440 380 L 432 384" stroke="#A5A59F" stroke-width="1" fill="none"/>
+  <text x="40" y="400" font-size="11" fill="#80807A">geniş, ucuz</text>
+  <text x="440" y="400" font-size="11" fill="#80807A" text-anchor="end">dar, pahalı, kanıtlayıcı</text>
+
+  <line x1="480" y1="108" x2="480" y2="430" stroke="#C5C5C0" stroke-width="1"/>
+
+  <text x="500" y="108" font-size="12" fill="#80807A" letter-spacing="2">SAĞ — ELECTRON FILE-EXPORT</text>
+
+  <rect x="500" y="130" width="260" height="50" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+  <text x="514" y="152" font-size="13" fill="#0E1417">Yalnız birim</text>
+  <text x="746" y="160" font-size="14" fill="#20333C" text-anchor="end" font-weight="600">0 / 5</text>
+  <text x="514" y="170" font-size="11" fill="#A5A59F">sınırlar mock'lanmış — kör</text>
+  <g stroke="#80807A" stroke-width="1.5" fill="none">
+    <path d="M 730 138 L 738 146 M 738 138 L 730 146"/>
+  </g>
+
+  <rect x="500" y="194" width="260" height="50" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+  <text x="514" y="216" font-size="13" fill="#0E1417">Birim + entegrasyon</text>
+  <text x="746" y="224" font-size="14" fill="#20333C" text-anchor="end" font-weight="600">1 / 5</text>
+  <text x="514" y="234" font-size="11" fill="#A5A59F">süreç ve paketleme hâlâ dışarıda</text>
+  <g stroke="#80807A" stroke-width="1.5" fill="none">
+    <path d="M 730 202 L 738 210 M 738 202 L 730 210"/>
+  </g>
+
+  <rect x="500" y="258" width="260" height="60" fill="#E5FF59" stroke="#1A2300" stroke-width="1.5"/>
+  <text x="514" y="282" font-size="13" fill="#1A2300" font-weight="600">Birim + entegrasyon + e2e</text>
+  <text x="746" y="290" font-size="18" fill="#1A2300" text-anchor="end" font-weight="700">5 / 5</text>
+  <text x="514" y="302" font-size="11" fill="#1A2300">tüm sınırlar gerçek — kanıt</text>
+  <g stroke="#1A2300" stroke-width="2" fill="none">
+    <path d="M 728 286 L 734 292 L 744 280"/>
+  </g>
+
+  <text x="500" y="350" font-size="11" fill="#80807A" letter-spacing="1">OKUMA</text>
+  <text x="500" y="370" font-size="12" fill="#20333C">On üç saniyelik fark, beş üretim</text>
+  <text x="500" y="388" font-size="12" fill="#20333C">kusurunu açıklar. Atlanan katman,</text>
+  <text x="500" y="406" font-size="12" fill="#20333C">görünmez kusur üretir.</text>
+
+  <text x="40" y="456" font-size="10" fill="#A5A59F" letter-spacing="1">DERS 10 — ÜÇ KATMANLI DOĞRULAMA KAPISI</text>
+</svg>
+
 ## Birim testin mimari körlüğü
 
 Birim test üç şeyi göremez:
@@ -178,4 +246,4 @@ Karşılaştırma için: SWE-bench Verified beş yüz görev üzerinde aynı pre
 
 [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) doğrulamayı dışsallaştırmıştı; bu ders en üst katmanı somutlaştırdı. Birim testin mimari körlüğü, mimari sınırın lint kuralına çevrilmesi, doğrulama hiyerarşisinin atlanmazlığı ve doğrulayıcının ajan davranışını şekillendirmesi — hepsi e2e'yi bir yatırım değil, bir sözleşme yaptı. [Ders 11 — Düzeneğin Gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali) bir adım geri çekilir: test geçtiğinde "neden geçti", geçmediğinde "neden geçmedi" sorusunu runtime ve süreç katmanlarıyla cevaplar.
 
-Pratik karşılığı: [Proje 05 — Öz-Doğrulama ve Rol Ayrımı](/projeler/05-oz-dogrulama-ve-rol-ayrimi).
+Pratik karşılığı: [Proje 05 — Yapan ve Denetleyen](/projeler/05-oz-dogrulama-ve-rol-ayrimi).

@@ -1,28 +1,127 @@
 ---
-title: "Proje 02 — Ajan-Okunabilir Çalışma Alanı"
-description: "Reponuzu bir AI ajanının verimli okuyabileceği şekilde yapılandırın; handoff mekanizmasını kurun."
+title: "02 — Bilgi Mimarisi"
+description: "Bloated tek AGENTS.md'den yönlendirici dosya + konu dokümanları + per-module ARCHITECTURE.md'ye geçiş. Bilgi görünürlüğü boşluğunu kapatın."
 ---
 
-## Amaç
+Pazartesi sabahı, aynı reponun iki kopyası açık. Soldakinde `AGENTS.md` 248 satır — proje tarihi, eski Flask kalıntıları, kısayol aliaslar, "bir gün eklenecek" listeleri, ortada bir yere gömülmüş bir güvenlik kuralı. Sağdakinde 52 satırlık bir yönlendirici, üç konu dokümanı, ve `src/api/ARCHITECTURE.md`. Aynı kod tabanı, aynı `Makefile`, aynı testler. Sol kopyaya yeni bir ajan oturumu açtığında token bütçesinin yarısı daha ilk dosyada eriyor; sağ kopyada ajan görevin tipine göre tek bir konu dosyasına gidiyor.
 
-Bir AI ajanının repoya ilk geldiğinde **dakikalar içinde** bağlam kuracak hale getirmek. Reponun kendisini ajanın bağlam kaynağı yapmak ([Ders 03](/dersler/03-repo-neden-hakikat-kaynagi-olmali)).
+Düzenek Mühendisliği (Harness Engineering) müfredatının bu projesi, [Ders 03](/dersler/03-repo-neden-hakikat-kaynagi-olmali) ve [Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz)'ün önerisini elle hissedeceğin tek harekete indiriyor: **şişmiş tek dosyadan yönlendirici dosya + konu dokümanlarına geçiş.**
 
-## Çıktı
+## Bu projede ne öğreneceksin
 
-- `AGENTS.md` — temel kurallar
-- `progress.md` — devam eden iş
-- `decisions.md` — bağlayıcı kararlar
-- `README.md` içinde ajan girişi için "ilk eylem" cümlesi
+- Bilgi Görünürlüğü Boşluğu'nun (Knowledge Visibility Gap) bir reponun içinde nasıl somut göründüğünü.
+- Bir `AGENTS.md` dosyasının neden 248 satıra şiştiğini ve aynı bilgi kümesinin 52 satırlık bir router'a nasıl indiğini.
+- "Progressive disclosure" yapısının pratikte ne demek olduğunu: kök dosya yalnızca tanım + sıkı kısıtlar + harita; ayrıntı `docs/` altında ve modül-yerel `ARCHITECTURE.md`'lerde yaşar.
+- Soğuk başlangıç testinin (Ders 03) yapı üzerinden nasıl yeşile döndüğünü.
+- Sıkı kısıtların görünürlüğünün — örneğin "Authorization header asla loglanmaz" kuralının — neden ortadaki bir satırdan başa taşındığında ihlal oranının düştüğünü.
 
 ## Yapı
 
 ```
 projeler/02/
-├── starter/    # ajansız bir repo iskeleti
-└── solution/   # tam AGENTS / progress / decisions yapısı
+├── starter/
+│   ├── AGENTS.md          # 248 satır — şişmiş tek dosya
+│   ├── app.py
+│   ├── Makefile
+│   ├── README.md
+│   ├── pyproject.toml
+│   ├── requirements.txt
+│   └── tests/
+└── solution/
+    ├── AGENTS.md          # 52 satır — yönlendirici (router)
+    ├── docs/
+    │   ├── api-patterns.md
+    │   ├── database-rules.md
+    │   └── security.md
+    ├── src/
+    │   └── api/
+    │       └── ARCHITECTURE.md
+    ├── app.py             # starter ile aynı
+    ├── Makefile
+    ├── README.md
+    ├── pyproject.toml
+    ├── requirements.txt
+    └── tests/
 ```
 
-## Ön koşul
+Solution dizinindeki `app.py`, `Makefile`, testler — hepsi starter ile aynı. **Değişen tek şey bilgi mimarisi.**
 
-- [Ders 03](/dersler/03-repo-neden-hakikat-kaynagi-olmali)
-- [Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz)
+## starter ile solution arasındaki fark
+
+| Eksen | `projeler/02/starter/AGENTS.md` | `projeler/02/solution/AGENTS.md` |
+| --- | --- | --- |
+| Satır sayısı | **248** | **52** |
+| Rol | ansiklopedi | yönlendirici (router) |
+| Sıkı kısıtların konumu | dosya boyunca dağılmış | başta, beş madde, ayrılmış blok |
+| Tarih / kısayollar / "bir gün" listeleri | var (≈ 80 satır) | yok (silinmiş veya konu dokümanına gitmiş) |
+| Konu dokümanlarına yönlendirme | yok | var, görev tipiyle eşleşmiş |
+
+Starter dosyasında "Tüm SQL sorguları parametreli olmalıdır" kuralı 40. satıra gömülmüştür; "Authorization header asla loglanmaz" kuralı 74. satırda, "Tarih" başlığının altında, eski Flask kalıntıları ve aliaslarla aynı dosya içinde. Liu et al. 2023'ün [Lost in the Middle](https://arxiv.org/abs/2307.03172) bulgusu tam burayı işaretliyor: U-şeklindeki performans eğrisi ortayı kör eder. Solution'da aynı iki kural, dosyanın ilk yirmi satırı içinde, "Sıkı kısıtlar (ihlal edilemez)" başlığı altında listelenmiş durumda.
+
+Aynı zamanda solution **bilgiyi silmiyor**, taşıyor:
+
+- Endpoint stili, status code haritası, validation kuralları → `projeler/02/solution/docs/api-patterns.md`
+- SQLite kullanımı, parametreli sorgular, transaction'lar, migration → `projeler/02/solution/docs/database-rules.md`
+- Bearer auth, secret yönetimi, token rotation, CORS, rate limiting → `projeler/02/solution/docs/security.md`
+- API modülünün iç düzeni — `routes.py`, `models.py`, `dependencies.py` hedef düzeni — → `projeler/02/solution/src/api/ARCHITECTURE.md`
+
+Konu dokümanlarının toplam satırı starter'dan daha uzun olabilir. Amaç **sıkıştırma değil, doğru yerleştirme.** Ajan görevine göre `docs/security.md`'yi yükler, `docs/api-patterns.md`'yi yüklemez — bağlam bütçesi just-in-time harcanır.
+
+## Adım adım
+
+1. **Klonla.**
+   ```
+   git clone <repo>
+   cd projeler/02/starter
+   ```
+
+2. **`AGENTS.md`'yi baştan sona oku.** Tüm 248 satırı. Bunu bilinçli yap. İlk yarıda dikkatin dağılacak, ortada bir yere geldiğinde ekrandan kaymaya başlayacaksın — bu bir hata değil, gözlemin kendisi.
+   - Soru 1: "Tüm SQL sorguları parametreli olmalıdır" kuralını okuduktan ne kadar sonra unuttun?
+   - Soru 2: "Authorization header asla loglanmaz" kuralını ilk okuyuşta yakalayabildin mi yoksa geri dönmek zorunda mı kaldın?
+   - Soru 3: "Test isimleri davranışı tanımlamalıdır" kuralı ile "Lisans belirsiz" notu aynı dosyada, aynı seviyede madde olarak duruyor. Hangisi ihlal edilemez, hangisi gevşek? Dosya sana bunu söylüyor mu?
+
+   Tipik sonuç: sıkı kısıtlar dosyanın ortasında, stil tercihleri ve "bir gün" listeleriyle aynı görsel ağırlıkta. Lost-in-the-middle etkisi insanı da vurur, ajanı daha sert vurur.
+
+3. **Solution'a geç.**
+   ```
+   cd ../solution
+   ```
+
+4. **Router'ı oku — `projeler/02/solution/AGENTS.md`, 52 satır.** Aşağıdaki beş bölümün başlığına dikkat et: Proje (tek paragraf), Sıkı kısıtlar (beş madde), Hızlı başlangıç, Konu dokümanları (görev tipi → dosya eşlemesi), Bu dosyanın disiplini. Dosya kendi bakım kuralını da içeriyor: üst sınır iki yüz satır, hedef yüz satır civarı.
+
+5. **Konu dokümanlarını sırayla oku.** Her birinin başında "Ne zaman oku" cümlesi ve "Sıkı kısıtlar" bölümü var; "Bu dosyada **olmayan** konular" listesi sınırları çiziyor.
+   - `projeler/02/solution/docs/api-patterns.md`
+   - `projeler/02/solution/docs/database-rules.md`
+   - `projeler/02/solution/docs/security.md`
+   - `projeler/02/solution/src/api/ARCHITECTURE.md`
+
+   Bu okuma sırası kasıtlı: önce kapı (router), sonra konu, sonra modülün iç mimarisi. Bir ajan oturumu da aynı sırayı takip eder.
+
+6. **Aynı görevi iki kopyaya ver.** "Yeni bir `/notes/{nid}` DELETE endpoint'i ekle" gibi küçük bir görev seç. Starter kopyasında ajan dosyayı baştan sona tarar; solution kopyasında `AGENTS.md` → `docs/api-patterns.md` rotasını izler. Token sayımları ve hata oranlarını not et.
+
+## Beklenen sonuçlar
+
+- **Soğuk başlangıç testi yeşil.** Ders 03'ün beş sorusu — proje nedir, nasıl çalıştırılır, nasıl doğrulanır, hangi kurallar ihlal edilemez, detaya inmek için nereye bakılır — solution'ın `AGENTS.md` dosyasından, başka hiçbir yere bakmadan cevaplanabilir. Solution dosyasının son bölümü ("Soğuk başlangıç testi") bu sözleşmeyi açıkça yazılı tutuyor.
+- **Sıkı kısıtların görünürlüğü artar.** "Parametreli sorgu" ve "Authorization loglanmaz" kuralları artık dosyanın ilk on satırında, ayrılmış bir blokta. Liu et al. 2023'ün U-şekilli eğrisinin baş-uç avantajına yerleşmiş durumdalar.
+- **Bağlam bütçesi just-in-time harcanır.** Bir SQL refactoru sırasında ajan `security.md`'yi yüklemez; bir token rotation görevinde `database-rules.md`'yi yüklemez. Anthropic'in "Effective Context Engineering" yazısının önerdiği "smallest possible set of high-signal tokens" prensibi mimari seviyede uygulanmış olur.
+- **Öncelik karmaşası çözülür.** Stil tercihi (`api-patterns.md`) ile güvenlik kuralı (`security.md`) artık aynı dosyada yan yana iki tire değil; fiziksel olarak ayrılmış iki dosyadalar. Hangisinin müzakere edilebilir olduğu, dosyanın *yerinden* okunur.
+- **Bakım maliyeti düşer.** Yeni bir kural eklerken karar, "hangi konu dokümanına ait?" sorusuna döner. Router şişmez; konu dokümanı kendi sınırı içinde büyür.
+
+## Yerel çalıştırma
+
+```
+cd projeler/02/solution
+make setup
+make check
+```
+
+`make check` testleri koşturur ve "ok" basar. Aynı komut `projeler/02/starter` içinde de yeşil döner; doğrulama sözleşmesi her iki tarafta aynı. Değişen tek şey **bilginin yeri.** Eğer Python 3.11+ kurulu değilse, starter'ın `AGENTS.md`'sindeki "Geliştirme ortamı" bölümünde gerekçesi yazılı; solution'da aynı bilgi `AGENTS.md`'nin "Hızlı başlangıç" satırında özet halinde.
+
+## İlgili dersler
+
+- [Ders 03 — Repo: Hakikat Kaynağı](/dersler/03-repo-neden-hakikat-kaynagi-olmali) — repoda olmayan bilgi ajan için yoktur; bu projenin solution'ı dört ilkenin (kodun yanında, standardize giriş, minimum ama tam, kodla güncel) elle tutulur uygulamasıdır.
+- [Ders 04 — Şişmiş Talimat Sendromu](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) — tek büyük talimat dosyası neden çürür; çözüm "kısalt" değil, "rolünü değiştir": ansiklopediden router'a.
+
+## Sıradaki proje
+
+- [Proje 03 — Çok Oturumlu Süreklilik](/projeler/03-cok-oturumlu-sureklilik) — bilgi mimarisi yerinde olduğuna göre, bir sonraki adım: oturumlar arası `progress.md` ve `decisions.md` ile sürekliliği kurmak. Router yapısı orada `docs/` yerine `state/` dizinine yönlendirme kazanır; aynı prensip, farklı eksen.

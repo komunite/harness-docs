@@ -1,28 +1,151 @@
 ---
-title: "Proje 03 — Çok Oturumlu Süreklilik"
-description: "Durum dosyaları ve init script'leri ile ajanın oturumlar arasında kesintisiz devam etmesini sağla."
+title: "03 — Vardiya Süreklilik"
+description: "Yarım kalmış bir özelliği kasıtlı bırak; süreklilik aparatları (PROGRESS.md + DECISIONS.md + init.sh + vardiya rutinleri) ile bir sonraki oturum dakikalar içinde devam etsin."
 ---
 
-## Amaç
+## Vardiya değişimi: aynı şantiye, iki farklı usta
 
-Bir görevi kasıtlı olarak yarıda kes; ertesi oturum aynı görevin **kaldığı yerden** devam ettiğini doğrula. Süreklilik sohbete değil, dosya sistemine dayanmalı.
+Gündüz ustası paydos ediyor; duvarın bir köşesi yarım, bir tuğla seçimi finalize olmamış. Ertesi sabah gelen usta defter yoksa şantiyeyi 30–45 dakika **forensic** olarak tarar; hangi köşe yarım, hangi karışım, neden kırmızı tuğla. Üstüne, dün reddedilen tuğla bugün yeniden gündeme gelebilir. Defter düzenliyse ve vardiya rutini varsa, devir teslim dakikalar sürer.
 
-## Çıktı
+AI ajanlarının "vardiyası" bağlam penceresidir. Pencere dolduğunda ya sıkıştırılır (compaction) ya sıfırlanır. [Ders 05](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder) tezi nettir: **unutkanlık varsayılan ayardır, süreklilik mühendislik ürünüdür.** Bu proje, devir teslim defterini kuran dört dosyayı üretir — ve bunu, kodu hiç değiştirmeden yapar.
 
-- `init.sh` veya muadili bir başlangıç script'i
-- `progress.md` sözleşmesi (alanlar, güncelleme kuralları)
-- "Kapanış" ve "açılış" davranış sözleşmeleri
-- Oturum-1 ve oturum-2 transcript karşılaştırması
+## Bu projede ne öğreneceksin
+
+- Süreklilik artefaktlarını (PROGRESS.md, DECISIONS.md, init.sh, AGENTS.md vardiya rutinleri) birinci sınıf vatandaş kurmayı.
+- "Vardiya alımı (clock-in)" ve "vardiya teslimi (clock-out)" davranış sözleşmelerini yazmayı.
+- Yarım bir özelliği **kasıtlı olarak** bırakmayı; gerçek vardiya zaten yarımdır, mesele bug değil teslim ritmidir.
+- Yeniden inşa süresini 15 dakikadan 3 dakikaya çekmeyi.
+- **Handoff over heroics:** kodu sağlamlaştıran şey kahraman refactor değil, ertesi ajanın işine dakikalar içinde girebilmesi.
 
 ## Yapı
 
 ```
 projeler/03/
-├── starter/    # init yok, progress yok
-└── solution/   # init + progress + decisions
+├── starter/                    # Yarım Notes API — süreklilik artefaktı yok
+│   ├── app.py                  # search endpoint yarım (SQL inj + boş q)
+│   ├── AGENTS.md               # router, ama vardiya rutini YOK
+│   ├── Makefile
+│   ├── README.md
+│   ├── docs/
+│   ├── tests/
+│   ├── pyproject.toml
+│   └── requirements.txt
+│
+└── solution/                   # AYNI yarım Notes API + 4 yeni dosya
+    ├── app.py                  # ← starter ile birebir aynı, bug aynen duruyor
+    ├── AGENTS.md               # ← starter + "Vardiya alımı/teslimi" iki bölümü
+    ├── PROGRESS.md             # ← YENİ — vardiya defteri
+    ├── DECISIONS.md            # ← YENİ — gerekçeli karar günlüğü
+    ├── init.sh                 # ← YENİ — idempotent vardiya alımı script'i
+    ├── Makefile, README.md, docs/, tests/, pyproject.toml, requirements.txt
 ```
 
-## Ön koşul
+Klasör ağaçlarının diff'ini bir cümleyle özetlemek mümkün: **dört dosya farkı, sıfır kod farkı.**
 
-- [Ders 05](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder)
-- [Ders 06](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali)
+## Starter ile solution arasındaki fark — kod aynı, sadece artefaktlar farklı
+
+```bash
+diff projeler/03/starter/app.py projeler/03/solution/app.py
+# (çıktı yok — dosyalar birebir aynı)
+```
+
+`projeler/03/starter/app.py` ile `projeler/03/solution/app.py` byte-byte özdeştir. `GET /notes/search` her iki klasörde de yarımdır: f-string ile SQL interpolasyonu (injection), boş `q` tüm kayıtları döndürür, iki test skip ile beklemede. Solution **bu bug'ları çözmez.** Çözer gibi yapsaydı, dersin tezini yıkardık.
+
+Solution'ın getirdiği dört şey:
+
+1. **`projeler/03/solution/PROGRESS.md`** — son commit, test durumu (smoke 2/2, search skip 2), tamamlananlar, "search %90 — iki açık madde", bilinen sorunlar, sıralı sonraki adımlar, açık sorular (boş q için 400 mü 422 mi?).
+2. **`projeler/03/solution/DECISIONS.md`** — Bearer token (cookie session reddedildi, neden), sqlite3 (PostgreSQL ertelendi, neden), search için LIKE (FTS5 yarın, neden). Her madde: tarih + neden + **reddedilen alternatif** + kısıt. Compaction'ın kaybettiği "neden" burada yaşar.
+3. **`projeler/03/solution/init.sh`** — idempotent: `make setup` → `make test || true` → `cat PROGRESS.md` → "Önerilen sonraki adım" mesajı.
+4. **AGENTS.md** — starter router'ına iki bölüm eklendi: "Vardiya alımı" (init.sh → durum oku → kararları oku → sıradaki adımdan başla → belirsizliği DECISIONS'a yaz) ve "Vardiya teslimi" (PROGRESS güncelle → DECISIONS ekle → make check → tek commit → açık soruları kullanıcıya ilet).
+
+## Adım adım
+
+<Steps>
+  <Step title="Klonla ve starter'a gir">
+    ```bash
+    git clone <repo>
+    cd harness-docs/projeler/03/starter
+    make setup
+    make test
+    ```
+    Smoke testleri yeşildir (2/2). Search testleri var ama `@pytest.mark.skip` ile beklemede. Görünürde her şey "iyi."
+  </Step>
+
+  <Step title="'Search yarım' durumunu gör — nereden devam edileceği belirsiz">
+    ```bash
+    ls PROGRESS.md DECISIONS.md   # ikisi de yok
+    ```
+    `app.py` içinde `# TODO: yarim` yorumu var ama: hangi noktaya geldim? hangi karar verildi? hangi alternatif neden reddedildi? Yanıt yok. Bir sonraki oturum bunları git log + kod okuma + deneme ile çıkarmak zorunda.
+  </Step>
+
+  <Step title="Solution'a geç, farkı gör">
+    ```bash
+    cd ../solution
+    diff ../starter/app.py app.py        # boş çıktı
+    ls PROGRESS.md DECISIONS.md init.sh  # üçü de var
+    ```
+    Kod aynı; eklenen dört artefakt: `PROGRESS.md`, `DECISIONS.md`, `init.sh`, ve AGENTS.md'nin iki yeni bölümü.
+  </Step>
+
+  <Step title="init.sh'ı çalıştır — vardiyayı al">
+    ```bash
+    ./init.sh
+    ```
+    `make setup` + `make test || true` + `cat PROGRESS.md` + "Önerilen sonraki adım: Sıradaki adımlar listesinin 1 numaralı maddesinden devam et" mesajı. Bağlam penceresi boş bir ajan bile bu çıktıyla hangi satıra dokunması gerektiğini öğrenir.
+  </Step>
+
+  <Step title="PROGRESS.md'yi oku, devam edebileceğini gör">
+    1 numaralı madde: parametrize sorgu (`LIKE ?`, `(f"%{q}%",)`). 2: boş `q` için 400. 3: skip'leri kaldır. 4: LIKE jokeri kararını `DECISIONS.md`'ye yaz. 5: commit + PROGRESS güncelle. Belirsizlik — "400 mü 422 mi?" — hem PROGRESS hem DECISIONS "açık" başlığı altında durur.
+  </Step>
+
+  <Step title="Karşılaştırma deneyi (önerilir)">
+    İki ayrı oturum: birincisinde starter, ikincisinde solution. Aynı talimat: "search'i tamamla." İlk 10 dakikayı karşılaştır. Starter oturumu arkeoloji yapar; solution oturumu 1 numaralı maddeye dokunur.
+  </Step>
+</Steps>
+
+## Beklenen sonuçlar
+
+Anthropic'in *Effective harnesses for long-running agents* yazısı `init.sh + progress.txt + ilk commit` üçlüsünü "initializer agent" çıktısı olarak tarif eder. Bu üçlü hazır olduğunda yeni oturumun ilk dakikaları yapıma, yoksa arkeolojiye gider.
+
+| Senaryo | Yeniden inşa süresi | Davranış |
+| --- | --- | --- |
+| Starter (artefakt yok) | ~15 dk | git log, kod tarama, "ne yapmalıyım", tahmin |
+| Solution (artefakt var) | ~3 dk | `./init.sh`, PROGRESS oku, 1 numaradan başla |
+
+Beş kata yakın hızlanma; üstelik yanlış karar olasılığı da düşer çünkü `DECISIONS.md` reddedilmiş alternatifi belgeler. İkinci bulgu: **erken yakınsama azalır.** Ajan "bitti gibi" demeden önce "Bilinen sorunlar" listesindeki iki skip'i görür; "tamamlandı" iddiası yapısal olarak zorlaşır.
+
+## Yerel çalıştırma
+
+Starter:
+
+```bash
+cd projeler/03/starter
+make setup
+make test                       # smoke yeşil, search skip
+# Burada PROGRESS.md yok — devam etmek için forensic yap
+```
+
+Solution:
+
+```bash
+cd projeler/03/solution
+./init.sh                       # vardiya alımı: setup + test + PROGRESS dökümü
+# is yap...
+# vardiya teslimi (AGENTS.md "Vardiya teslimi" bölümünden):
+#   1) PROGRESS.md güncelle
+#   2) DECISIONS.md'ye yeni karar(lar)ı ekle
+#   3) make check yeşil olsun
+#   4) tek descriptive commit at
+#   5) açık soruları kullanıcıya ilet
+```
+
+İki klasörü yan yana açık tutmak öğretici: aynı kodun iki farklı **vardiya defteri** ile yaşadığını gözünle görürsün.
+
+## İlgili dersler
+
+- [Ders 05 — Vardiya Defteri](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder): Sürekliliğin neden bağlam penceresine değil dosya sistemine emanet edilmesi gerektiği. PROGRESS.md, DECISIONS.md ve vardiya rutinlerinin teorik gerekçesi.
+- [Ders 06 — Önce Temel, Sonra Duvar](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali): Başlangıcın ayrı bir faz olduğu; `init.sh`'in neden uygulama kodundan ayrı bir optimizasyon hedefi olduğu.
+
+## Sıradaki proje
+
+[Proje 04 — Çalışma Zamanı Geri Bildirimi](/projeler/04-calisma-zamani-geri-bildirimi). Süreklilik defteri kuruldu; sırada düzeneğin **canlı sinyalleri** var. PROGRESS.md statik bir snapshot; runtime feedback (test çıktısı, lint, type checker, log) dinamik bir nabızdır. İkisi birlikte düzeneğin "geri bildirim halkasını" tamamlar.

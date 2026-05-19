@@ -19,6 +19,58 @@ Bu operasyonel bir tanımdır. Promptu içerir ama prompttan ibaret değildir. B
 
 Bu dersin amacı, "düzenek" kelimesini elle tutulur **beş aparata** ayırmaktır. Müfredatın geri kalanı bu beş aparatı sırayla derinleştirir.
 
+## Beş aparat
+
+<svg viewBox="0 0 700 500" role="img" aria-label="Düzeneğin beş aparatı: merkezdeki Model düğümünü çevreleyen Talimat, Araç, Ortam, Durum ve Geri bildirim aparatları." xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+  <rect x="0" y="0" width="700" height="500" fill="#E8E8E3"/>
+
+  <line x1="350" y1="250" x2="350" y2="110" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="350" y1="250" x2="483" y2="207" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="350" y1="250" x2="432" y2="383" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="350" y1="250" x2="268" y2="383" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <line x1="350" y1="250" x2="217" y2="207" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
+
+  <polygon points="207,134 287,376 423,376 503,134" fill="none" stroke="#C5C5C0" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.7"/>
+
+  <circle cx="350" cy="250" r="46" fill="#20333C" stroke="#0E1417" stroke-width="2"/>
+  <text x="350" y="256" text-anchor="middle" fill="#F0F0EB" font-size="16" font-weight="600">Model</text>
+
+  <circle cx="350" cy="90" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+  <text x="350" y="86" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Talimat</text>
+  <text x="350" y="104" text-anchor="middle" fill="#80807A" font-size="11">AGENTS.md / CLAUDE.md</text>
+
+  <circle cx="552" cy="185" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+  <text x="552" y="181" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Araç</text>
+  <text x="552" y="199" text-anchor="middle" fill="#80807A" font-size="11">izinli komut yelpazesi</text>
+
+  <circle cx="473" cy="412" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+  <text x="473" y="408" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Ortam</text>
+  <text x="473" y="426" text-anchor="middle" fill="#80807A" font-size="11">Makefile / pyproject.toml</text>
+
+  <circle cx="227" cy="412" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+  <text x="227" y="408" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Durum</text>
+  <text x="227" y="426" text-anchor="middle" fill="#80807A" font-size="11">PROGRESS.md / DECISIONS.md</text>
+
+  <circle cx="148" cy="185" r="58" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+  <text x="148" y="181" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Geri bildirim</text>
+  <text x="148" y="199" text-anchor="middle" fill="#80807A" font-size="11">test / lint / e2e</text>
+  <circle cx="148" cy="120" r="7" fill="#E5FF59" stroke="#1A2300" stroke-width="1.5"/>
+
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0E1417"/>
+    </marker>
+  </defs>
+
+  <path d="M 350,144 L 350,210" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <path d="M 510,210 L 393,238" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <path d="M 437,373 L 374,289" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <path d="M 263,373 L 326,289" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+  <path d="M 190,210 L 307,238" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
+
+  <text x="350" y="475" text-anchor="middle" fill="#20333C" font-size="12" font-style="italic">Beş aparat modele akar; lime nokta en yüksek getirili sinyali işaretler.</text>
+</svg>
+
 ## Anti-örüntü — "düzenek = prompt" yanılgısı
 
 Saha pratiğindeki en yaygın hata, düzeneği tek bir uzun talimat dosyasına indirgemektir. Bir Markdown dosyasına 800 satır kural yazılır, ajana takılır, "harness yaptık" denir. Sonra aynı ajan:
@@ -159,4 +211,4 @@ Bu blok bir referans değil, bir **sözleşmedir**. Ajan teslim etmeden önce bu
 
 [Ders 01](/dersler/01-yetkin-ajanlar-neden-basarisiz) başarısızlığın düzenek kaynaklı olduğunu söylemişti; bu ders düzeneği somutlaştırdı: beş aparat, ablasyonla ölçülebilen darboğaz, framework/runtime/harness taksonomisi. [Ders 03 — Repo: Hakikat Kaynağı](/dersler/03-repo-neden-hakikat-kaynagi-olmali) bu beş aparatın neden bir tek mekânda — repoda — yaşaması gerektiğini savunur.
 
-Pratik karşılığı: [Proje 01 — Yalnız Prompt vs Kural Öncelikli](/projeler/01-yalniz-prompt-vs-kural-oncelikli). Her aparatı tek tek kapatıp açarak ablasyon eğrisini kendi reponuzda görürsünüz.
+Pratik karşılığı: [Proje 01 — Kural Öncelikli](/projeler/01-yalniz-prompt-vs-kural-oncelikli). Her aparatı tek tek kapatıp açarak ablasyon eğrisini kendi reponuzda görürsünüz.

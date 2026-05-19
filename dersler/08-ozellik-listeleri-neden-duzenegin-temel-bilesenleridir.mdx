@@ -19,6 +19,70 @@ Düzenek Mühendisliği (Harness Engineering) dünyasında bir özellik listesi 
 
 Anthropic'in uzun süreli ajanlar için yayımladığı çerçeve bu fikri açıkça koyar: "Set up a feature list file: based on the input spec, set up a structured JSON file with a list of end-to-end feature descriptions." Liste JSON'dur, satır içi notlar değil. claude.ai klonu deneyinde 200'den fazla özellik bu yapıda tutulmuş ve başlangıçta hepsi `failing` olarak işaretlenmiştir.
 
+## Dört durumlu kapı
+
+<svg viewBox="0 0 800 400" role="img" aria-label="Feature dört durumlu kapı: not_started, active, blocked, passing. not_started scheduler ile active'e geçer; active ile blocked çift yönlüdür; active'ten passing'e tek yönlü geçiş verifier tarafından yeşil çıkış koduyla yapılır; ajan kendi passing yazamaz." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="800" height="400" fill="#E8E8E3"/>
+
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#20333C"/>
+    </marker>
+    <marker id="arrowBold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0E1417"/>
+    </marker>
+  </defs>
+
+  <text x="400" y="34" text-anchor="middle" font-size="15" fill="#0E1417" font-weight="600">Özellik durum geçişi</text>
+
+  <line x1="170" y1="200" x2="345" y2="135" stroke="#20333C" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <rect x="220" y="148" width="78" height="20" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+  <text x="259" y="162" text-anchor="middle" font-size="11" fill="#20333C">scheduler</text>
+
+  <line x1="400" y1="170" x2="400" y2="265" stroke="#20333C" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
+  <rect x="412" y="207" width="138" height="20" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+  <text x="481" y="221" text-anchor="middle" font-size="11" fill="#20333C">açık soru / bağımlılık</text>
+
+  <line x1="455" y1="135" x2="615" y2="135" stroke="#0E1417" stroke-width="2" marker-end="url(#arrowBold)"/>
+  <rect x="465" y="100" width="170" height="22" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+  <text x="550" y="115" text-anchor="middle" font-size="11" fill="#0E1417">verifier (yeşil çıkış kodu)</text>
+
+  <g>
+    <circle cx="120" cy="200" r="50" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
+    <text x="120" y="197" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">not_started</text>
+    <text x="120" y="214" text-anchor="middle" font-size="10" fill="#80807A">başlangıç</text>
+  </g>
+
+  <g>
+    <circle cx="400" cy="135" r="48" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
+    <text x="400" y="132" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">active</text>
+    <text x="400" y="149" text-anchor="middle" font-size="10" fill="#80807A">WIP = 1</text>
+  </g>
+
+  <g>
+    <circle cx="400" cy="300" r="48" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
+    <text x="400" y="297" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">blocked</text>
+    <text x="400" y="314" text-anchor="middle" font-size="10" fill="#80807A">engelli</text>
+  </g>
+
+  <g>
+    <circle cx="665" cy="135" r="52" fill="#F0F0EB" stroke="#E5FF59" stroke-width="3"/>
+    <circle cx="665" cy="135" r="48" fill="none" stroke="#0E1417" stroke-width="1.5"/>
+    <text x="665" y="132" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="700">passing</text>
+    <text x="665" y="149" text-anchor="middle" font-size="10" fill="#80807A">geri alınamaz</text>
+    <g transform="translate(665,78)">
+      <circle r="13" fill="#E5FF59" stroke="#0E1417" stroke-width="1.5"/>
+      <path d="M-6,0 L-2,4 L6,-4" fill="none" stroke="#1A2300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    </g>
+  </g>
+
+  <g>
+    <rect x="540" y="345" width="240" height="38" rx="4" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+    <text x="660" y="361" text-anchor="middle" font-size="11" fill="#20333C" font-style="italic">Not: ajan kendi</text>
+    <text x="660" y="376" text-anchor="middle" font-size="11" fill="#20333C" font-style="italic">passing yazamaz.</text>
+  </g>
+</svg>
+
 ## Özelliğin üçlüsü
 
 Her özellik **üç bileşenden** oluşur. Üçü olmadan o şey özellik değildir, sadece bir niyettir.
@@ -174,7 +238,7 @@ Aynı 12 özellik, iki farklı kuruluş:
 
 [Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir) WIP=1 disiplinini koydu; bu ders o disiplinin altındaki veri yapısını resmileştirdi. Liste artık insan için bir not değil, dört düzenek komponentinin işlettiği bir primitif; özelliklerin üçlüsü ve dört durumlu makine bunu mekanikleştirir. [Ders 09 — Erken Zafer İlanı](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) en kritik geçişin — `passing`'in — neden ajandan alınıp düzeneğe verilmesi gerektiğini ölçer.
 
-Pratik karşılığı: [Proje 04 — Çalışma Zamanı Geri Bildirimi ve Kapsam Kontrolü](/projeler/04-calisma-zamani-geri-bildirimi).
+Pratik karşılığı: [Proje 04 — Geri Bildirim Halkası](/projeler/04-calisma-zamani-geri-bildirimi).
 
 ## Kaynaklar
 

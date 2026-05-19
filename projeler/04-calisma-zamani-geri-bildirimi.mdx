@@ -1,27 +1,243 @@
 ---
-title: "Proje 04 — Çalışma Zamanı Geri Bildirimi ve Kapsam Kontrolü"
-description: "Ajanın kendi kodunu çalıştırıp hataları görerek düzeltebilmesi için minimum geri bildirim halkasını kur."
+title: "04 — Geri Bildirim Halkası"
+description: "Serbest formda features.md'den yapılandırılmış features.json + verify.sh + WIP=1 kuralına. Çalışma zamanı geri bildirimini ajan otomasyonuna bağlayın."
 ---
 
-## Amaç
+## Senaryo — 12 dosya, 800 satır, 0% e2e
 
-Ajanı **kendi koduyla yüzleştir**: test koşturma, lint, type-check, çalıştırma — bu sinyaller ajan kararlarına geri beslenmeli. Aynı zamanda yapılan değişikliklerin kapsam dışına taşmadığını bir kontrol mekanizmasıyla doğrula.
+Notes API repoları üzerinde tek cümlelik görev verildi: "kullanıcı favorilerini ve etiket sistemini ekle, bir de markdown render". İki saat sonra ajan oturumu bitti, repoya bakıldı:
 
-## Çıktı
+- **12 değiştirilmiş dosya** — modeller, üç route, bir middleware, frontend stub, README değişikliği
+- **~800 satır** kod
+- **Uçtan uca geçen senaryo: 0/3** — favoriler kayıt etmiyor, etiket endpoint'i 404, markdown render fonksiyonu çağrılmıyor
+- "Yapıldı" diye işaretlenmiş özellik sayısı: 3
+- Doğrulanmış özellik sayısı: 0
 
-- Çalıştırma sözleşmesi: "her değişiklikten sonra `make test`"
-- Hook ya da skill ile lint/type-check kapısı
-- Kapsam dışı değişikliği işaretleyen kontrol (örn. izin verilen dosya yolları)
+Ajan hatalı değildi; düzenek (harness) yoktu. Özellik listesi `features.md` adında serbest formda bir prozaydı; bunu okuyan ajanın bir öncelik haritası çıkarması da, bittiğini iddia ettiği işin gerçekten bittiğini kanıtlaması da imkânsızdı. Aşırıya kaçma ile yarım bırakma, [Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)'de söylediğimiz simbiyozla, aynı oturumda yan yana durdu.
+
+Bu projede `features.md` serbest formunu **`features.json` yapılandırılmış primitifine** çeviriyoruz; `scripts/verify.sh` ile WIP=1 kuralını mekanik olarak zorlayan bir doğrulama scripti kuruyoruz; ve `AGENTS.md` içine ajanın değiştiremeyeceği bir **Feature Liste Kuralları** bloğu yerleştiriyoruz.
+
+## Bu projede ne öğreneceksin
+
+- Düzenek Mühendisliği (Harness Engineering) içinde **özellik listesinin neden primitif olduğunu** — bir doküman değil, scheduler/verifier/handoff reporter/progress tracker'ın okuduğu veri yapısı olduğunu.
+- `not_started`, `active`, `blocked`, `passing` dört durumlu makineyi `features.json` üzerinde çalıştırmayı.
+- `jq` ile features dosyasını sorgulamayı: aktif feature'ı bulmak, durum dağılımı çıkarmak, geri basınç (backpressure) hesaplamak.
+- `verify.sh` ile pass-state kapısını ajandan alıp düzeneğe vermeyi: durum `passing`'e ancak doğrulama komutu sıfır çıkış koduyla biterse geçer.
+- WIP=1 invariant'ını mekanik bir kilitle uygulamayı: iki feature aynı anda `active` ise script `exit 3` ile reddeder.
+- `AGENTS.md` içine konacak **Feature Liste Kuralları** bloğunu — ajanın bu kuralları değiştirme yetkisi olmadan okuyup uyguladığı sözleşmeyi.
 
 ## Yapı
 
 ```
 projeler/04/
-├── starter/    # test koşmuyor, kapsam kuralı yok
-└── solution/   # tam runtime feedback halkası
+├── starter/                       # serbest formda features.md, verify.sh yok
+│   ├── AGENTS.md
+│   ├── features.md                # prose, soft, "galiba"-lar dolu
+│   ├── app.py
+│   ├── Makefile
+│   ├── PROGRESS.md
+│   ├── DECISIONS.md
+│   └── tests/
+└── solution/                      # features.json + verify.sh + WIP=1 kuralı
+    ├── AGENTS.md                  # "Feature Liste Kurallari" blogu eklendi
+    ├── features.json              # F01 passing, F02 passing, F03 not_started,
+    │                              # F04 not_started, F05 blocked
+    ├── scripts/
+    │   └── verify.sh              # jq-driven, WIP=1 enforce, state machine
+    ├── app.py
+    ├── Makefile                   # `make verify` -> bash scripts/verify.sh
+    ├── PROGRESS.md
+    ├── DECISIONS.md
+    └── tests/
 ```
 
-## Ön koşul
+## starter ile solution arasındaki fark
 
-- [Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)
-- [Ders 08](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir)
+`projeler/04/starter/features.md` — proza, yumuşak, ölçülemez:
+
+```text
+Yapilacaklar: arama duzelt (tamam galiba, testler yesil — son commitle birlikte
+parametreli surume cevrildi), etiket sistemi ekle (devam ediyor? — kafamda var
+ama henuz kod yazilmadi, belki yarin), kullanici favorileri (henuz baslanmadi...),
+markdown body destegi (belirsiz — frontend yok, sadece sunucu tarafinda render mi
+yoksa pass-through mu karar verilmedi, biri "blocked" demisti)...
+```
+
+Bu paragraf üç problemi aynı anda taşır:
+
+1. **Durum belirsiz.** "Galiba", "devam ediyor?", "belirsiz" — bir makinenin okuyup karar veremeyeceği kelimeler. Doğrulama komutu yok; "tamam" denmesi `passing` anlamına gelmiyor.
+2. **WIP yok.** Aynı satırda dört iş "üzerinde" gözüküyor; ajan oturumu açtığında hangisinin aktif olduğunu seçmek zorunda — her seferinde farklı seçer.
+3. **Kanıt yok.** "Testler yeşil" iddiası kim tarafından ne zaman doğrulandı? Hangi commit? Hangi log?
+
+`projeler/04/solution/features.json` aynı bilgiyi **state machine** olarak verir — strict, ölçülebilir, `jq`-driven:
+
+```json
+[
+  {
+    "id": "F01",
+    "behavior": "Notes CRUD — POST /notes 201, GET /notes/{id} 200, liste, 401",
+    "verification": ". .venv/bin/activate && pytest tests/test_smoke.py -q",
+    "state": "passing",
+    "depends_on": [],
+    "evidence": "commit a1b2c3d — tests/test_smoke.py 4 passed in 0.42s"
+  },
+  {
+    "id": "F02",
+    "behavior": "GET /notes/search?q=...; bos sorgu [] doner; quote -> SQL injection yok",
+    "verification": ". .venv/bin/activate && pytest tests/test_search.py -q",
+    "state": "passing",
+    "depends_on": ["F01"],
+    "evidence": "commit b2c3d4e — 4 passed; proje 04'te parametreli sorguya cevrildi"
+  },
+  { "id": "F03", "state": "not_started", "behavior": "tags endpoint", "...": "..." },
+  { "id": "F04", "state": "not_started", "behavior": "favorites endpoint", "...": "..." },
+  { "id": "F05", "state": "blocked", "evidence": "markdown kutuphanesi secilmedi", "...": "..." }
+]
+```
+
+Beş feature, dört alan zorunluluğu (`behavior`, `verification`, `state`, `evidence`), bağımlılık grafiği (`depends_on`). `F01` ve `F02` doğrulanmış (kanıtı commit hash ile), `F03` ve `F04` henüz başlanmamış, `F05` `blocked` — kütüphane seçimi `DECISIONS.md`'ye yazılana kadar açılmaz. Aktif feature **şu anda yok**; sıradaki ajan oturumu hangisini `active` yapacağını rastgele değil, scheduler tarafından söylenerek seçer.
+
+## Adım adım
+
+### 1) Repoyu al
+
+```bash
+git clone <repo-url> harness-04
+cd harness-04/projeler/04
+```
+
+### 2) starter'a bak — şüpheli durum
+
+```bash
+cd starter
+cat features.md
+```
+
+Dosyayı okudukça soru biriktir: "etiket sistemi" hangi state'te? "Arama düzelt" gerçekten passing mi yoksa son commit'te birisi öyle yazıvermiş mi? "Markdown body" blocked dendi ama hangi engel? `make test` çalıştırdığında hangi feature'ın testleri yeşil olmalı? Yanıt yok — çünkü dosyada `state` alanı yok, `verification` komutu yok, `evidence` referansı yok. Bu repoya gelen yeni ajan, oturumun ilk 15 dakikasını teşhise harcar.
+
+### 3) solution'a geç
+
+```bash
+cd ../solution
+cat features.json | jq '.'
+```
+
+JSON çıktısı net: beş feature, her birinde dört zorunlu alan, durum dağılımı tek bakışta görünür.
+
+### 4) Durum dağılımını çıkar (progress tracker rolü)
+
+```bash
+jq -r 'group_by(.state) | map({state: .[0].state, count: length}) | .[] |
+  "  " + .state + ": " + (.count|tostring)' features.json
+```
+
+Beklenen çıktı:
+
+```
+  blocked: 1
+  not_started: 2
+  passing: 2
+```
+
+VCR (Verified Completion Rate) = passing / aktive edilmiş = 2 / 2 = 1.0 — yeni feature `active`'e alınabilir.
+
+### 5) Aktif feature'ı sorgula
+
+```bash
+jq '.[] | select(.state=="active")' features.json
+```
+
+Boş döner — şu an aktif yok, sıradaki iş güvenle başlatılabilir.
+
+### 6) verify.sh çalıştır — boş durum
+
+```bash
+bash scripts/verify.sh
+```
+
+Beklenen:
+
+```
+bilgi: active feature yok — yapilacak dogrulama yok
+  blocked: 1
+  not_started: 2
+  passing: 2
+```
+
+Script sıfır kodla biter, hiçbir şeyi değiştirmez — yapacak iş yok.
+
+### 7) F03'ü active yap, verify.sh tekrar çalıştır
+
+```bash
+jq '(.[] | select(.id=="F03").state) = "active"' features.json > /tmp/f.json \
+  && mv /tmp/f.json features.json
+bash scripts/verify.sh
+```
+
+`F03` aktif, doğrulama komutu (`pytest tests/test_tags.py -q`) çalışır. Tag endpoint'i henüz yazılmadığı için test başarısız olur; `verify.sh` sıfır-dışı kodla çıkar, `state` `active` kalır. Pass-state kapısı kapalı: ajan kendi başına `passing` yazamaz.
+
+### 8) WIP=1 ihlalini dene — `exit 3` reddi
+
+`F02` zaten `passing`. Onu da `active` yapalım — yani iki feature aynı anda aktif olsun:
+
+```bash
+jq '(.[] | select(.id=="F02").state) = "active" |
+    (.[] | select(.id=="F03").state) = "active"' features.json > /tmp/f.json \
+  && mv /tmp/f.json features.json
+
+bash scripts/verify.sh ; echo "rc=$?"
+```
+
+Beklenen:
+
+```
+hata: WIP=1 ihlali — 2 adet active feature var
+  F02 — GET /notes/search?q=... eslesn notlari doner...
+  F03 — POST /notes/{id}/tags ile bir nota etiket eklenir...
+rc=3
+```
+
+Script hiçbir doğrulama çalıştırmadan, hiçbir dosya değiştirmeden `exit 3` ile reddeder. WIP=1 invariant'ı mekanik bir kilitle korunur — ajanın "iki şeyi paralel yapayım" demesi mümkün değil; düzenek izin vermiyor.
+
+## Beklenen sonuçlar
+
+Bu proje sonunda elinde olması gerekenler:
+
+- **`features.json` primitifi** — beş feature, dört alanlık zorunluluk, durum makinesi (`not_started` / `active` / `blocked` / `passing`), bağımlılık grafiği.
+- **`scripts/verify.sh`** — `jq`-driven; WIP=1 invariant'ını `exit 3` ile zorlar; aktif feature'ın `verification` komutunu çalıştırır; sıfır kod -> `state` `passing` + `evidence` (commit hash + UTC zaman damgası) yazar; sıfır-dışı kod -> `active` kalır.
+- **`AGENTS.md` içinde Feature Liste Kuralları bloğu** — ajan kuralları **değiştiremez**, sadece uygular: features kaynak dosyası `features.json`'dir, WIP=1, pass-state kapısı script'e aittir, VCR sub 1.0 iken yeni `active` yok.
+- **Geri bildirim halkası** — kod yazılır, `make verify` çalıştırılır, sonuç dosyaya geri yazılır; ajan bir sonraki oturumda `features.json` durum dağılımını okuyarak nereden devam edeceğini bilir.
+
+Sayısal hedef ([Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir) tablosuyla uyumlu): aynı beş feature sınırsız WIP altında ~%37,5 tamamlanma, ~31 dokunulmuş dosya, ~2,4 saat lead time verirken; WIP=1 + verify.sh altında ~%87,5 tamamlanma, ~9 dokunulmuş dosya, ~0,6 saat lead time.
+
+## Yerel çalıştırma
+
+```bash
+cd projeler/04/solution
+
+# bagimliliklar
+python -m venv .venv && . .venv/bin/activate
+pip install -r requirements.txt
+command -v jq >/dev/null || brew install jq   # macOS
+
+# durum fotografi
+jq -r 'group_by(.state) | map({state: .[0].state, count: length}) | .[] |
+  "  " + .state + ": " + (.count|tostring)' features.json
+
+# aktif feature varsa dogrula
+make verify          # -> bash scripts/verify.sh
+
+# tum testler
+make test
+```
+
+`make verify` `scripts/verify.sh`'i sarar; CI'da da aynı komut çağrılır.
+
+## İlgili dersler
+
+- [Ders 07 — WIP=1 Disiplini](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir) — Aşırıya kaçma ile yarım bırakmanın simbiyozu; Little's Law (L = λ × W); VCR; geri basınç.
+- [Ders 08 — Özellik Listesi Bir Primitiftir](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir) — Özelliğin üçlüsü (behavior, verification, state); dört durumlu makine; listeyi okuyan dört komponent (scheduler, verifier, handoff reporter, progress tracker); granülerlik.
+
+## Sıradaki proje
+
+[Proje 05 — Yapan ve Denetleyen](/projeler/05-oz-dogrulama-ve-rol-ayrimi) — `features.json` artık WIP=1 kuralını mekanik olarak uyguluyor; bir sonraki adım, "tamamlandı" yargısını executor'dan **bağımsız bir verifier rolüne** dışsallaştırmak. Doğrulama halkasını kurduktan sonra, halkayı kimin **kapatacağına** karar veren rol ayrımını ekliyorsunuz.

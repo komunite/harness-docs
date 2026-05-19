@@ -22,6 +22,67 @@ Aynı kod tabanı, aynı görev tipi, aynı ajan. Tek değişken: oturum sonunda
 
 Uzun vadeli güvenilirlik tek koşumun başarısına değil, **işletim disiplinine** dayanır. Bir oturumun çıktısı yalnız üretilen değişiklik değil, aynı zamanda **bıraktığı durumdur**. Düzenek Mühendisliği (Harness Engineering) "temiz state"i tamamlanma tanımının (DoD) parçası kabul eder; aksi halde yarınki oturum bugünkünün hatalarını miras alır.
 
+## Beş boyut
+
+<svg viewBox="0 0 700 600" role="img" aria-label="Beş boyut radarı: temizliksiz vs temizlikli 12 hafta karşılaştırması — pentagon spider chart" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="700" height="600" fill="#E8E8E3"/>
+
+  <text x="350" y="38" text-anchor="middle" font-size="13" fill="#20333C" font-style="italic">Lehman'ın yasası: kullanılan bir sistem, korunmadıkça çürür</text>
+
+  <g transform="translate(350,330)">
+    <polygon points="0,-220 209.31,-67.99 129.33,177.99 -129.33,177.99 -209.31,-67.99" fill="none" stroke="#C5C5C0" stroke-width="1"/>
+    <polygon points="0,-165 156.98,-50.99 96.99,133.49 -96.99,133.49 -156.98,-50.99" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
+    <polygon points="0,-110 104.65,-33.99 64.66,88.99 -64.66,88.99 -104.65,-33.99" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
+    <polygon points="0,-55 52.33,-17.00 32.33,44.50 -32.33,44.50 -52.33,-17.00" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
+
+    <line x1="0" y1="0" x2="0" y2="-220" stroke="#A5A59F" stroke-width="1"/>
+    <line x1="0" y1="0" x2="209.31" y2="-67.99" stroke="#A5A59F" stroke-width="1"/>
+    <line x1="0" y1="0" x2="129.33" y2="177.99" stroke="#A5A59F" stroke-width="1"/>
+    <line x1="0" y1="0" x2="-129.33" y2="177.99" stroke="#A5A59F" stroke-width="1"/>
+    <line x1="0" y1="0" x2="-209.31" y2="-67.99" stroke="#A5A59F" stroke-width="1"/>
+
+    <text x="8" y="-170" font-size="10" fill="#80807A">50</text>
+    <text x="8" y="-115" font-size="10" fill="#80807A">25</text>
+    <text x="8" y="-60" font-size="10" fill="#80807A">0</text>
+    <text x="8" y="-225" font-size="10" fill="#80807A">100</text>
+
+    <polygon points="0,-213.4 199.04,-64.65 122.86,169.09 -91.85,126.40 -125.59,-40.79" fill="#F0F0EB" fill-opacity="0.85" stroke="#0E1417" stroke-width="2.2" stroke-linejoin="round"/>
+
+    <polygon points="0,-83.6 127.68,-41.47 33.62,46.27 -77.60,106.79 -83.72,-27.20" fill="none" stroke="#A5A59F" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="6 4"/>
+
+    <circle cx="0" cy="-213.4" r="4" fill="#0E1417"/>
+    <circle cx="199.04" cy="-64.65" r="4" fill="#0E1417"/>
+    <circle cx="122.86" cy="169.09" r="4" fill="#0E1417"/>
+    <circle cx="-91.85" cy="126.40" r="4" fill="#0E1417"/>
+    <circle cx="-125.59" cy="-40.79" r="4" fill="#0E1417"/>
+
+    <circle cx="0" cy="-83.6" r="3.5" fill="#A5A59F"/>
+    <circle cx="127.68" cy="-41.47" r="3.5" fill="#A5A59F"/>
+    <circle cx="33.62" cy="46.27" r="3.5" fill="#A5A59F"/>
+    <circle cx="-77.60" cy="106.79" r="3.5" fill="#A5A59F"/>
+    <circle cx="-83.72" cy="-27.20" r="3.5" fill="#A5A59F"/>
+
+    <text x="0" y="-240" text-anchor="middle" font-size="14" fill="#0E1417" font-weight="600">Build</text>
+    <text x="232" y="-72" text-anchor="start" font-size="14" fill="#0E1417" font-weight="600">Test</text>
+    <text x="144" y="200" text-anchor="start" font-size="14" fill="#0E1417" font-weight="600">Progress</text>
+    <text x="-144" y="200" text-anchor="end" font-size="14" fill="#0E1417" font-weight="600">Artifact</text>
+    <text x="-232" y="-72" text-anchor="end" font-size="14" fill="#0E1417" font-weight="600">Startup</text>
+  </g>
+
+  <g transform="translate(60,540)">
+    <rect x="0" y="0" width="18" height="12" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
+    <text x="26" y="10" font-size="12" fill="#20333C">Hafta 12 — temizlikli</text>
+
+    <rect x="200" y="0" width="18" height="12" fill="none" stroke="#A5A59F" stroke-width="2" stroke-dasharray="4 3"/>
+    <text x="226" y="10" font-size="12" fill="#20333C">Hafta 12 — temizliksiz</text>
+  </g>
+
+  <g transform="translate(500,540)">
+    <circle cx="0" cy="6" r="6" fill="#E5FF59" stroke="#1A2300" stroke-width="1"/>
+    <text x="12" y="10" font-size="11" fill="#1A2300">günlük + haftalık disiplin ile</text>
+  </g>
+</svg>
+
 ## Entropi varsayılandır — Lehman yasaları
 
 Manny Lehman'ın yazılım evrimi yasaları nettir: **kullanılan bir sistem, korunmadıkça çürür.** İkinci yasa (artan karmaşıklık): bir sistem evrildikçe karmaşıklığı artar, ancak aktif olarak azaltılırsa azalır. Yedinci yasa (azalan kalite): aktif bakım yapılmayan bir sistemin algılanan kalitesi zamanla düşer.
@@ -162,4 +223,4 @@ Bu rakamlar sezgisel projeksiyonlardır; saha gözleminde nokta nokta dağılım
 
 [Ders 11](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali) düzeneği görünür kıldı; bu son ders onu sürdürülebilir kıldı. Beş boyutlu temiz state, iki kademeli temizlik, Quality Document ve oturum çıkış kontrol listesi — entropiye karşı yürüyen çöp toplayıcının somut parçalarıdır. Lehman yasaları kadar serttir: aktif bakım yoksa çalışan düzenek bile çürür. Müfredat burada bitiyor; disiplin buradan başlıyor.
 
-Tüm halkalar tek bir koşumda birleşsin diye: [Proje 06 — Bütünleşik Düzenek (Capstone)](/projeler/06-butunlesik-duzenek-capstone). Beş aparat, doğrulama kapısı, e2e suite, gözlemlenebilirlik ve temiz teslim aynı düzenekte toplanır. İyi bir düzeneğin ölçüsü tek koşum değildir; otuzuncu koşumda hâlâ yarı saniyede açılabilmesidir.
+Tüm halkalar tek bir koşumda birleşsin diye: [Proje 06 — Capstone: Bütünleşik Düzenek](/projeler/06-butunlesik-duzenek-capstone). Beş aparat, doğrulama kapısı, e2e suite, gözlemlenebilirlik ve temiz teslim aynı düzenekte toplanır. İyi bir düzeneğin ölçüsü tek koşum değildir; otuzuncu koşumda hâlâ yarı saniyede açılabilmesidir.

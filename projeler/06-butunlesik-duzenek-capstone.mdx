@@ -1,32 +1,235 @@
 ---
-title: "Proje 06 — Bütünleşik Düzenek (Capstone)"
-description: "Önceki beş projeyi birleştirip uçtan uca, gözlemlenebilir, temiz state bırakan bir düzenek (harness) inşa et."
+title: "06 — Capstone: Bütünleşik Düzenek"
+description: "Beş aparat + gözlemlenebilirlik + temiz teslim, tek bir çalışan kod tabanında birleşir. Tam OpenTelemetry instrumentation, Quality.md, session_close.sh, idempotent cleanup."
 ---
 
-## Amaç
+## Saat 23:47, önceki vardiya kapanırken
 
-Müfredatın final projesi. Beş aparatın tamamını tek bir repoda çalışır halde teslim et:
+Önceki vardiyanın ajanı son commit'inde şunu yazmış:
 
-1. **Repo** — kurallar, kararlar, ilerleme yazılı
-2. **Durum** — init + progress + decisions
-3. **Çalışma zamanı geri bildirimi** — test/lint/type halkası
-4. **Öz-doğrulama** — executor/verifier rol ayrımı
-5. **Gözlemlenebilirlik** — trace ve karar günlüğü
+> OTel iskeleti ekledim ama bitiremedim. `otel_setup.py` içinde `tracer = None` kaldı; `app.py` onu import ediyor ama hiçbir handler `start_as_current_span` çağırmıyor — çağırsam `AttributeError` fırlatırdı. Yarın bitirilecek.
 
-## Çıktı
+Sabah sen oturuyorsun. App ayakta, testler yeşil, beş aparat — repo, durum, çalışma zamanı geri bildirimi, öz-doğrulama ve onların hepsini taşıyan iskelet — yerinde. Ama düzeneğin gözleri kapalı: bir istek geldiğinde hangi handler kaç ms sürdü, hangi sorgu kaç satır döndü, hangi error context'inde patladı — hiçbir kayıt yok. Önceki vardiyanın yarısı kalmış girişimi düzeneği görünür kılma sözüyle başlamış; senin işin o sözü kapatmak ve müfredattaki tüm halkaları tek bir düzenekte birleştirmek.
 
-- Yeniden kullanılabilir bir düzenek şablonu (template repo)
-- İki ardışık oturumda **kesintisiz** ilerleyebildiğini gösteren transcript
-- Capstone değerlendirme kontrol listesi (kapanış fazı)
+Bu, "Düzenek Mühendisliği (Harness Engineering)" müfredatının capstone'u. Yeni bir özellik eklemiyoruz; mevcut beş aparatın üstüne gözlemlenebilirlik ve temiz teslim disiplinini koyup düzeneği tamamlıyoruz.
+
+## Bu projede ne öğreneceksin
+
+- Önceki beş projenin çıktısını **tek koşumda** birleştirmek.
+- `tracer = None` gibi yarım girişimleri **çalışan OTel kurulumuna** çevirmek; GenAI semconv attribute'larıyla her span'i etiketlemek.
+- `Quality.md` ile her modülün sağlığını **kanıt tabanlı** notlamak; sonraki vardiyaya "nereden başla" sorusunun cevabını bırakmak.
+- Sprint sözleşmesini gerçek bir özellik (FTS5 arama) için yazmak; generator ve verifier arasındaki müzakereyi kod yazımından önce kapatmak.
+- `session_close.sh` ile **beş boyutun** (build / test / progress / artifact / startup) hepsini her oturum sonunda doğrulamak.
+- `cleanup.sh` ile **idempotent** anlık temizlik kurmak — iki kez koşturmak hiç koşturmamakla aynı veya daha güvenli.
+- Capstone hissi: müfredatın tüm halkalarının aynı çalışan kod tabanında nasıl buluştuğunu görmek.
 
 ## Yapı
 
+Capstone'da tüm aparatlar bir arada. `solution/` ağacı muhtemelen müfredat boyunca gördüğün en dolu starter / solution çiftidir — çünkü beş aparatın hepsi artık aynı anda yerinde:
+
 ```
 projeler/06/
-├── starter/    # boş template, aparatlar eksik
-└── solution/   # tam, observable, end-to-end düzenek
+├── starter/                      # P05 solution'undan miras + KIRIK OTel
+│   ├── AGENTS.md                 # Aparat 1: kurallar
+│   ├── PROGRESS.md               # Aparat 2: durum
+│   ├── DECISIONS.md
+│   ├── features.json
+│   ├── executor.md / verifier.md # Aparat 4: rol ayrımı
+│   ├── Makefile                  # Aparat 3: çalışma zamanı geri bildirimi
+│   ├── three_layer_check.sh
+│   ├── otel_setup.py             # tracer = None — YARIM
+│   ├── app.py                    # OTel import edilmiş, kullanılmıyor
+│   ├── tests/  scripts/  docs/
+│   └── ...
+└── solution/                     # capstone — beş aparat + gözler + temiz teslim
+    ├── (starter'daki her şey)
+    ├── otel_setup.py             # tam: TracerProvider + Console exporter + set_genai_attrs
+    ├── app.py                    # her handler bir span — GenAI semconv attribute'lu
+    ├── Quality.md                # Aparat 5: modül başına 5 boyut
+    ├── sprint-contracts/
+    │   └── notes-search-improvements.md
+    └── scripts/
+        ├── verify.sh
+        ├── cleanup.sh            # idempotent
+        └── session_close.sh      # 5 boyutlu çıkış kapısı
 ```
 
-## Ön koşul
+İki yeni dizin ön plana çıkıyor: `sprint-contracts/` (Ders 11'in birinci enstrümanı) ve `scripts/session_close.sh` + `scripts/cleanup.sh` (Ders 12'nin iki kademeli temizliği). `Quality.md` repo köküne çıktı — düzeneğin sağlık tablosu artık birinci sınıf bir dosya.
 
-Müfredattaki tüm dersler ve önceki beş proje.
+## starter ile solution arasındaki fark
+
+Starter, Proje 05'in solution'ını miras alır ve onun üstüne **bilinçli olarak yarım bırakılmış** bir OTel girişimi koyar. Capstone'un başlangıç noktası işte budur.
+
+### Starter — `projeler/06/starter/otel_setup.py`
+
+```python
+from opentelemetry import trace
+
+# TODO: tracer provider ve exporter ekle
+# TODO: tracer = trace.get_tracer("notes-api") olmali
+tracer = None  # broken; asagidaki app.py bunu kullanmak istiyor
+```
+
+`projeler/06/starter/app.py` bu `tracer`'ı import eder ama hiçbir handler `start_as_current_span` çağırmaz. Çünkü çağırsa `AttributeError: 'NoneType' object has no attribute 'start_as_current_span'` fırlatır — düzenek hemen patlardı. Önceki vardiyanın ajanı "şimdilik bırakıyorum" diye notu PROGRESS.md'ye düştü ve oturum kapandı. Sonuç: app çalışıyor, testler geçiyor, **ama düzeneğin gözleri yok**.
+
+### Solution — `projeler/06/solution/otel_setup.py`
+
+```python
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.resources import Resource
+
+_resource = Resource.create({"service.name": "notes-api", "service.version": "0.1.0"})
+
+_provider = trace.get_tracer_provider()
+if not isinstance(_provider, TracerProvider):
+    _provider = TracerProvider(resource=_resource)
+    _provider.add_span_processor(BatchSpanProcessor(ConsoleSpanExporter()))
+    trace.set_tracer_provider(_provider)
+
+tracer = trace.get_tracer("notes-api")
+
+def set_genai_attrs(span, operation_name: str) -> None:
+    span.set_attribute("gen_ai.system", "notes-api")
+    span.set_attribute("gen_ai.operation.name", operation_name)
+```
+
+Üç şey aynı anda olur: (1) `TracerProvider` ve `ConsoleSpanExporter` kurulur — harici bir collector kurmadan span'ler stdout'a akar; (2) provider idempotent — modül iki kez import edilirse ikinci `set_tracer_provider` atlanır; (3) `set_genai_attrs` helper'ı GenAI semconv attribute'larını (`gen_ai.system`, `gen_ai.operation.name`) tek bir yerde yönetir. Spec hâlâ Development statüsünde; isim değişirse tek bir noktadan güncellersin.
+
+`projeler/06/solution/app.py` artık her endpoint'i bir span ile sarmalar; üstüne bir HTTP middleware'i tüm istekleri parent span olarak yakalar:
+
+```python
+@app.middleware("http")
+async def trace_requests(request: Request, call_next):
+    with tracer.start_as_current_span(f"{request.method} {request.url.path}") as span:
+        span.set_attribute("http.method", request.method)
+        span.set_attribute("http.target", request.url.path)
+        set_genai_attrs(span, "http.request")
+        response = await call_next(request)
+        span.set_attribute("http.status_code", response.status_code)
+        return response
+
+@app.get("/notes/search", response_model=list[Note], dependencies=[Depends(auth)])
+def search_notes(q: str):
+    with tracer.start_as_current_span("search_notes") as span:
+        set_genai_attrs(span, "search_notes")
+        span.set_attribute("search.q", q)
+        ...
+        span.set_attribute("search.result_count", len(rows))
+```
+
+Bu iki katman birlikte: HTTP middleware "ne oldu"yu yakalar (method, path, status), handler span'ı "ne arandı, kaç satır döndü" gibi domain bağlamını yakalar. Bir hata anında trace açılınca soru "tahmin" değil "okuma" haline gelir.
+
+Bunun yanında solution **dört ek artefakt** taşır:
+
+- **`Quality.md`** — Beş modül (`app`, `db`, `scripts`, `tests`, `docs`) × beş boyut (Doğrulama, Ajan-okunabilirlik, Test kararlılığı, Mimari sınır, Konvansiyon). En düşük puanlı modül `docs` C aldı; "önce buraya gir" oku ile işaretli. Sonraki vardiya rastgele başlamaz; kanıtla başlar.
+- **`sprint-contracts/notes-search-improvements.md`** — Generator ve verifier arasında, henüz tek satır kod yazılmadan müzakere edilmiş sözleşme. Üç başlık: kapsam (FTS5, üç yeni test), doğrulama standartları (`make test`, `make verify`, `three_layer_check.sh` yeşil; `search_notes` span'ı belli attribute'ları taşır), dışlananlar (stemming yok, çok dilli tokenization yok). Kabul edildiğinde `features.json` ve `Quality.md` güncellenir.
+- **`scripts/session_close.sh`** — Beş boyutun hepsini tek tek doğrular: `make setup` → build, `make test` → test, `PROGRESS.md` bugün dokunulmuş mu → progress, `debug-*.log` aranır → artifact, `uvicorn --port 8799` ayağa kalkıp 401 dönüyor mu → startup. Bir tek FAIL varsa oturum kapanmaz. Yarım teslim yok; commit ya da rollback.
+- **`scripts/cleanup.sh`** — Anlık, idempotent temizlik: `/tmp/debug-*.log` silinir, `notes.db` ve `notes.db-journal` silinir, `.env` şablona döner, `__pycache__` ve `.pytest_cache` temizlenir, sonunda `pytest -q` ile kanıt üretilir. İki kez koşturmak hiç koşturmamakla aynı veya daha güvenli.
+
+## Beş aparat + gözlemlenebilirlik + temiz teslim — nasıl birleşiyor
+
+Capstone'un asıl dersi tek tek aparat değil; **birlikte çalışma**. Bir oturum boyunca akış şöyle örülür:
+
+1. **Aparat 1 — Repo (AGENTS.md, kurallar):** "Bir oturum commit ile ya rollback ile biter" kuralı yazılı. Ajan açılışta okur, davranışı buna göre seçer.
+2. **Aparat 2 — Durum (PROGRESS, DECISIONS, features):** Önceki vardiyanın "tracer = None bıraktım" notu PROGRESS.md'de; capstone vardiyası buradan okur ve işe yarım bırakıldığı yerden devam eder.
+3. **Aparat 3 — Çalışma zamanı geri bildirimi (Makefile, three_layer_check):** Kod yazılırken `make check` yeşil — type / lint / test üç katman.
+4. **Aparat 4 — Öz-doğrulama (executor + verifier):** Sprint sözleşmesi `sprint-contracts/` altında; verifier, kod yazılmadan kabul kriterlerini ve dışlananları imzalar. "Erken zafer" kapatılır.
+5. **Aparat 5 — Gözlemlenebilirlik (otel_setup + GenAI semconv span'ler):** Her HTTP isteği parent span, her handler child span, her span standart attribute kümesi taşır. Hata anında trace'i okumak gerçek bir seçenek.
+6. **Temiz teslim (cleanup + session_close + Quality):** Oturum kapanmadan beş boyut yeşilllenir; en düşük puanlı modül `Quality.md`'de işaretlenir. Sonraki vardiya sıfırdan keşfe değil, kanıttan başlar.
+
+Yedi parçanın yedisi yerinde olduğunda düzenek "iki paralel katman" tezi gerçekleşir: runtime gözleri trace'ten, süreç gözleri sözleşme ve Quality.md'den bakıyor; ikisi aynı diyagrama çiziliyor.
+
+## Adım adım
+
+<Steps>
+  <Step title="Klonla ve starter'a gir">
+    ```bash
+    cd projeler/06/starter
+    make setup
+    make test    # beş aparat yerinde, testler yeşil — ama OTel yarım
+    ```
+  </Step>
+  <Step title="OTel'in kırık olduğunu kendi gözünle gör">
+    `otel_setup.py` aç — sadece `tracer = None`. `app.py` aç — `from otel_setup import tracer` var ama hiçbir handler kullanmıyor. App çalışıyor, ama çağrılar iz bırakmıyor: `uvicorn app:app` ile ayağa kaldır, birkaç istek at, konsola hiçbir span düşmez.
+  </Step>
+  <Step title="Solution'a geç ve karşılaştır">
+    ```bash
+    cd ../solution
+    diff -u ../starter/otel_setup.py otel_setup.py | head -40
+    diff -u ../starter/app.py app.py | head -60
+    ```
+    Diff iki noktayı gösterir: TracerProvider + exporter + `set_genai_attrs` helper'ı eklenmiş, ve her handler bir span ile sarılmış.
+  </Step>
+  <Step title="make check ile üç katman">
+    ```bash
+    make setup
+    make check    # lint + type + test, üçü yeşil
+    ```
+  </Step>
+  <Step title="App'i çalıştır ve trace'leri konsoldan oku">
+    ```bash
+    . .venv/bin/activate
+    uvicorn app:app --port 8799 &
+    curl -s -H "Authorization: Bearer dev-token" http://127.0.0.1:8799/notes/search?q=test
+    ```
+    Konsola GenAI semconv attribute'lu span'ler düşer. Her span en az `gen_ai.system=notes-api`, `gen_ai.operation.name=search_notes`, `search.q`, `search.result_count` taşır. HTTP middleware'i de parent span olarak `http.method`, `http.target`, `http.status_code` yakalar.
+  </Step>
+  <Step title="Sprint sözleşmesini ve Quality.md'yi oku">
+    ```bash
+    cat sprint-contracts/notes-search-improvements.md
+    cat Quality.md
+    ```
+    Sözleşme bir sonraki özellik için yazılı (FTS5 araması); Quality.md `docs` modülünü C ile işaretlemiş — sonraki vardiya nereden başlayacağını sezgiyle değil, tablodan okur.
+  </Step>
+  <Step title="cleanup.sh ile anlık temizlik">
+    ```bash
+    ./scripts/cleanup.sh
+    ./scripts/cleanup.sh    # iki kez koştur — idempotent, hata çıkmaz
+    ```
+  </Step>
+  <Step title="session_close.sh ile beş boyutu doğrula">
+    ```bash
+    ./scripts/session_close.sh
+    ```
+    Çıktı `[1/5] Build`, `[2/5] Test`, `[3/5] Progress`, `[4/5] Artifact`, `[5/5] Startup` — beşi de OK olduğunda **"Oturum temiz kapanabilir."** Tek bir FAIL varsa script `exit 1` döner ve oturum kapanmaz.
+  </Step>
+</Steps>
+
+## Beklenen sonuçlar
+
+- `make check` yeşil — lint, type, test üç katman.
+- App çalışırken her HTTP isteği konsolda GenAI semconv attribute'larıyla bir trace ağacı bırakır (parent: HTTP, child: handler).
+- `Quality.md` en düşük puanlı modülü işaretli; sonraki vardiya buradan başlar.
+- `sprint-contracts/notes-search-improvements.md` bir sonraki özelliğin kapsamını, doğrulamasını ve dışlananlarını yazılı tutar.
+- `./scripts/cleanup.sh` iki kez koşturulduğunda iki kez de yeşil — idempotent.
+- `./scripts/session_close.sh` beş boyutu sırayla doğrular; bir tane bile FAIL varsa oturum kapanmaz.
+- `git status --porcelain` boş — çalışma dizini temiz, commit ya rollback ile bitti.
+
+## Yerel çalıştırma
+
+```bash
+cd projeler/06/solution
+make setup
+make check
+. .venv/bin/activate
+uvicorn app:app --port 8799 &
+# birkaç istek at — trace'ler konsola düşer
+curl -s -H "Authorization: Bearer dev-token" http://127.0.0.1:8799/notes
+curl -s -H "Authorization: Bearer dev-token" http://127.0.0.1:8799/notes/search?q=hello
+# kapanış
+./scripts/cleanup.sh
+./scripts/session_close.sh
+```
+
+`make verify` ve `./three_layer_check.sh` de mevcut; sırasıyla e2e davranışı ve üç katman kontrolünü tekrarlar. Yapı tanıdık çünkü Proje 05'ten miras; tek yeni boyut **gözler** ve **temiz çıkış**.
+
+## İlgili dersler
+
+- [Ders 11 — Düzeneğin Gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali) — runtime ve süreç olmak üzere iki paralel katman; sprint sözleşmesi, evaluator rubriği, OpenTelemetry GenAI semconv ile standardize trace.
+- [Ders 12 — Temiz Teslim](/dersler/12-her-oturum-neden-temiz-durum-birakmali) — entropi varsayılan; beş boyutlu temiz state, iki kademeli (anlık + periyodik) temizlik, Quality Document, oturum çıkış kontrol listesi.
+
+## Müfredatın sonu
+
+Sonraki proje yok — bu capstone. Beş aparat, gözlemlenebilirlik ve temiz teslim aynı çalışan kod tabanında buluştu. Müfredat burada bitiyor; **disiplin buradan başlıyor**. İyi bir düzeneğin ölçüsü tek koşum değildir; otuzuncu koşumda hâlâ yarım saniyede açılabilmesidir. Buradan sonrası kendi repolarında, kendi vardiyalarında — aynı yedi parçayı kurup koruyabilmek.

@@ -15,6 +15,111 @@ Başlangıç (initialization) ve uygulama (implementation), farklı optimizasyon
 
 Anthropic'in *Effective harnesses for long-running agents* yazısında bu ayrım açıkça kurulur: ilk bağlam penceresi özel olarak "initializer agent" adıyla anılan dar kapsamlı bir ajana verilir; bu ajanın görevi `init.sh`, `claude-progress.txt` ve "hangi dosyaların eklendiğini gösteren bir ilk git commit" üretmektir. Feature kodu daha sonraki ajanların işidir.
 
+## İki faz
+
+<svg viewBox="0 0 900 400" role="img" aria-label="İki faz: init ayrı, sonra implementation vs karışık anti-pattern; üst timeline'da bootstrap kutuları sıralı ve sonunda lime onay, alt timeline'da init ve feature kutuları üst üste binmiş kaotik düzen." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+  <rect width="900" height="400" fill="#E8E8E3"/>
+
+  <text x="30" y="30" font-size="13" font-weight="700" fill="#0E1417" letter-spacing="0.5">ÖNCE TEMEL — iki ayrı faz</text>
+  <rect x="30" y="50" width="840" height="140" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+
+  <text x="45" y="73" font-size="10" font-weight="700" fill="#20333C" letter-spacing="1">BOOTSTRAP</text>
+  <text x="45" y="86" font-size="9" fill="#80807A">Phase 1 · Init</text>
+
+  <rect x="45" y="100" width="80" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="85" y="122" font-size="11" font-weight="600" fill="#0E1417" text-anchor="middle">make</text>
+  <text x="85" y="135" font-size="11" font-weight="600" fill="#0E1417" text-anchor="middle">setup</text>
+
+  <line x1="125" y1="122" x2="143" y2="122" stroke="#20333C" stroke-width="1.5"/>
+  <polygon points="143,118 151,122 143,126" fill="#20333C"/>
+
+  <rect x="151" y="100" width="80" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="191" y="122" font-size="11" font-weight="600" fill="#0E1417" text-anchor="middle">smoke</text>
+  <text x="191" y="135" font-size="11" font-weight="600" fill="#0E1417" text-anchor="middle">test</text>
+
+  <line x1="231" y1="122" x2="249" y2="122" stroke="#20333C" stroke-width="1.5"/>
+  <polygon points="249,118 257,122 249,126" fill="#20333C"/>
+
+  <rect x="257" y="100" width="86" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="300" y="128" font-size="11" font-weight="600" fill="#0E1417" text-anchor="middle">AGENTS.md</text>
+
+  <line x1="343" y1="122" x2="361" y2="122" stroke="#20333C" stroke-width="1.5"/>
+  <polygon points="361,118 369,122 361,126" fill="#20333C"/>
+
+  <rect x="369" y="100" width="116" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="2"/>
+  <text x="427" y="120" font-size="10" font-weight="700" fill="#0E1417" text-anchor="middle">init: bootstrap</text>
+  <text x="427" y="134" font-size="10" font-weight="700" fill="#0E1417" text-anchor="middle">complete</text>
+
+  <line x1="500" y1="60" x2="500" y2="180" stroke="#20333C" stroke-width="2" stroke-dasharray="4 3"/>
+
+  <text x="515" y="73" font-size="10" font-weight="700" fill="#20333C" letter-spacing="1">ÖZELLİKLER</text>
+  <text x="515" y="86" font-size="9" fill="#80807A">Phase 2 · Implementation</text>
+
+  <rect x="515" y="100" width="70" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="550" y="128" font-size="11" font-weight="700" fill="#0E1417" text-anchor="middle">F01</text>
+
+  <line x1="585" y1="122" x2="603" y2="122" stroke="#20333C" stroke-width="1.5"/>
+  <polygon points="603,118 611,122 603,126" fill="#20333C"/>
+
+  <rect x="611" y="100" width="70" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="646" y="128" font-size="11" font-weight="700" fill="#0E1417" text-anchor="middle">F02</text>
+
+  <line x1="681" y1="122" x2="699" y2="122" stroke="#20333C" stroke-width="1.5"/>
+  <polygon points="699,118 707,122 699,126" fill="#20333C"/>
+
+  <rect x="707" y="100" width="70" height="44" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+  <text x="742" y="128" font-size="11" font-weight="700" fill="#0E1417" text-anchor="middle">F03</text>
+
+  <circle cx="830" cy="122" r="14" fill="#E5FF59" stroke="#20333C" stroke-width="1.5"/>
+  <path d="M 822 122 L 828 128 L 838 116" stroke="#1A2300" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="830" y="160" font-size="9" font-weight="600" fill="#1A2300" text-anchor="middle">ortam sağlam</text>
+
+  <text x="30" y="225" font-size="13" font-weight="700" fill="#0E1417" letter-spacing="0.5">ANTI-PATTERN — karışık</text>
+  <rect x="30" y="245" width="840" height="135" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
+
+  <text x="45" y="268" font-size="10" font-weight="700" fill="#80807A" letter-spacing="1">INIT + FEATURE · TEK PENCERE</text>
+
+  <rect x="55" y="285" width="90" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="100" y="310" font-size="10" fill="#20333C" text-anchor="middle">make setup?</text>
+
+  <rect x="120" y="305" width="86" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1"/>
+  <text x="163" y="330" font-size="10" font-weight="700" fill="#20333C" text-anchor="middle">F01 (yarım)</text>
+
+  <rect x="185" y="280" width="92" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="231" y="305" font-size="10" fill="#20333C" text-anchor="middle">Makefile…</text>
+
+  <rect x="255" y="312" width="80" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1"/>
+  <text x="295" y="337" font-size="10" font-weight="700" fill="#20333C" text-anchor="middle">F02</text>
+
+  <path d="M 340 285 L 410 285 L 410 305 L 405 305" stroke="#80807A" stroke-width="1" fill="#E8E8E3"/>
+  <line x1="340" y1="285" x2="340" y2="320" stroke="#80807A" stroke-width="1"/>
+  <line x1="340" y1="320" x2="395" y2="320" stroke="#80807A" stroke-width="1"/>
+  <text x="375" y="304" font-size="10" fill="#20333C" text-anchor="middle">test?</text>
+
+  <rect x="395" y="298" width="86" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1"/>
+  <text x="438" y="323" font-size="10" font-weight="700" fill="#20333C" text-anchor="middle">F03</text>
+
+  <rect x="460" y="282" width="94" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1" stroke-dasharray="3 2"/>
+  <text x="507" y="307" font-size="10" fill="#20333C" text-anchor="middle">AGENTS.md?</text>
+
+  <rect x="540" y="310" width="80" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1"/>
+  <text x="580" y="335" font-size="10" font-weight="700" fill="#20333C" text-anchor="middle">F04</text>
+
+  <rect x="605" y="288" width="86" height="42" fill="#E8E8E3" stroke="#80807A" stroke-width="1"/>
+  <text x="648" y="313" font-size="10" font-weight="700" fill="#20333C" text-anchor="middle">commit?</text>
+
+  <rect x="680" y="316" width="80" height="36" fill="#E8E8E3" stroke="#80807A" stroke-width="1" stroke-dasharray="2 2"/>
+  <text x="720" y="338" font-size="10" fill="#20333C" text-anchor="middle">CI…</text>
+
+  <g transform="translate(815, 312)">
+    <circle cx="14" cy="14" r="14" fill="#E8E8E3" stroke="#20333C" stroke-width="1.5"/>
+    <line x1="6" y1="6" x2="22" y2="22" stroke="#20333C" stroke-width="2" stroke-linecap="round"/>
+    <line x1="22" y1="6" x2="6" y2="22" stroke="#20333C" stroke-width="2" stroke-linecap="round"/>
+  </g>
+
+  <text x="450" y="370" font-size="10" font-style="italic" fill="#20333C" text-anchor="middle">altyapı + feature aynı pencerede → her ikisi de yarım</text>
+</svg>
+
 ## Karıştırmanın dört maliyeti
 
 Başlangıç ile uygulama tek oturumda yapıldığında dört tipik hata görülür.
@@ -156,4 +261,4 @@ Tek ajanlı bir ortamda çalışıyorsan aynı disiplin oturum sınırlarıyla u
 
 [Ders 05](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder) süreklilik artefaktlarını tanıtmıştı; bu ders onlara bir başlangıç anı verdi. Bootstrap Sözleşmesi'nin dört koşulu sağlanmadan feature ajanı sahaya çıkmaz; init "ilk oturum" değil, ayrı bir mühendislik fazıdır. Bu fazın çıktısı bir feature listesidir; o liste de [Ders 07 — WIP=1 Disiplini](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)'nin başlangıç noktasıdır: aşırıya kaçma ve yarım bırakma simbiyozu, listenin nasıl tüketileceğiyle çözülür.
 
-Pratik karşılığı: [Proje 03 — Çok Oturumlu Süreklilik](/projeler/03-cok-oturumlu-sureklilik). Init + devam desenini gerçek bir repoda kurarsınız; bu dersteki dört koşul ve beş teslim, projenin kabul kapısıdır.
+Pratik karşılığı: [Proje 03 — Vardiya Süreklilik](/projeler/03-cok-oturumlu-sureklilik). Init + devam desenini gerçek bir repoda kurarsınız; bu dersteki dört koşul ve beş teslim, projenin kabul kapısıdır.

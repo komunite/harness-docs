@@ -1,27 +1,168 @@
 ---
-title: "Proje 05 — Öz-Doğrulama ve Rol Ayrımı"
-description: "Bağımsız doğrulayıcı rol ile 'erken zafer' eğilimini sistematik biçimde keser."
+title: "05 — Yapan ve Denetleyen"
+description: "Aynı kod tabanı, iki rol modeli. Tek executor'da gizli kalan PUT-404 bug'ı, yapan/denetleyen ayrımı + üç katmanlı doğrulama ile 30 saniyede yakalanır."
 ---
 
-## Amaç
+## Cuma deploy, Pazartesi destek kuyruğu
 
-Yapan (executor) ile doğrulayan (verifier) rollerini ayır; verifier'ın çıktıyı **kod yazmadan** ölçeceği bir sözleşme tanımla. Hedef: testler / e2e davranış doğrulanmadan "tamamlandı" diyemeyen bir düzenek.
+Cuma akşamı bir ajan "Notes API tamam, birim testler yeşil" raporu düştü. Kod review yüzeyden temizdi, `pytest` çıktısı son satıra kadar `passed`. Deploy edildi. Pazartesi sabahı destek kuyruğu doldu: kullanıcılar var olmayan bir notu güncellemeye çalışınca uygulama hata vermiyor, sessizce `200 OK` dönüyor — ama veritabanında hiçbir şey değişmemiş. Mobil istemci "kayıt güncellendi" diye gösteriyor; sunucuda not yok. İlk hipotez "ön yüz bug'ı"; iki saat sonra log'lar gerçeği söylüyor: `PUT /notes/{nid}` endpoint'i olmayan bir `nid` için 404 dönmesi gerekirken 200 dönüyor.
 
-## Çıktı
+Bu hata bir dikkatsizlik değil. [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)'da koyduğumuz tezin saha karşılığı: **ajan kendi çıktısına bakıp tamamlanma yargısı verdiğinde sistematik olarak fazla pozitiftir.** Yazmadığı edge-case testi geçmez de düşmez de — sessizce yoktur. Bu projede bug'ı kasten bırakıyoruz; sonra Düzenek Mühendisliği (Harness Engineering) sözleşmesinin onu 30 saniyede nasıl yakaladığını gösteriyoruz.
 
-- `verifier.md` rol sözleşmesi
-- Verifier kontrol listesi (ne kontrol edilecek, ne yapılmayacak)
-- E2E davranış doğrulamasının küçük bir örneği
+## Bu projede ne öğreneceksin
+
+- **Yapan / denetleyen ayrımı** neden bir nezaket değil, mimari zorunluluk. Executor kod yazar; verifier kod yazmaz, sadece dışarıdan ölçer ve raporlar.
+- **Üç katmanlı doğrulama kapısı** (lint → unit → e2e) nasıl kurulur. Katman N başarısızken N+1'e geçilmez.
+- **Uçtan uca testin** birim testlerin göremediği sınır hatalarını neden yakaladığı ([Ders 10](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir)).
+- **ERROR / WHY / FIX** formatı: ajan-okunur hata mesajı nasıl yazılır, bir sonraki turda neden hızlı kapanış üretir.
+- **Self-grading yanılgısı**: aynı el hem yapan hem denetleyen olduğunda kalibrasyon yanlılığı nasıl geri döner.
 
 ## Yapı
 
 ```
 projeler/05/
-├── starter/    # tek rol, doğrulama yok
-└── solution/   # executor + verifier ayrımı, e2e küçük test
+├── starter/                       # tek rol, doğrulama yok
+│   ├── app.py                     # PUT-404 BUG'I VAR
+│   ├── executor.md                # "ben yazdım, ben onayladım"
+│   ├── tests/test_smoke.py        # sadece happy-path
+│   ├── scripts/verify.sh          # placeholder
+│   └── ...
+└── solution/                      # executor + verifier ayrımı
+    ├── app.py                     # PUT-404 FIX uygulanmış
+    ├── executor.md                # yapan: kod + birim test, "awaiting verification"
+    ├── verifier.md                # denetleyen: read-only, ERROR/WHY/FIX raporcusu
+    ├── scripts/three_layer_check.sh   # lint → unit → e2e kapısı
+    ├── tests/test_smoke.py        # birim
+    ├── tests/test_search.py       # arama edge-case
+    └── tests/test_e2e.py          # **uçtan uca + PUT-missing-id 404 testi**
 ```
 
-## Ön koşul
+Solution starter'a şu üç dosyayı ekler ve bir satır değiştirir:
 
-- [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)
-- [Ders 10](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir)
+1. `verifier.md` — yeni rol sözleşmesi.
+2. `scripts/three_layer_check.sh` — sıralı kapı.
+3. `tests/test_e2e.py` — uçtan uca akış, içinde `test_put_missing_id_returns_404`.
+4. `app.py::update_note` içine `if cur.rowcount == 0: raise HTTPException(404)` (FIX).
+
+## Planted bug: `PUT /notes/{nid}` senaryosu
+
+Starter'daki `app.py` içinde kasıtlı bir defekt vardır:
+
+```python
+@app.put("/notes/{nid}", response_model=Note, dependencies=[Depends(auth)])
+def update_note(nid: int, n: Note):
+    with conn() as c:
+        cur = c.execute("UPDATE notes SET title=?, body=? WHERE id=?", (n.title, n.body, nid))
+        # BUG: cur.rowcount == 0 ise 404 dönmeli. Burada yok.
+    n.id = nid
+    return n
+```
+
+SQL `UPDATE` cümlesi hiçbir satıra dokunmasa bile hata fırlatmaz; `cur.rowcount` `0` döner ama kontrol edilmez. FastAPI sessizce `Note` gövdesini `200 OK` ile geri verir. **Mobil istemci için bu "başarılı güncelleme"den ayırt edilemezdir.**
+
+Bu defektin birim test ile yakalanmaması bir kusur değil, **birim testin mimari karakteridir**. Executor kendi yazdığı happy-path testlerine baktığında "geçti" der; yazmadığı `test_put_missing_id` testi de tabii ki düşmez — sessizce yoktur. Tedavi tek bir test yazmak değil, **tamamlanma yargısını başkasına bağlamaktır.**
+
+## starter ile solution arasındaki fark
+
+| Boyut                 | starter                              | solution                                            |
+| --------------------- | ------------------------------------ | --------------------------------------------------- |
+| Rol sayısı            | 1 (executor)                         | 2 (executor + verifier)                             |
+| Kod yazma yetkisi     | executor                             | yalnız executor                                     |
+| "passing" imzası      | executor                             | yalnız verifier                                     |
+| Doğrulama katmanı     | `pytest` (tek)                       | lint → unit → e2e (sıralı)                          |
+| E2E test              | yok                                  | `tests/test_e2e.py` (PUT-missing-id 404 dahil)      |
+| Hata mesaj formatı    | `pytest`'in standart çıktısı         | **ERROR / WHY / FIX** blokları                      |
+| Tamamlanma yargısı    | "ben yazdım, ben onayladım"          | dışsal: `three_layer_check.sh` çıkış kodu           |
+
+`executor.md` starter'da "kendi kendini değerlendir" doktrini yazar; solution'da aynı dosya "verifier'a hazır de, 'tamamlandı' deme" der. Tek satırlık bir değişiklik gibi durur — yapısal olarak başka bir sistemdir.
+
+## Adım adım
+
+```bash
+# 1) Repoyu al, starter'a gir
+git clone <repo-url> harness-docs
+cd harness-docs/projeler/05/starter
+make setup
+
+# 2) Executor'in yaptıklarını oynat: birim testler yeşil
+make test
+# tests/test_smoke.py .....   passed
+# >>> Burada bir tek-rol ajanı "tamamlandı" der.
+#     Pazartesi destek kuyruğunu bu cümle açar.
+
+# 3) Solution'a geç, üç katmanlı kapıyı koştur
+cd ../solution
+make setup
+bash scripts/three_layer_check.sh
+```
+
+Katman 1 (lint) ve Katman 2 (unit) saniyeler içinde geçer. Katman 3 (e2e) `test_put_missing_id_returns_404` üzerinde durur — çünkü solution'ın `app.py`'sinde FIX zaten uygulanmıştır, test geçer. Defektin yakalandığı anı görmek için starter'ın `app.py`'sini geçici olarak solution klasörüne kopyalayın ve scripti tekrar koşturun:
+
+```bash
+cp ../starter/app.py ./app.py        # sadece deneme amaçlı
+bash scripts/three_layer_check.sh
+```
+
+Script şu çıktıyı basar ve `exit 1` ile durur:
+
+```
+--> Katman 3: e2e
+FAILED tests/test_e2e.py::test_put_missing_id_returns_404
+============================================================
+VERIFIER BLOCKED — Katman 3 düşer
+------------------------------------------------------------
+ERROR: tests/test_e2e.py::test_put_missing_id_returns_404 FAIL
+       beklenen status 404; gözlenen 200
+WHY:   app.py::update_note cur.rowcount kontrolü yapmıyor. SQL UPDATE
+       hiçbir satıra dokunmuyor; FastAPI yine de Note gövdesini 200 ile
+       döndürüyor. Birim test happy-path olduğu için bu durumu görmez.
+FIX:   update_note içinde "if cur.rowcount == 0: raise HTTPException(404)"
+       satırını ekleyin. Sonra "bash scripts/three_layer_check.sh" tekrar
+       koşturun.
+============================================================
+```
+
+FIX uygulandığında script tekrar koşturulur, üç katman da geçer:
+
+```
+VERIFIER PASSING — üç katman da geçti
+lint OK | unit OK | e2e OK
+```
+
+## Beklenen sonuçlar
+
+- **Bug, yapısal olarak yakalandı.** Daha akıllı ajan veya daha sıkı code review değil; sözleşme bağladı.
+- **30 saniye toplam süre.** `three_layer_check.sh` lokal koşumda saniyeler sürer; e2e adımı PUT-missing-id'yi ilk turda işaret eder.
+- **Rapor ajan-okunur.** ERROR / WHY / FIX bloğu doğrudan executor'a yapıştırılır; executor bir sonraki turda FIX satırını uygular, gerekçeyi yeniden türetmek zorunda kalmaz.
+- **Tamamlanma yargısı dışsallaştı.** `PROGRESS.md`'ye "done" yalnız `verifier=passing` satırı düştüğünde işaretlenir. Executor "verifier'a hazır" yazabilir; "done" yazma yetkisi onda yoktur.
+- **Self-grading yanılgısı somutlaştı.** Aynı kod tabanı, iki rol modeli; arada tek fark verifier'ın bağımsız gözü. Bug ilk modelde 200 ile gizliydi, ikincide 30 saniyede ortaya çıktı.
+
+## Yerel çalıştırma
+
+```bash
+# Bağımlılıklar
+cd projeler/05/solution
+make setup
+
+# Executor'in hızlı geri besleme komutu (tamamlanma yargısı değildir)
+make test
+
+# Verifier'in tam doğrulama kapısı: lint → unit → e2e
+make verify
+# eşdeğeri: bash scripts/three_layer_check.sh
+
+# CI / teslim yargısı yalnız buna bakar
+make check
+# çıktı: verifier=passing
+```
+
+`make verify` `exit 0` döndürmediği sürece kalem `done` işaretlenmez. Bu kural `AGENTS.md` içindeki Definition of Done bloğuyla zorlanır; tek bir ajanın iç sesi bu kapıyı atlatamaz.
+
+## İlgili dersler
+
+- [Ders 09 — Erken Zafer İlanı](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder): Ajanların sistematik olarak fazla güvenli olduğunun teorik gerekçesi (Guo et al. 2017, Anthropic harness rehberi). Bu projedeki rol ayrımının niye **karakter terbiyesi değil yapı kararı** olduğu burada açıklanır.
+- [Ders 10 — Üç Katmanlı Doğrulama Kapısı](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir): Birim testlerin bileşen sınırlarına mimari olarak kör olduğu, yalnız uçtan uca testin sistem düzeyi kusurların yokluğunu kanıtlayabildiği tezi. Bu projedeki `tests/test_e2e.py` o tezin saha uygulamasıdır.
+
+## Sıradaki proje
+
+[Proje 06 — Bütünleşik Düzenek (Capstone)](/projeler/06-butunlesik-duzenek-capstone): Önceki beş projedeki tüm parçaları (kural-öncelikli prompt, ajan-okunur çalışma alanı, çok-oturumlu süreklilik, çalışma zamanı geri bildirimi, yapan/denetleyen ayrımı) tek bir ajan koşumunda birleştirir. PUT-404 hikâyesinin ölçeklenmiş hali: aynı sözleşme, çoklu özellik kalemi, gerçek bir feature backlog.

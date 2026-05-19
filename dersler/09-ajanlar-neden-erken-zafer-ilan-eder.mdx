@@ -17,6 +17,88 @@ Bu hata "model dikkatsizdi" diye açıklanamaz. Aynı senaryo farklı ajanlarla,
 
 Ajanlar **sistematik olarak fazla güvenlidir.** Kendi çıktısına bakıp tamamlanma yargısı verdiğinde, insan gözlemcinin "yetersiz" diyeceği durumlarda bile pozitif rapor üretir. Bu yüzden Düzenek Mühendisliği (Harness Engineering) tamamlanma kararını ajandan alır, **dışsal ve katmanlı bir kapıya bağlar.** Yapan ve denetleyen ayrılır.
 
+## Üç katmanlı kapı
+
+<svg viewBox="0 0 900 380" role="img" aria-label="Üç katmanlı doğrulama kapısı: lint, runtime, e2e. Executor soldan kod üretir, üç ardışık kapıdan (sözdizimi, çalışma zamanı, sistem) geçer, sağda Verifier tamamlandı damgasını basar." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0" y="0" width="900" height="380" fill="#E8E8E3"/>
+
+  <rect x="20" y="18" width="860" height="32" fill="#0E1417"/>
+  <text x="36" y="39" font-size="14" fill="#E8E8E3" font-weight="600" letter-spacing="0.4">KATMAN N BAŞARISIZKEN N+1'E GEÇİLMEZ</text>
+  <text x="864" y="39" font-size="12" fill="#80807A" text-anchor="end">sözleşme</text>
+
+  <g transform="translate(40,110)">
+    <rect x="0" y="0" width="110" height="150" rx="6" fill="#F0F0EB" stroke="#20333C" stroke-width="2"/>
+    <circle cx="55" cy="42" r="20" fill="#20333C"/>
+    <rect x="32" y="66" width="46" height="44" rx="4" fill="#20333C"/>
+    <rect x="40" y="76" width="30" height="3" fill="#E8E8E3"/>
+    <rect x="40" y="84" width="22" height="3" fill="#E8E8E3"/>
+    <rect x="40" y="92" width="26" height="3" fill="#E8E8E3"/>
+    <text x="55" y="135" font-size="13" fill="#0E1417" font-weight="700" text-anchor="middle">Executor</text>
+  </g>
+
+  <path d="M 152 185 L 196 185" stroke="#0E1417" stroke-width="2" fill="none"/>
+  <polygon points="196,180 206,185 196,190" fill="#0E1417"/>
+  <text x="178" y="175" font-size="11" fill="#80807A" text-anchor="middle">kod</text>
+
+  <g transform="translate(208,120)">
+    <rect x="0" y="0" width="120" height="130" rx="4" fill="#F0F0EB" stroke="#20333C" stroke-width="2"/>
+    <rect x="30" y="20" width="60" height="90" fill="#C5C5C0" stroke="#20333C" stroke-width="2"/>
+    <circle cx="78" cy="68" r="3" fill="#0E1417"/>
+    <text x="60" y="14" font-size="14" fill="#0E1417" font-weight="700" text-anchor="middle">Katman 1</text>
+    <text x="60" y="125" font-size="11" fill="#0E1417" text-anchor="middle">Sözdizimi</text>
+    <circle cx="105" cy="15" r="11" fill="#20333C"/>
+    <path d="M 100 15 L 104 19 L 110 11" stroke="#E8E8E3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="268" y="270" font-size="11" fill="#80807A" text-anchor="middle">lint · type-check · derleme</text>
+
+  <path d="M 330 185 L 374 185" stroke="#0E1417" stroke-width="2" fill="none"/>
+  <polygon points="374,180 384,185 374,190" fill="#0E1417"/>
+
+  <g transform="translate(386,115)">
+    <rect x="0" y="0" width="130" height="140" rx="4" fill="#F0F0EB" stroke="#20333C" stroke-width="2"/>
+    <rect x="32" y="22" width="66" height="98" fill="#C5C5C0" stroke="#20333C" stroke-width="2"/>
+    <circle cx="86" cy="73" r="3" fill="#0E1417"/>
+    <text x="65" y="15" font-size="14" fill="#0E1417" font-weight="700" text-anchor="middle">Katman 2</text>
+    <text x="65" y="135" font-size="11" fill="#0E1417" text-anchor="middle">Çalışma zamanı</text>
+    <circle cx="115" cy="17" r="11" fill="#20333C"/>
+    <path d="M 110 17 L 114 21 L 120 13" stroke="#E8E8E3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="451" y="275" font-size="11" fill="#80807A" text-anchor="middle">unit · integration · gerçek modüller</text>
+
+  <path d="M 518 185 L 562 185" stroke="#0E1417" stroke-width="2" fill="none"/>
+  <polygon points="562,180 572,185 562,190" fill="#0E1417"/>
+
+  <g transform="translate(574,105)">
+    <rect x="0" y="0" width="150" height="155" rx="4" fill="#F0F0EB" stroke="#20333C" stroke-width="2"/>
+    <rect x="34" y="24" width="82" height="112" fill="#C5C5C0" stroke="#20333C" stroke-width="2"/>
+    <circle cx="103" cy="82" r="3" fill="#0E1417"/>
+    <text x="75" y="16" font-size="14" fill="#0E1417" font-weight="700" text-anchor="middle">Katman 3</text>
+    <text x="75" y="150" font-size="11" fill="#0E1417" text-anchor="middle">Sistem · uçtan uca</text>
+    <circle cx="133" cy="18" r="11" fill="#20333C"/>
+    <path d="M 128 18 L 132 22 L 138 14" stroke="#E8E8E3" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  </g>
+  <text x="649" y="282" font-size="11" fill="#80807A" text-anchor="middle">gerçek HTTP · DB · SMTP/worker</text>
+
+  <path d="M 726 185 L 770 185" stroke="#0E1417" stroke-width="2" fill="none"/>
+  <polygon points="770,180 780,185 770,190" fill="#0E1417"/>
+
+  <g transform="translate(782,108)">
+    <rect x="0" y="0" width="78" height="152" rx="6" fill="#F0F0EB" stroke="#20333C" stroke-width="2" stroke-dasharray="4 3"/>
+    <circle cx="39" cy="38" r="16" fill="none" stroke="#20333C" stroke-width="2.5"/>
+    <circle cx="39" cy="38" r="6" fill="#20333C"/>
+    <path d="M 23 70 Q 39 60 55 70 L 55 108 L 23 108 Z" fill="none" stroke="#20333C" stroke-width="2"/>
+    <text x="39" y="130" font-size="13" fill="#0E1417" font-weight="700" text-anchor="middle">Verifier</text>
+    <text x="39" y="145" font-size="9" fill="#80807A" text-anchor="middle">(ayrı rol)</text>
+  </g>
+
+  <g transform="translate(700,300)">
+    <rect x="0" y="0" width="170" height="48" rx="4" fill="#E5FF59" stroke="#1A2300" stroke-width="2" transform="rotate(-4 85 24)"/>
+    <text x="85" y="30" font-size="18" fill="#1A2300" font-weight="800" text-anchor="middle" letter-spacing="1.5" transform="rotate(-4 85 24)">TAMAMLANDI</text>
+  </g>
+
+  <text x="40" y="360" font-size="11" fill="#80807A" font-style="italic">Confidence calibration bias — ajan kendi işine baktığında sistematik olarak pozitif kalibrasyon verir; yargı dışsallaştırılır.</text>
+</svg>
+
 ## Confidence calibration bias
 
 Bu bir karakter zaafı değil, ölçülmüş bir yanlılıktır. Guo et al. (2017) "On Calibration of Modern Neural Networks" yayını derin ağların kendi tahminlerine olan güveninin gerçek doğruluk oranlarından **sistemli olarak yüksek** olduğunu gösterdi. LLM çağında bu özellik ürün davranışına yansıdı: ajan kendi işini değerlendirdiğinde aşırı pozitif kalibrasyon verir.
@@ -137,7 +219,7 @@ Tembel öğretmen kâğıdın üstüne büyük kırmızı çarpı atar. İyi ö�
 
 [Ders 08](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir) feature primitifini kurmuştu; bu ders en kritik geçişi sözleşmeye bağladı. Tamamlanma yargısı ajandan alınıp dışsal, katmanlı bir kapıya devredildi; üç katman (sözdizimi → çalışma zamanı → uçtan uca) ve evaluator-optimizer rol ayrımı bu kararı yapısal kıldı. [Ders 10 — Üç Katmanlı Doğrulama Kapısı](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir) en üst katmanı — sistem düzeyi uçtan uca testi — derinleştirir: birim testin mimari körlüğü ve doğrulayıcının ajan davranışını şekillendirmesi.
 
-Pratik karşılığı: [Proje 05 — Öz-Doğrulama ve Rol Ayrımı](/projeler/05-oz-dogrulama-ve-rol-ayrimi).
+Pratik karşılığı: [Proje 05 — Yapan ve Denetleyen](/projeler/05-oz-dogrulama-ve-rol-ayrimi).
 
 [^1]: Anthropic, "Effective harnesses for long-running agents" — özellik listesi, `passes` alanı ve uçtan uca doğrulama yaklaşımı: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
 [^2]: Martin Fowler, "Exploring Gen AI — ccmenu quality" — denetimsiz ajanların teknik borç üretme eğilimi, hatayı yakalayan insan gözü: https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html
