@@ -27,7 +27,84 @@ Doğrulayıcı, üretici tarafından okunan bir sözleşmedir. Ajan farklı doğ
 
 ## Test yeterlilik gradiyenti
 
-<svg viewBox="0 0 800 480" role="img" aria-label="Test yeterlilik gradiyenti: birim'den e2e'ye kapsam genişler; yalnız birim 0/5 kusur, birim+entegrasyon 1/5 kusur, birim+entegrasyon+e2e 5/5 kusur yakalar. Atlanan zorunlu seviye NOT COMPLETE sayılır." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'18px'}}>
+    <div>
+      <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>TEST YETERLİLİK GRADİYENTİ</div>
+      <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>Birim test sistem sınırlarına mimari olarak kördür.</div>
+    </div>
+    <div style={{background:'#0E1417',color:'#F0F0EB',borderRadius:'10px',padding:'8px 14px',fontSize:'10.5px',fontWeight:'700',letterSpacing:'0.12em',whiteSpace:'nowrap'}}>ATLANAN SEVİYE = NOT COMPLETE</div>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'1.4fr 1fr',gap:'28px',marginTop:'28px',alignItems:'start'}}>
+    <div>
+      <div style={{fontSize:'11px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A',marginBottom:'14px'}}>KATMAN PİRAMİDİ</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'10px'}}>
+        <div style={{background:'#E8E8E3',border:'1.5px solid #0E1417',borderRadius:'10px',padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',width:'100%'}}>
+          <div>
+            <div style={{fontSize:'15px',fontWeight:'700'}}>Lint + Type</div>
+            <div style={{fontSize:'11px',color:'#5C5C57'}}>en geniş kapsam, en hızlı</div>
+          </div>
+          <div style={{fontSize:'13px',fontWeight:'600',color:'#80807A',fontVariantNumeric:'tabular-nums'}}>~2 sn</div>
+        </div>
+        <div style={{background:'#E8E8E3',border:'1.5px solid #0E1417',borderRadius:'10px',padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',width:'76%',marginLeft:'12%'}}>
+          <div>
+            <div style={{fontSize:'15px',fontWeight:'700'}}>Unit + Integration</div>
+            <div style={{fontSize:'11px',color:'#5C5C57'}}>bileşen içi davranış</div>
+          </div>
+          <div style={{fontSize:'13px',fontWeight:'600',color:'#80807A',fontVariantNumeric:'tabular-nums'}}>~8 sn</div>
+        </div>
+        <div style={{background:'#0E1417',color:'#F0F0EB',border:'1.5px solid #0E1417',borderRadius:'10px',padding:'14px 18px',display:'flex',justifyContent:'space-between',alignItems:'center',width:'52%',marginLeft:'24%'}}>
+          <div>
+            <div style={{fontSize:'15px',fontWeight:'700'}}>E2E</div>
+            <div style={{fontSize:'11px',color:'#A5A59F'}}>en dar, en kapsamlı</div>
+          </div>
+          <div style={{fontSize:'13px',fontWeight:'600',color:'#A5A59F',fontVariantNumeric:'tabular-nums'}}>~15 sn</div>
+        </div>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',marginTop:'18px',paddingTop:'10px',borderTop:'1px solid rgba(14,20,23,0.08)',fontSize:'10.5px',color:'#80807A',letterSpacing:'0.04em'}}>
+        <span>geniş, ucuz</span>
+        <span>kapsam ←————→ kanıt</span>
+        <span>dar, pahalı, kanıtlayıcı</span>
+      </div>
+    </div>
+    <div>
+      <div style={{fontSize:'11px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A',marginBottom:'14px'}}>ELECTRON FILE-EXPORT · KUSUR YAKALAMA</div>
+      <div style={{display:'flex',flexDirection:'column',gap:'8px'}}>
+        <div style={{border:'1px solid rgba(14,20,23,0.12)',borderRadius:'10px',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:'13px',fontWeight:'600'}}>Yalnız birim</div>
+            <div style={{fontSize:'11px',color:'#80807A'}}>sınırlar mock'lanmış · kör</div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+            <span style={{color:'#80807A',fontSize:'14px'}}>✕</span>
+            <span style={{fontSize:'18px',fontWeight:'700',color:'#80807A',fontVariantNumeric:'tabular-nums'}}>0/5</span>
+          </div>
+        </div>
+        <div style={{border:'1px solid rgba(14,20,23,0.12)',borderRadius:'10px',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:'13px',fontWeight:'600'}}>Birim + entegrasyon</div>
+            <div style={{fontSize:'11px',color:'#80807A'}}>süreç ve paketleme hâlâ dışarıda</div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+            <span style={{color:'#80807A',fontSize:'14px'}}>✕</span>
+            <span style={{fontSize:'18px',fontWeight:'700',color:'#80807A',fontVariantNumeric:'tabular-nums'}}>1/5</span>
+          </div>
+        </div>
+        <div style={{background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'10px',padding:'12px 14px',display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:'13px',fontWeight:'700',color:'#1A2300'}}>Birim + entegrasyon + e2e</div>
+            <div style={{fontSize:'11px',color:'#1A2300'}}>tüm sınırlar gerçek · kanıt</div>
+          </div>
+          <div style={{display:'flex',alignItems:'center',gap:'6px'}}>
+            <span style={{color:'#1A2300',fontSize:'14px',fontWeight:'700'}}>✓</span>
+            <span style={{fontSize:'18px',fontWeight:'800',color:'#1A2300',fontVariantNumeric:'tabular-nums'}}>5/5</span>
+          </div>
+        </div>
+      </div>
+      <div style={{marginTop:'14px',fontSize:'11px',color:'#80807A',fontStyle:'italic'}}>13 saniyelik fark, beş üretim kusurunu açıklar.</div>
+    </div>
+  </div>
+</div>{/*
   <rect x="0" y="0" width="800" height="480" fill="#E8E8E3"/>
 
   <text x="40" y="44" font-size="13" fill="#80807A" letter-spacing="2">NOT</text>
@@ -91,7 +168,7 @@ Doğrulayıcı, üretici tarafından okunan bir sözleşmedir. Ajan farklı doğ
   <text x="500" y="406" font-size="12" fill="#20333C">görünmez kusur üretir.</text>
 
   <text x="40" y="456" font-size="10" fill="#A5A59F" letter-spacing="1">DERS 10 — ÜÇ KATMANLI DOĞRULAMA KAPISI</text>
-</svg>
+</svg> */}
 
 ## Birim testin mimari körlüğü
 

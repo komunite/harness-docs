@@ -17,93 +17,62 @@ Uzun süren görevlerde güvenilirlik **bağlam penceresinin değil, dosya siste
 
 ## Vardiya köprüsü
 
-<svg viewBox="0 0 900 380" role="img" aria-label="Vardiya teslimi: PROGRESS.md ve DECISIONS.md artefaktları iki oturum arasında köprü kurar; köprüsüz alternatifte akış kırılır ve sapma oluşur." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="900" height="380" fill="#E8E8E3"/>
-
-  <line x1="40" y1="120" x2="860" y2="120" stroke="rgba(14,20,23,0.08)" stroke-width="1"/>
-  <line x1="40" y1="260" x2="860" y2="260" stroke="rgba(14,20,23,0.08)" stroke-width="1"/>
-
-  <text x="40" y="32" fill="#0E1417" font-size="14" font-weight="600">Vardiya köprüsü — iki oturum, bir süreklilik</text>
-  <text x="40" y="52" fill="#80807A" font-size="11">üst yol: artefaktlı teslim · alt yol: artefaktsız reset</text>
-
-  <g>
-    <rect x="40" y="80" width="180" height="90" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5" rx="4"/>
-    <circle cx="68" cy="108" r="10" fill="#20333C"/>
-    <circle cx="68" cy="105" r="3" fill="#F0F0EB"/>
-    <text x="86" y="112" fill="#0E1417" font-size="12" font-weight="600">Oturum A</text>
-    <text x="86" y="128" fill="#80807A" font-size="10">ajan · bağlam dolu</text>
-    <rect x="54" y="140" width="150" height="6" fill="#C5C5C0" rx="2"/>
-    <rect x="54" y="140" width="138" height="6" fill="#20333C" rx="2"/>
-    <text x="54" y="160" fill="#80807A" font-size="9">token: 92%</text>
-  </g>
-
-  <g>
-    <rect x="680" y="80" width="180" height="90" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5" rx="4"/>
-    <circle cx="708" cy="108" r="10" fill="#20333C"/>
-    <circle cx="708" cy="105" r="3" fill="#F0F0EB"/>
-    <text x="726" y="112" fill="#0E1417" font-size="12" font-weight="600">Oturum B</text>
-    <text x="726" y="128" fill="#80807A" font-size="10">yeni ajan · okuyor</text>
-    <rect x="694" y="140" width="150" height="6" fill="#C5C5C0" rx="2"/>
-    <rect x="694" y="140" width="42" height="6" fill="#20333C" rx="2"/>
-    <text x="694" y="160" fill="#80807A" font-size="9">token: 28%</text>
-  </g>
-
-  <g>
-    <text x="395" y="100" fill="#0E1417" font-size="11" font-weight="600">vardiya teslimi</text>
-    <rect x="335" y="108" width="70" height="44" fill="#F0F0EB" stroke="#0E1417" stroke-width="1.5" rx="3"/>
-    <text x="370" y="128" fill="#0E1417" font-size="9" text-anchor="middle" font-weight="600">PROGRESS</text>
-    <text x="370" y="142" fill="#80807A" font-size="9" text-anchor="middle">.md</text>
-    <rect x="415" y="108" width="70" height="44" fill="#F0F0EB" stroke="#0E1417" stroke-width="1.5" rx="3"/>
-    <text x="450" y="128" fill="#0E1417" font-size="9" text-anchor="middle" font-weight="600">DECISIONS</text>
-    <text x="450" y="142" fill="#80807A" font-size="9" text-anchor="middle">.md</text>
-    <rect x="495" y="108" width="70" height="44" fill="#F0F0EB" stroke="#0E1417" stroke-width="1.5" rx="3"/>
-    <text x="530" y="128" fill="#0E1417" font-size="9" text-anchor="middle" font-weight="600">init.sh</text>
-    <text x="530" y="142" fill="#80807A" font-size="9" text-anchor="middle">clock-in</text>
-
-    <defs>
-      <marker id="arrA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
-        <path d="M 0 0 L 10 5 L 0 10 z" fill="#0E1417"/>
-      </marker>
-    </defs>
-
-    <path d="M 220 125 L 335 130" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arrA)"/>
-    <path d="M 565 130 L 680 125" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arrA)"/>
-
-    <text x="240" y="118" fill="#0E1417" font-size="9">yaz</text>
-    <text x="650" y="118" fill="#0E1417" font-size="9" text-anchor="end">oku</text>
-  </g>
-
-  <g>
-    <text x="395" y="245" fill="#80807A" font-size="11" font-weight="600">köprüsüz: kırık akış</text>
-
-    <rect x="40" y="265" width="180" height="70" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3,3" rx="4"/>
-    <circle cx="68" cy="293" r="10" fill="#80807A"/>
-    <circle cx="68" cy="290" r="3" fill="#F0F0EB"/>
-    <text x="86" y="297" fill="#80807A" font-size="12">Oturum A</text>
-    <text x="86" y="313" fill="#80807A" font-size="10">reset · bağlam yok</text>
-
-    <rect x="680" y="265" width="180" height="70" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3,3" rx="4"/>
-    <circle cx="708" cy="293" r="10" fill="#80807A"/>
-    <circle cx="708" cy="290" r="3" fill="#F0F0EB"/>
-    <text x="726" y="297" fill="#80807A" font-size="12">Oturum B</text>
-    <text x="726" y="313" fill="#80807A" font-size="10">sıfırdan tahmin</text>
-
-    <path d="M 220 300 L 405 300" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4,4" fill="none"/>
-    <text x="425" y="304" fill="#80807A" font-size="18" font-weight="600">?</text>
-    <path d="M 445 300 L 680 300" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4,4" fill="none" marker-end="url(#arrA)"/>
-
-    <path d="M 600 300 Q 620 285 640 270" stroke="#80807A" stroke-width="1.5" fill="none" marker-end="url(#arrA)"/>
-    <text x="608" y="278" fill="#80807A" font-size="9">sapma</text>
-  </g>
-
-  <g>
-    <rect x="700" y="20" width="170" height="40" fill="#E5FF59" stroke="#1A2300" stroke-width="1.5" rx="3"/>
-    <circle cx="715" cy="40" r="5" fill="#1A2300"/>
-    <path d="M 712 40 L 715 43 L 720 37" stroke="#E5FF59" stroke-width="1.5" fill="none"/>
-    <text x="728" y="37" fill="#1A2300" font-size="10" font-weight="700">rebuild süresi</text>
-    <text x="728" y="50" fill="#1A2300" font-size="10">15 dk → 3 dk</text>
-  </g>
-</svg>
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'24px'}}>
+    <div>
+      <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>VARDİYA KÖPRÜSÜ</div>
+      <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>İki oturum, üç dosyalık bir köprü, kesintisiz süreklilik.</div>
+    </div>
+    <div style={{background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'12px',padding:'10px 16px',whiteSpace:'nowrap'}}>
+      <div style={{fontSize:'10px',color:'#1A2300',letterSpacing:'0.16em',fontWeight:'700'}}>REBUILD SÜRESİ</div>
+      <div style={{fontSize:'16px',color:'#1A2300',fontWeight:'700',marginTop:'2px',fontVariantNumeric:'tabular-nums'}}>15 dk → 3 dk</div>
+    </div>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',gap:'18px',marginTop:'28px'}}>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderRadius:'12px',padding:'18px'}}>
+      <div style={{fontSize:'11px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>OTURUM A</div>
+      <div style={{fontSize:'14px',fontWeight:'600',marginTop:'4px'}}>ajan · bağlam dolu</div>
+      <div style={{display:'flex',height:'6px',background:'rgba(14,20,23,0.1)',borderRadius:'3px',marginTop:'14px',overflow:'hidden'}}>
+        <div style={{width:'92%',background:'#20333C'}}></div>
+      </div>
+      <div style={{fontSize:'10px',color:'#80807A',marginTop:'4px',fontVariantNumeric:'tabular-nums'}}>token %92</div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:'8px',minWidth:'220px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#0E1417'}}>VARDİYA TESLİMİ</div>
+      <div style={{display:'flex',gap:'6px'}}>
+        <div style={{background:'#E8E8E3',border:'1.4px solid #0E1417',borderRadius:'6px',padding:'8px 10px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#0E1417',fontWeight:'600'}}>PROGRESS.md</div>
+        <div style={{background:'#E8E8E3',border:'1.4px solid #0E1417',borderRadius:'6px',padding:'8px 10px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#0E1417',fontWeight:'600'}}>DECISIONS.md</div>
+        <div style={{background:'#E8E8E3',border:'1.4px solid #0E1417',borderRadius:'6px',padding:'8px 10px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#0E1417',fontWeight:'600'}}>init.sh</div>
+      </div>
+      <div style={{display:'flex',justifyContent:'space-between',width:'100%',marginTop:'6px',fontSize:'10px',color:'#80807A',letterSpacing:'0.08em'}}>
+        <span>← yaz (clock-out)</span>
+        <span>oku (clock-in) →</span>
+      </div>
+    </div>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderRadius:'12px',padding:'18px'}}>
+      <div style={{fontSize:'11px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>OTURUM B</div>
+      <div style={{fontSize:'14px',fontWeight:'600',marginTop:'4px'}}>yeni ajan · okuyor</div>
+      <div style={{display:'flex',height:'6px',background:'rgba(14,20,23,0.1)',borderRadius:'3px',marginTop:'14px',overflow:'hidden'}}>
+        <div style={{width:'28%',background:'#20333C'}}></div>
+      </div>
+      <div style={{fontSize:'10px',color:'#80807A',marginTop:'4px',fontVariantNumeric:'tabular-nums'}}>token %28</div>
+    </div>
+  </div>
+  <div style={{marginTop:'28px',paddingTop:'20px',borderTop:'1px solid rgba(14,20,23,0.08)'}}>
+    <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KÖPRÜSÜZ — ANTİ-ÖRÜNTÜ</div>
+    <div style={{display:'grid',gridTemplateColumns:'1fr auto 1fr',alignItems:'center',gap:'18px',marginTop:'12px'}}>
+      <div style={{background:'transparent',border:'1px dashed rgba(14,20,23,0.22)',borderRadius:'12px',padding:'14px',color:'#80807A'}}>
+        <div style={{fontSize:'11px',letterSpacing:'0.14em',fontWeight:'700'}}>OTURUM A</div>
+        <div style={{fontSize:'13px',marginTop:'2px'}}>kapatıldı · iz bırakmadı</div>
+      </div>
+      <div style={{fontSize:'26px',fontWeight:'700',color:'#A5A59F',textAlign:'center',minWidth:'80px'}}>?</div>
+      <div style={{background:'transparent',border:'1px dashed rgba(14,20,23,0.22)',borderRadius:'12px',padding:'14px',color:'#80807A'}}>
+        <div style={{fontSize:'11px',letterSpacing:'0.14em',fontWeight:'700'}}>OTURUM B</div>
+        <div style={{fontSize:'13px',marginTop:'2px'}}>sıfırdan tahmin · sapma</div>
+      </div>
+    </div>
+  </div>
+</div>
 
 ## İki başarısızlık mekanizması
 

@@ -19,7 +19,46 @@ Ajanlar **sistematik olarak fazla güvenlidir.** Kendi çıktısına bakıp tama
 
 ## Üç katmanlı kapı
 
-<svg viewBox="0 0 900 380" role="img" aria-label="Üç katmanlı doğrulama kapısı: lint, runtime, e2e. Executor soldan kod üretir, üç ardışık kapıdan (sözdizimi, çalışma zamanı, sistem) geçer, sağda Verifier tamamlandı damgasını basar." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>ÜÇ KATMANLI DOĞRULAMA KAPISI</div>
+  <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>Katman N başarısızken N+1'e geçilmez. "Tamamlandı" damgasını verifier basar.</div>
+  <div style={{display:'grid',gridTemplateColumns:'auto 1fr 1fr 1fr auto',gap:'12px',alignItems:'stretch',marginTop:'26px'}}>
+    <div style={{background:'#0E1417',color:'#F0F0EB',borderRadius:'12px',padding:'18px 14px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minWidth:'110px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.18em',color:'#A5A59F',fontWeight:'600'}}>YAPAN</div>
+      <div style={{fontSize:'14px',fontWeight:'700',marginTop:'4px'}}>Executor</div>
+      <div style={{fontSize:'10.5px',color:'#A5A59F',marginTop:'4px',textAlign:'center'}}>kod üretir</div>
+    </div>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderRadius:'12px',padding:'18px 16px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KATMAN 1</div>
+      <div style={{fontSize:'15px',fontWeight:'700',marginTop:'4px'}}>Sözdizimi</div>
+      <div style={{fontSize:'11px',color:'#5C5C57',marginTop:'4px'}}>lint · type-check · derleme</div>
+      <div style={{marginTop:'12px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#20333C'}}>ruff · mypy</div>
+    </div>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderRadius:'12px',padding:'18px 16px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KATMAN 2</div>
+      <div style={{fontSize:'15px',fontWeight:'700',marginTop:'4px'}}>Çalışma zamanı</div>
+      <div style={{fontSize:'11px',color:'#5C5C57',marginTop:'4px'}}>unit + integration · gerçek modüller</div>
+      <div style={{marginTop:'12px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#20333C'}}>pytest · go test</div>
+    </div>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderRadius:'12px',padding:'18px 16px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KATMAN 3</div>
+      <div style={{fontSize:'15px',fontWeight:'700',marginTop:'4px'}}>Uçtan uca</div>
+      <div style={{fontSize:'11px',color:'#5C5C57',marginTop:'4px'}}>gerçek HTTP · DB · SMTP / worker</div>
+      <div style={{marginTop:'12px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'10.5px',color:'#20333C'}}>playwright · httpx</div>
+    </div>
+    <div style={{background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'12px',padding:'18px 14px',display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',minWidth:'130px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.18em',color:'#1A2300',fontWeight:'700'}}>DENETLEYEN</div>
+      <div style={{fontSize:'14px',fontWeight:'800',marginTop:'4px',color:'#1A2300'}}>Verifier</div>
+      <div style={{background:'#1A2300',color:'#E5FF59',borderRadius:'14px',padding:'5px 12px',marginTop:'10px',fontSize:'10.5px',fontWeight:'700',letterSpacing:'0.14em'}}>TAMAMLANDI ✓</div>
+    </div>
+  </div>
+  <div style={{display:'flex',justifyContent:'center',alignItems:'center',gap:'10px',marginTop:'18px',fontSize:'11px',color:'#80807A',letterSpacing:'0.04em'}}>
+    <span>kod akışı</span>
+    <span style={{color:'#0E1417',fontSize:'18px',fontWeight:'700',letterSpacing:'-0.05em'}}>————————————————————</span>
+    <span>damga</span>
+  </div>
+  <div style={{marginTop:'18px',paddingTop:'16px',borderTop:'1px solid rgba(14,20,23,0.08)',fontSize:'12px',color:'#80807A',fontStyle:'italic'}}>Confidence calibration bias — ajan kendi işine baktığında sistematik olarak pozitif kalibrasyon verir; bu yüzden tamamlanma yargısı verifier'a devredilir (Guo et al. 2017; Anthropic 2026).</div>
+</div>{/*
   <rect x="0" y="0" width="900" height="380" fill="#E8E8E3"/>
 
   <rect x="20" y="18" width="860" height="32" fill="#0E1417"/>
@@ -97,7 +136,7 @@ Ajanlar **sistematik olarak fazla güvenlidir.** Kendi çıktısına bakıp tama
   </g>
 
   <text x="40" y="360" font-size="11" fill="#80807A" font-style="italic">Confidence calibration bias — ajan kendi işine baktığında sistematik olarak pozitif kalibrasyon verir; yargı dışsallaştırılır.</text>
-</svg>
+</svg> */}
 
 ## Confidence calibration bias
 

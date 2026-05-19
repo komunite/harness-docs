@@ -24,64 +24,108 @@ Uzun vadeli güvenilirlik tek koşumun başarısına değil, **işletim disiplin
 
 ## Beş boyut
 
-<svg viewBox="0 0 700 600" role="img" aria-label="Beş boyut radarı: temizliksiz vs temizlikli 12 hafta karşılaştırması — pentagon spider chart" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="700" height="600" fill="#E8E8E3"/>
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:'18px'}}>
+    <div>
+      <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>BEŞ BOYUT · 12 HAFTA SONU</div>
+      <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>Entropi her boyutu eşit yemiyor — en zayıf halkadan başlıyor.</div>
+    </div>
+    <div style={{display:'flex',gap:'10px'}}>
+      <div style={{display:'flex',alignItems:'center',gap:'6px',fontSize:'11px',color:'#80807A'}}>
+        <span style={{width:'14px',height:'2px',background:'#A5A59F',borderTop:'1px dashed transparent'}}></span>
+        temizliksiz
+      </div>
+      <div style={{display:'flex',alignItems:'center',gap:'6px',fontSize:'11px',color:'#0E1417'}}>
+        <span style={{width:'14px',height:'3px',background:'#0E1417'}}></span>
+        temizlikli
+      </div>
+    </div>
+  </div>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'10px 24px',marginTop:'24px',alignItems:'center'}}>
+    <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#A5A59F',textTransform:'uppercase'}}>Temizliksiz · hafta 12</div>
+    <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#0E1417',textTransform:'uppercase'}}>Temizlikli · hafta 12</div>
+  </div>
 
-  <text x="350" y="38" text-anchor="middle" font-size="13" fill="#20333C" font-style="italic">Lehman'ın yasası: kullanılan bir sistem, korunmadıkça çürür</text>
+  <div style={{marginTop:'10px',display:'flex',flexDirection:'column',gap:'12px'}}>
+    <div style={{display:'grid',gridTemplateColumns:'90px 1fr 1fr',gap:'14px',alignItems:'center'}}>
+      <div style={{fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>Build</div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'68%',height:'100%',background:'repeating-linear-gradient(45deg,#C5C5C0,#C5C5C0 5px,#D8D8D3 5px,#D8D8D3 10px)',border:'1px solid #A5A59F',borderRadius:'4px',boxSizing:'border-box'}}/>
+        <div style={{position:'absolute',top:'50%',left:'calc(68% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#80807A',fontWeight:'600',fontVariantNumeric:'tabular-nums'}}>%68</div>
+      </div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'97%',height:'100%',background:'#0E1417',borderRadius:'4px',position:'relative'}}>
+          <div style={{position:'absolute',right:'0',top:'0',bottom:'0',width:'8px',background:'#E5FF59'}}/>
+        </div>
+        <div style={{position:'absolute',top:'50%',left:'calc(97% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#0E1417',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>%97</div>
+      </div>
+    </div>
 
-  <g transform="translate(350,330)">
-    <polygon points="0,-220 209.31,-67.99 129.33,177.99 -129.33,177.99 -209.31,-67.99" fill="none" stroke="#C5C5C0" stroke-width="1"/>
-    <polygon points="0,-165 156.98,-50.99 96.99,133.49 -96.99,133.49 -156.98,-50.99" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
-    <polygon points="0,-110 104.65,-33.99 64.66,88.99 -64.66,88.99 -104.65,-33.99" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
-    <polygon points="0,-55 52.33,-17.00 32.33,44.50 -32.33,44.50 -52.33,-17.00" fill="none" stroke="#C5C5C0" stroke-width="1" stroke-dasharray="3 3"/>
+    <div style={{display:'grid',gridTemplateColumns:'90px 1fr 1fr',gap:'14px',alignItems:'center'}}>
+      <div style={{fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>Test</div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'61%',height:'100%',background:'repeating-linear-gradient(45deg,#C5C5C0,#C5C5C0 5px,#D8D8D3 5px,#D8D8D3 10px)',border:'1px solid #A5A59F',borderRadius:'4px',boxSizing:'border-box'}}/>
+        <div style={{position:'absolute',top:'50%',left:'calc(61% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#80807A',fontWeight:'600',fontVariantNumeric:'tabular-nums'}}>%61</div>
+      </div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'95%',height:'100%',background:'#0E1417',borderRadius:'4px',position:'relative'}}>
+          <div style={{position:'absolute',right:'0',top:'0',bottom:'0',width:'8px',background:'#E5FF59'}}/>
+        </div>
+        <div style={{position:'absolute',top:'50%',left:'calc(95% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#0E1417',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>%95</div>
+      </div>
+    </div>
 
-    <line x1="0" y1="0" x2="0" y2="-220" stroke="#A5A59F" stroke-width="1"/>
-    <line x1="0" y1="0" x2="209.31" y2="-67.99" stroke="#A5A59F" stroke-width="1"/>
-    <line x1="0" y1="0" x2="129.33" y2="177.99" stroke="#A5A59F" stroke-width="1"/>
-    <line x1="0" y1="0" x2="-129.33" y2="177.99" stroke="#A5A59F" stroke-width="1"/>
-    <line x1="0" y1="0" x2="-209.31" y2="-67.99" stroke="#A5A59F" stroke-width="1"/>
+    <div style={{display:'grid',gridTemplateColumns:'90px 1fr 1fr',gap:'14px',alignItems:'center'}}>
+      <div style={{fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>Progress</div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'35%',height:'100%',background:'repeating-linear-gradient(45deg,#C5C5C0,#C5C5C0 5px,#D8D8D3 5px,#D8D8D3 10px)',border:'1px solid #A5A59F',borderRadius:'4px',boxSizing:'border-box'}}/>
+        <div style={{position:'absolute',top:'50%',left:'calc(35% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#80807A',fontWeight:'600',fontVariantNumeric:'tabular-nums'}}>%35</div>
+      </div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'93%',height:'100%',background:'#0E1417',borderRadius:'4px',position:'relative'}}>
+          <div style={{position:'absolute',right:'0',top:'0',bottom:'0',width:'8px',background:'#E5FF59'}}/>
+        </div>
+        <div style={{position:'absolute',top:'50%',left:'calc(93% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#0E1417',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>%93</div>
+      </div>
+    </div>
 
-    <text x="8" y="-170" font-size="10" fill="#80807A">50</text>
-    <text x="8" y="-115" font-size="10" fill="#80807A">25</text>
-    <text x="8" y="-60" font-size="10" fill="#80807A">0</text>
-    <text x="8" y="-225" font-size="10" fill="#80807A">100</text>
+    <div style={{display:'grid',gridTemplateColumns:'90px 1fr 1fr',gap:'14px',alignItems:'center'}}>
+      <div style={{fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>Artifact</div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'18%',height:'100%',background:'repeating-linear-gradient(45deg,#C5C5C0,#C5C5C0 5px,#D8D8D3 5px,#D8D8D3 10px)',border:'1px solid #A5A59F',borderRadius:'4px',boxSizing:'border-box'}}/>
+        <div style={{position:'absolute',top:'50%',left:'calc(18% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#80807A',fontWeight:'600',fontVariantNumeric:'tabular-nums'}}>%18</div>
+      </div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'90%',height:'100%',background:'#0E1417',borderRadius:'4px',position:'relative'}}>
+          <div style={{position:'absolute',right:'0',top:'0',bottom:'0',width:'8px',background:'#E5FF59'}}/>
+        </div>
+        <div style={{position:'absolute',top:'50%',left:'calc(90% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#0E1417',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>%90</div>
+      </div>
+    </div>
 
-    <polygon points="0,-213.4 199.04,-64.65 122.86,169.09 -91.85,126.40 -125.59,-40.79" fill="#F0F0EB" fill-opacity="0.85" stroke="#0E1417" stroke-width="2.2" stroke-linejoin="round"/>
+    <div style={{display:'grid',gridTemplateColumns:'90px 1fr 1fr',gap:'14px',alignItems:'center'}}>
+      <div style={{fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>Startup</div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'15%',height:'100%',background:'repeating-linear-gradient(45deg,#C5C5C0,#C5C5C0 5px,#D8D8D3 5px,#D8D8D3 10px)',border:'1px solid #A5A59F',borderRadius:'4px',boxSizing:'border-box'}}/>
+        <div style={{position:'absolute',top:'50%',left:'calc(15% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#80807A',fontWeight:'600',fontVariantNumeric:'tabular-nums'}}>%15</div>
+      </div>
+      <div style={{position:'relative',height:'22px',background:'rgba(14,20,23,0.04)',borderRadius:'4px'}}>
+        <div style={{width:'94%',height:'100%',background:'#0E1417',borderRadius:'4px',position:'relative'}}>
+          <div style={{position:'absolute',right:'0',top:'0',bottom:'0',width:'8px',background:'#E5FF59'}}/>
+        </div>
+        <div style={{position:'absolute',top:'50%',left:'calc(94% + 8px)',transform:'translateY(-50%)',fontSize:'12px',color:'#0E1417',fontWeight:'700',fontVariantNumeric:'tabular-nums'}}>%94</div>
+      </div>
+    </div>
+  </div>
 
-    <polygon points="0,-83.6 127.68,-41.47 33.62,46.27 -77.60,106.79 -83.72,-27.20" fill="none" stroke="#A5A59F" stroke-width="1.8" stroke-linejoin="round" stroke-dasharray="6 4"/>
-
-    <circle cx="0" cy="-213.4" r="4" fill="#0E1417"/>
-    <circle cx="199.04" cy="-64.65" r="4" fill="#0E1417"/>
-    <circle cx="122.86" cy="169.09" r="4" fill="#0E1417"/>
-    <circle cx="-91.85" cy="126.40" r="4" fill="#0E1417"/>
-    <circle cx="-125.59" cy="-40.79" r="4" fill="#0E1417"/>
-
-    <circle cx="0" cy="-83.6" r="3.5" fill="#A5A59F"/>
-    <circle cx="127.68" cy="-41.47" r="3.5" fill="#A5A59F"/>
-    <circle cx="33.62" cy="46.27" r="3.5" fill="#A5A59F"/>
-    <circle cx="-77.60" cy="106.79" r="3.5" fill="#A5A59F"/>
-    <circle cx="-83.72" cy="-27.20" r="3.5" fill="#A5A59F"/>
-
-    <text x="0" y="-240" text-anchor="middle" font-size="14" fill="#0E1417" font-weight="600">Build</text>
-    <text x="232" y="-72" text-anchor="start" font-size="14" fill="#0E1417" font-weight="600">Test</text>
-    <text x="144" y="200" text-anchor="start" font-size="14" fill="#0E1417" font-weight="600">Progress</text>
-    <text x="-144" y="200" text-anchor="end" font-size="14" fill="#0E1417" font-weight="600">Artifact</text>
-    <text x="-232" y="-72" text-anchor="end" font-size="14" fill="#0E1417" font-weight="600">Startup</text>
-  </g>
-
-  <g transform="translate(60,540)">
-    <rect x="0" y="0" width="18" height="12" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-    <text x="26" y="10" font-size="12" fill="#20333C">Hafta 12 — temizlikli</text>
-
-    <rect x="200" y="0" width="18" height="12" fill="none" stroke="#A5A59F" stroke-width="2" stroke-dasharray="4 3"/>
-    <text x="226" y="10" font-size="12" fill="#20333C">Hafta 12 — temizliksiz</text>
-  </g>
-
-  <g transform="translate(500,540)">
-    <circle cx="0" cy="6" r="6" fill="#E5FF59" stroke="#1A2300" stroke-width="1"/>
-    <text x="12" y="10" font-size="11" fill="#1A2300">günlük + haftalık disiplin ile</text>
-  </g>
-</svg>
+  <div style={{marginTop:'22px',paddingTop:'16px',borderTop:'1px solid rgba(14,20,23,0.08)',display:'flex',justifyContent:'space-between',alignItems:'center',gap:'12px',flexWrap:'wrap'}}>
+    <div style={{fontSize:'11.5px',color:'#80807A',fontStyle:'italic'}}>Lehman'ın yasası: kullanılan bir sistem, korunmadıkça çürür.</div>
+    <div style={{display:'inline-flex',alignItems:'center',gap:'8px',background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'999px',padding:'4px 12px',fontSize:'11px',fontWeight:'700',color:'#1A2300'}}>
+      <span style={{display:'inline-flex',width:'14px',height:'14px',borderRadius:'50%',background:'#1A2300',color:'#E5FF59',alignItems:'center',justifyContent:'center',fontSize:'10px'}}>✓</span>
+      günlük + haftalık disiplin
+    </div>
+  </div>
+</div>
 
 ## Entropi varsayılandır — Lehman yasaları
 

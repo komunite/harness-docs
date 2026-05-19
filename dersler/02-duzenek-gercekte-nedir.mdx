@@ -21,55 +21,51 @@ Bu dersin amacı, "düzenek" kelimesini elle tutulur **beş aparata** ayırmakt�
 
 ## Beş aparat
 
-<svg viewBox="0 0 700 500" role="img" aria-label="Düzeneğin beş aparatı: merkezdeki Model düğümünü çevreleyen Talimat, Araç, Ortam, Durum ve Geri bildirim aparatları." xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
-  <rect x="0" y="0" width="700" height="500" fill="#E8E8E3"/>
-
-  <line x1="350" y1="250" x2="350" y2="110" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <line x1="350" y1="250" x2="483" y2="207" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <line x1="350" y1="250" x2="432" y2="383" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <line x1="350" y1="250" x2="268" y2="383" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
-  <line x1="350" y1="250" x2="217" y2="207" stroke="#80807A" stroke-width="1.5" stroke-dasharray="4 4"/>
-
-  <polygon points="207,134 287,376 423,376 503,134" fill="none" stroke="#C5C5C0" stroke-width="1.5" stroke-dasharray="2 6" opacity="0.7"/>
-
-  <circle cx="350" cy="250" r="46" fill="#20333C" stroke="#0E1417" stroke-width="2"/>
-  <text x="350" y="256" text-anchor="middle" fill="#F0F0EB" font-size="16" font-weight="600">Model</text>
-
-  <circle cx="350" cy="90" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-  <text x="350" y="86" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Talimat</text>
-  <text x="350" y="104" text-anchor="middle" fill="#80807A" font-size="11">AGENTS.md / CLAUDE.md</text>
-
-  <circle cx="552" cy="185" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-  <text x="552" y="181" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Araç</text>
-  <text x="552" y="199" text-anchor="middle" fill="#80807A" font-size="11">izinli komut yelpazesi</text>
-
-  <circle cx="473" cy="412" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-  <text x="473" y="408" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Ortam</text>
-  <text x="473" y="426" text-anchor="middle" fill="#80807A" font-size="11">Makefile / pyproject.toml</text>
-
-  <circle cx="227" cy="412" r="54" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-  <text x="227" y="408" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Durum</text>
-  <text x="227" y="426" text-anchor="middle" fill="#80807A" font-size="11">PROGRESS.md / DECISIONS.md</text>
-
-  <circle cx="148" cy="185" r="58" fill="#F0F0EB" stroke="#0E1417" stroke-width="2"/>
-  <text x="148" y="181" text-anchor="middle" fill="#0E1417" font-size="15" font-weight="600">Geri bildirim</text>
-  <text x="148" y="199" text-anchor="middle" fill="#80807A" font-size="11">test / lint / e2e</text>
-  <circle cx="148" cy="120" r="7" fill="#E5FF59" stroke="#1A2300" stroke-width="1.5"/>
-
-  <defs>
-    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#0E1417"/>
-    </marker>
-  </defs>
-
-  <path d="M 350,144 L 350,210" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
-  <path d="M 510,210 L 393,238" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
-  <path d="M 437,373 L 374,289" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
-  <path d="M 263,373 L 326,289" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
-  <path d="M 190,210 L 307,238" stroke="#0E1417" stroke-width="2" fill="none" marker-end="url(#arr)"/>
-
-  <text x="350" y="475" text-anchor="middle" fill="#20333C" font-size="12" font-style="italic">Beş aparat modele akar; lime nokta en yüksek getirili sinyali işaretler.</text>
-</svg>
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'40px 48px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',fontSize:'10px',letterSpacing:'0.18em',fontWeight:'700',color:'#80807A'}}>
+    <span>DÜZENEK</span>
+    <span>5 APARAT</span>
+  </div>
+  <div style={{display:'flex',alignItems:'center',gap:'16px',marginTop:'18px'}}>
+    <div style={{flex:'1',height:'1px',background:'rgba(14,20,23,0.08)'}}></div>
+    <div style={{background:'#0E1417',color:'#F0F0EB',padding:'8px 22px',borderRadius:'18px',fontSize:'12px',fontWeight:'600',letterSpacing:'0.18em'}}>MODEL</div>
+    <div style={{flex:'1',height:'1px',background:'rgba(14,20,23,0.08)'}}></div>
+  </div>
+  <div style={{marginTop:'28px'}}>
+    {[
+      {n:'01',label:'APARAT',name:'Talimat',desc:'Ajana sözleşme: kurallar, sıkı kısıtlar, rota.',tags:['AGENTS.md','CLAUDE.md']},
+      {n:'02',label:'APARAT',name:'Araç',desc:'İzinli eylem yelpazesi — en az ayrıcalık ilkesiyle.',tags:['tool sözleşmeleri',"MCP server'lar"]},
+      {n:'03',label:'APARAT',name:'Ortam',desc:'Kendini açıklayan kurulum, tek komutla başlangıç.',tags:['Makefile','pyproject.toml']},
+      {n:'04',label:'APARAT',name:'Durum',desc:'Oturumlar arası süreklilik — sohbet değil, dosya.',tags:['PROGRESS.md','DECISIONS.md']}
+    ].map(row => (
+      <div key={row.n} style={{display:'grid',gridTemplateColumns:'80px 1fr 280px',alignItems:'center',padding:'18px 0',borderTop:'1px solid rgba(14,20,23,0.08)'}}>
+        <div style={{fontSize:'34px',fontWeight:'700',color:'#C5C5C0',fontVariantNumeric:'tabular-nums',letterSpacing:'-0.02em'}}>{row.n}</div>
+        <div>
+          <div style={{fontSize:'10px',color:'#80807A',letterSpacing:'0.16em',fontWeight:'700'}}>{row.label}</div>
+          <div style={{fontSize:'20px',fontWeight:'600',marginTop:'2px'}}>{row.name}</div>
+          <div style={{fontSize:'12.5px',color:'#5C5C57',marginTop:'4px'}}>{row.desc}</div>
+        </div>
+        <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>
+          {row.tags.map(t => (
+            <span key={t} style={{background:'#E8E8E3',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'11px',padding:'5px 14px',fontSize:'11.5px',fontWeight:'500',color:'#20333C'}}>{t}</span>
+          ))}
+        </div>
+      </div>
+    ))}
+    <div style={{display:'grid',gridTemplateColumns:'80px 1fr 280px',alignItems:'center',padding:'18px',marginTop:'8px',background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'14px'}}>
+      <div style={{fontSize:'34px',fontWeight:'700',color:'#1A2300',fontVariantNumeric:'tabular-nums',letterSpacing:'-0.02em'}}>05</div>
+      <div>
+        <div style={{fontSize:'10px',color:'#1A2300',letterSpacing:'0.16em',fontWeight:'700'}}>EN YÜKSEK GETİRİ</div>
+        <div style={{fontSize:'20px',fontWeight:'700',marginTop:'2px',color:'#1A2300'}}>Geri bildirim</div>
+        <div style={{fontSize:'12.5px',color:'#1A2300',marginTop:'4px',opacity:'0.86'}}>Ajan kendi koduyla yüzleşir — doğrulama olmadan ne yaptığını bilemez.</div>
+      </div>
+      <div style={{display:'flex',gap:'8px',justifyContent:'flex-end'}}>
+        <span style={{background:'#1A2300',color:'#E5FF59',borderRadius:'11px',padding:'5px 14px',fontSize:'11.5px',fontWeight:'600'}}>test · lint · type</span>
+        <span style={{background:'#1A2300',color:'#E5FF59',borderRadius:'11px',padding:'5px 14px',fontSize:'11.5px',fontWeight:'600'}}>e2e doğrulama</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 ## Anti-örüntü — "düzenek = prompt" yanılgısı
 

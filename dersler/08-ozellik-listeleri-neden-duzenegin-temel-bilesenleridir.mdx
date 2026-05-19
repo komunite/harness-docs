@@ -21,67 +21,70 @@ Anthropic'in uzun süreli ajanlar için yayımladığı çerçeve bu fikri açı
 
 ## Dört durumlu kapı
 
-<svg viewBox="0 0 800 400" role="img" aria-label="Feature dört durumlu kapı: not_started, active, blocked, passing. not_started scheduler ile active'e geçer; active ile blocked çift yönlüdür; active'ten passing'e tek yönlü geçiş verifier tarafından yeşil çıkış koduyla yapılır; ajan kendi passing yazamaz." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="800" height="400" fill="#E8E8E3"/>
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>FEATURE DURUM MAKİNESİ</div>
+  <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>Dört durum, tek yönlü kapı, verifier'a ait anahtar.</div>
 
-  <defs>
-    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#20333C"/>
-    </marker>
-    <marker id="arrowBold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
-      <path d="M0,0 L10,5 L0,10 z" fill="#0E1417"/>
-    </marker>
-  </defs>
+  <div style={{marginTop:'28px',display:'grid',gridTemplateColumns:'1fr 110px 1fr 130px 1fr',alignItems:'center',gap:'0'}}>
+    <div style={{background:'#E8E8E3',border:'1.5px solid #80807A',borderRadius:'14px',padding:'16px 12px',textAlign:'center'}}>
+      <div style={{fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>not_started</div>
+      <div style={{fontSize:'10.5px',color:'#80807A',marginTop:'4px',letterSpacing:'0.02em'}}>başlangıç</div>
+    </div>
+    <div style={{textAlign:'center',padding:'0 6px'}}>
+      <div style={{fontSize:'9.5px',letterSpacing:'0.18em',fontWeight:'700',color:'#0E1417',marginBottom:'6px'}}>SCHEDULER</div>
+      <div style={{height:'2px',background:'#0E1417',position:'relative'}}>
+        <div style={{position:'absolute',right:'-1px',top:'-5px',width:'0',height:'0',borderTop:'6px solid transparent',borderBottom:'6px solid transparent',borderLeft:'10px solid #0E1417'}}/>
+      </div>
+    </div>
+    <div style={{background:'#E8E8E3',border:'2px solid #0E1417',borderRadius:'14px',padding:'16px 12px',textAlign:'center',boxShadow:'0 2px 8px rgba(14,20,23,0.06)'}}>
+      <div style={{fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'13px',fontWeight:'700',color:'#0E1417'}}>active</div>
+      <div style={{fontSize:'10.5px',color:'#80807A',marginTop:'4px',letterSpacing:'0.02em'}}>WIP = 1</div>
+    </div>
+    <div style={{textAlign:'center',padding:'0 6px'}}>
+      <div style={{display:'inline-block',background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'999px',padding:'3px 12px',fontSize:'10.5px',fontWeight:'700',color:'#1A2300',letterSpacing:'0.04em',marginBottom:'6px'}}>VERIFIER ✓</div>
+      <div style={{height:'3px',background:'#1A2300',position:'relative'}}>
+        <div style={{position:'absolute',right:'-1px',top:'-6px',width:'0',height:'0',borderTop:'7px solid transparent',borderBottom:'7px solid transparent',borderLeft:'11px solid #1A2300'}}/>
+      </div>
+    </div>
+    <div style={{background:'#E5FF59',border:'2.2px solid #1A2300',borderRadius:'14px',padding:'16px 12px',textAlign:'center',position:'relative',boxShadow:'0 2px 12px rgba(229,255,89,0.45)'}}>
+      <div style={{position:'absolute',top:'-12px',right:'-10px',width:'26px',height:'26px',background:'#1A2300',borderRadius:'50%',display:'flex',alignItems:'center',justifyContent:'center',color:'#E5FF59',fontSize:'15px',fontWeight:'800'}}>✓</div>
+      <div style={{fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'13px',fontWeight:'700',color:'#1A2300'}}>passing</div>
+      <div style={{fontSize:'10.5px',color:'#1A2300',marginTop:'4px',letterSpacing:'0.02em'}}>geri alınamaz</div>
+    </div>
+  </div>
 
-  <text x="400" y="34" text-anchor="middle" font-size="15" fill="#0E1417" font-weight="600">Özellik durum geçişi</text>
+  <div style={{marginTop:'14px',display:'grid',gridTemplateColumns:'1fr 110px 1fr 130px 1fr',alignItems:'start',gap:'0'}}>
+    <div/>
+    <div/>
+    <div style={{textAlign:'center'}}>
+      <div style={{display:'inline-flex',flexDirection:'column',alignItems:'center'}}>
+        <div style={{width:'2px',height:'18px',background:'#80807A'}}/>
+        <div style={{display:'flex',gap:'14px',alignItems:'center'}}>
+          <div style={{width:'0',height:'0',borderLeft:'5px solid transparent',borderRight:'5px solid transparent',borderTop:'7px solid #80807A'}}/>
+          <div style={{width:'0',height:'0',borderLeft:'5px solid transparent',borderRight:'5px solid transparent',borderBottom:'7px solid #80807A'}}/>
+        </div>
+        <div style={{fontSize:'10.5px',color:'#80807A',marginTop:'4px',fontStyle:'italic'}}>açık soru · bağımlılık</div>
+      </div>
+      <div style={{background:'#E8E8E3',border:'1.5px solid #80807A',borderRadius:'14px',padding:'14px 12px',marginTop:'10px',display:'inline-block',minWidth:'70%'}}>
+        <div style={{fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'13px',fontWeight:'600',color:'#0E1417'}}>blocked</div>
+        <div style={{fontSize:'10.5px',color:'#80807A',marginTop:'4px',letterSpacing:'0.02em'}}>engelli</div>
+      </div>
+    </div>
+    <div/>
+    <div/>
+  </div>
 
-  <line x1="170" y1="200" x2="345" y2="135" stroke="#20333C" stroke-width="1.5" marker-end="url(#arrow)"/>
-  <rect x="220" y="148" width="78" height="20" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
-  <text x="259" y="162" text-anchor="middle" font-size="11" fill="#20333C">scheduler</text>
-
-  <line x1="400" y1="170" x2="400" y2="265" stroke="#20333C" stroke-width="1.5" marker-end="url(#arrow)" marker-start="url(#arrow)"/>
-  <rect x="412" y="207" width="138" height="20" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
-  <text x="481" y="221" text-anchor="middle" font-size="11" fill="#20333C">açık soru / bağımlılık</text>
-
-  <line x1="455" y1="135" x2="615" y2="135" stroke="#0E1417" stroke-width="2" marker-end="url(#arrowBold)"/>
-  <rect x="465" y="100" width="170" height="22" rx="3" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
-  <text x="550" y="115" text-anchor="middle" font-size="11" fill="#0E1417">verifier (yeşil çıkış kodu)</text>
-
-  <g>
-    <circle cx="120" cy="200" r="50" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
-    <text x="120" y="197" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">not_started</text>
-    <text x="120" y="214" text-anchor="middle" font-size="10" fill="#80807A">başlangıç</text>
-  </g>
-
-  <g>
-    <circle cx="400" cy="135" r="48" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
-    <text x="400" y="132" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">active</text>
-    <text x="400" y="149" text-anchor="middle" font-size="10" fill="#80807A">WIP = 1</text>
-  </g>
-
-  <g>
-    <circle cx="400" cy="300" r="48" fill="#F0F0EB" stroke="#20333C" stroke-width="1.5"/>
-    <text x="400" y="297" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="600">blocked</text>
-    <text x="400" y="314" text-anchor="middle" font-size="10" fill="#80807A">engelli</text>
-  </g>
-
-  <g>
-    <circle cx="665" cy="135" r="52" fill="#F0F0EB" stroke="#E5FF59" stroke-width="3"/>
-    <circle cx="665" cy="135" r="48" fill="none" stroke="#0E1417" stroke-width="1.5"/>
-    <text x="665" y="132" text-anchor="middle" font-size="13" fill="#0E1417" font-weight="700">passing</text>
-    <text x="665" y="149" text-anchor="middle" font-size="10" fill="#80807A">geri alınamaz</text>
-    <g transform="translate(665,78)">
-      <circle r="13" fill="#E5FF59" stroke="#0E1417" stroke-width="1.5"/>
-      <path d="M-6,0 L-2,4 L6,-4" fill="none" stroke="#1A2300" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-    </g>
-  </g>
-
-  <g>
-    <rect x="540" y="345" width="240" height="38" rx="4" fill="#F0F0EB" stroke="#C5C5C0" stroke-width="1"/>
-    <text x="660" y="361" text-anchor="middle" font-size="11" fill="#20333C" font-style="italic">Not: ajan kendi</text>
-    <text x="660" y="376" text-anchor="middle" font-size="11" fill="#20333C" font-style="italic">passing yazamaz.</text>
-  </g>
-</svg>
+  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'14px',marginTop:'26px',paddingTop:'20px',borderTop:'1px solid rgba(14,20,23,0.08)'}}>
+    <div>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KURAL · PASS-STATE GATING</div>
+      <div style={{fontSize:'12.5px',color:'#5C5C57',marginTop:'4px'}}>Geçiş yalnız doğrulama scripti sıfır çıkış kodu döndüğünde gerçekleşir.</div>
+    </div>
+    <div>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KURAL · TEK YÖN</div>
+      <div style={{fontSize:'12.5px',color:'#5C5C57',marginTop:'4px'}}>Ajan kendi <code style={{background:'rgba(14,20,23,0.06)',padding:'1px 4px',borderRadius:'3px',fontSize:'12px'}}>passing</code> yazamaz; geri alınamaz.</div>
+    </div>
+  </div>
+</div>
 
 ## Özelliğin üçlüsü
 

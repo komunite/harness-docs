@@ -15,59 +15,43 @@ Tek bir dev talimat dosyası — `AGENTS.md`, `CLAUDE.md`, `.cursor/rules` fark 
 
 ## Şişme eğrisi
 
-<svg viewBox="0 0 800 400" role="img" aria-label="AGENTS.md satır sayısı ile ajan performansının ilişkisini gösteren ters U eğrisi: performans 100 ile 200 satır arasında tepe yapar, sonra şişme bölgesinde düşer." font-family="ui-sans-serif, system-ui, -apple-system, sans-serif" xmlns="http://www.w3.org/2000/svg">
-  <rect x="0" y="0" width="800" height="400" fill="#E8E8E3" />
-  <rect x="80" y="40" width="660" height="300" fill="#F0F0EB" />
-
-  <g stroke="#C5C5C0" stroke-width="0.5">
-    <line x1="80" y1="100" x2="740" y2="100" />
-    <line x1="80" y1="160" x2="740" y2="160" />
-    <line x1="80" y1="220" x2="740" y2="220" />
-    <line x1="80" y1="280" x2="740" y2="280" />
-    <line x1="190" y1="40" x2="190" y2="340" />
-    <line x1="300" y1="40" x2="300" y2="340" />
-    <line x1="410" y1="40" x2="410" y2="340" />
-    <line x1="520" y1="40" x2="520" y2="340" />
-    <line x1="630" y1="40" x2="630" y2="340" />
-  </g>
-
-  <rect x="135" y="40" width="165" height="300" fill="#C5C5C0" fill-opacity="0.35" />
-  <text x="217" y="60" text-anchor="middle" fill="#20333C" font-size="12" font-weight="600">ideal bölge</text>
-
-  <rect x="520" y="40" width="220" height="300" fill="#A5A59F" fill-opacity="0.3" />
-  <text x="630" y="60" text-anchor="middle" fill="#20333C" font-size="12" font-weight="600">şişme</text>
-  <text x="630" y="76" text-anchor="middle" fill="#20333C" font-size="11">context bloat + lost in the middle</text>
-
-  <path d="M 80 300 C 140 180, 180 110, 245 105 S 360 150, 410 190 S 560 270, 740 310" fill="none" stroke="#0E1417" stroke-width="2.5" stroke-linecap="round" />
-
-  <circle cx="245" cy="105" r="7" fill="#E5FF59" stroke="#1A2300" stroke-width="1.5" />
-  <text x="258" y="100" fill="#1A2300" font-size="12" font-weight="700">ideal</text>
-
-  <line x1="520" y1="40" x2="520" y2="340" stroke="#80807A" stroke-width="1" stroke-dasharray="4 4" />
-  <text x="512" y="36" text-anchor="end" fill="#20333C" font-size="11" font-weight="600">HumanLayer önerisi: 300 satır altı</text>
-
-  <line x1="80" y1="340" x2="740" y2="340" stroke="#20333C" stroke-width="1.5" />
-  <line x1="80" y1="40" x2="80" y2="340" stroke="#20333C" stroke-width="1.5" />
-
-  <g fill="#20333C" font-size="11">
-    <text x="80" y="358" text-anchor="middle">0</text>
-    <text x="190" y="358" text-anchor="middle">100</text>
-    <text x="300" y="358" text-anchor="middle">200</text>
-    <text x="410" y="358" text-anchor="middle">300</text>
-    <text x="520" y="358" text-anchor="middle">450</text>
-    <text x="630" y="358" text-anchor="middle">600</text>
-  </g>
-
-  <text x="410" y="385" text-anchor="middle" fill="#20333C" font-size="12" font-weight="600">AGENTS.md satır sayısı</text>
-
-  <g fill="#20333C" font-size="11">
-    <text x="72" y="304" text-anchor="end">düşük</text>
-    <text x="72" y="194" text-anchor="end">orta</text>
-    <text x="72" y="104" text-anchor="end">yüksek</text>
-  </g>
-
-  <text x="24" y="190" text-anchor="middle" fill="#20333C" font-size="12" font-weight="600" transform="rotate(-90 24 190)">Ajan performansı (göreli, yüzde)</text>
-</svg>
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px 28px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>TALİMAT BÜTÇESİ</div>
+  <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px',lineHeight:'1.4'}}>Performans, satır sayısının ters bir U fonksiyonudur — tepe 100-200 arasında, çürüme 300'den itibaren.</div>
+  <svg viewBox="0 0 800 360" role="img" aria-label="AGENTS.md satır sayısı ile ajan performansının ilişkisi" xmlns="http://www.w3.org/2000/svg" style={{display:'block',width:'100%',height:'auto',marginTop:'18px'}}>
+    <rect x="80" y="20" width="660" height="280" fill="#E8E8E3" stroke="rgba(14,20,23,0.06)" strokeWidth="1"/>
+    <line x1="80" y1="76" x2="740" y2="76" stroke="rgba(14,20,23,0.06)" strokeWidth="1"/>
+    <line x1="80" y1="132" x2="740" y2="132" stroke="rgba(14,20,23,0.06)" strokeWidth="1"/>
+    <line x1="80" y1="188" x2="740" y2="188" stroke="rgba(14,20,23,0.06)" strokeWidth="1"/>
+    <line x1="80" y1="244" x2="740" y2="244" stroke="rgba(14,20,23,0.06)" strokeWidth="1"/>
+    <rect x="135" y="20" width="165" height="280" fill="#C5C5C0" fillOpacity="0.28"/>
+    <text x="217" y="40" textAnchor="middle" fill="#20333C" fontSize="11" fontWeight="600" letterSpacing="0.04em">İDEAL BÖLGE</text>
+    <rect x="520" y="20" width="220" height="280" fill="#A5A59F" fillOpacity="0.3"/>
+    <text x="630" y="40" textAnchor="middle" fill="#20333C" fontSize="11" fontWeight="600" letterSpacing="0.04em">ŞİŞME</text>
+    <text x="630" y="56" textAnchor="middle" fill="#80807A" fontSize="10.5">context bloat · lost in the middle</text>
+    <line x1="520" y1="20" x2="520" y2="300" stroke="#80807A" strokeWidth="1" strokeDasharray="4 4"/>
+    <text x="512" y="16" textAnchor="end" fill="#20333C" fontSize="10.5" fontWeight="600">HumanLayer: 300 satır altı</text>
+    <path d="M 80 270 C 140 160, 180 86, 245 80 S 360 124, 410 162 S 560 240, 740 280" fill="none" stroke="#0E1417" strokeWidth="2.6" strokeLinecap="round"/>
+    <circle cx="245" cy="80" r="8" fill="#E5FF59" stroke="#1A2300" strokeWidth="1.6"/>
+    <text x="260" y="76" fill="#1A2300" fontSize="12" fontWeight="700">tepe</text>
+    <line x1="80" y1="300" x2="740" y2="300" stroke="#20333C" strokeWidth="1.5"/>
+    <line x1="80" y1="20" x2="80" y2="300" stroke="#20333C" strokeWidth="1.5"/>
+    <text x="80" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">0</text>
+    <text x="190" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">100</text>
+    <text x="300" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">200</text>
+    <text x="410" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">300</text>
+    <text x="520" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">450</text>
+    <text x="630" y="318" textAnchor="middle" fill="#80807A" fontSize="11" fontVariantNumeric="tabular-nums">600</text>
+    <text x="410" y="346" textAnchor="middle" fill="#20333C" fontSize="11" fontWeight="600" letterSpacing="0.1em">AGENTS.md SATIR SAYISI</text>
+    <text x="72" y="276" textAnchor="end" fill="#80807A" fontSize="10.5">düşük</text>
+    <text x="72" y="164" textAnchor="end" fill="#80807A" fontSize="10.5">orta</text>
+    <text x="72" y="84" textAnchor="end" fill="#80807A" fontSize="10.5">yüksek</text>
+  </svg>
+  <div style={{display:'flex',justifyContent:'space-between',marginTop:'10px',fontSize:'11px',color:'#80807A',letterSpacing:'0.04em'}}>
+    <span>kaynak: HumanLayer "Writing a Good CLAUDE.md" + Liu et al. 2023 "Lost in the Middle"</span>
+    <span style={{fontStyle:'italic'}}>ajan performansı (göreli, yüzde)</span>
+  </div>
+</div>
 
 ## Kısır döngü
 

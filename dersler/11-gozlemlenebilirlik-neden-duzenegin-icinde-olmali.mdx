@@ -19,7 +19,65 @@ Gözlemlenebilirlik, Düzenek Mühendisliği (Harness Engineering) için sonrada
 
 ## İki paralel katman — şema
 
-<svg viewBox="0 0 900 420" role="img" aria-label="Runtime ve süreç gözlemlenebilirliği birlikte tek bir kanıtlı karar üretir" xmlns="http://www.w3.org/2000/svg" font-family="ui-sans-serif, system-ui, -apple-system, sans-serif">
+<div style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.08)',borderRadius:'20px',padding:'36px 44px',color:'#0E1417',fontFamily:'ui-sans-serif,system-ui,-apple-system,sans-serif',margin:'24px 0'}}>
+  <div style={{fontSize:'10px',letterSpacing:'0.2em',fontWeight:'700',color:'#80807A'}}>İKİ PARALEL KATMAN</div>
+  <div style={{fontSize:'19px',fontWeight:'600',marginTop:'6px'}}>Runtime "ne oldu"yu, süreç "neden bu yapıldı"yı taşır — ikisi birden karar üretir.</div>
+  <div style={{display:'grid',gridTemplateColumns:'1.6fr auto',gap:'24px',marginTop:'26px',alignItems:'stretch'}}>
+    <div style={{display:'flex',flexDirection:'column',gap:'14px'}}>
+      <div style={{background:'#E8E8E3',border:'1.5px solid #0E1417',borderRadius:'12px',padding:'18px 20px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KATMAN 1 — RUNTIME</div>
+            <div style={{fontSize:'16px',fontWeight:'700',marginTop:'2px'}}>ne oldu</div>
+          </div>
+          <div style={{fontSize:'10.5px',color:'#80807A',fontStyle:'italic'}}>otomatik · OTel GenAI semconv</div>
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginTop:'14px'}}>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'600',fontFamily:'ui-monospace,Menlo,Monaco,monospace'}}>trace</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'600',fontFamily:'ui-monospace,Menlo,Monaco,monospace'}}>span</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'600',fontFamily:'ui-monospace,Menlo,Monaco,monospace'}}>log</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'600',fontFamily:'ui-monospace,Menlo,Monaco,monospace'}}>event</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'600',fontFamily:'ui-monospace,Menlo,Monaco,monospace'}}>error context</span>
+        </div>
+      </div>
+      <div style={{background:'#E8E8E3',border:'1.5px solid #20333C',borderStyle:'dashed',borderRadius:'12px',padding:'18px 20px'}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center'}}>
+          <div>
+            <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A'}}>KATMAN 2 — SÜREÇ</div>
+            <div style={{fontSize:'16px',fontWeight:'700',marginTop:'2px'}}>neden bu yapıldı</div>
+          </div>
+          <div style={{fontSize:'10.5px',color:'#80807A',fontStyle:'italic'}}>elle ya da yarı-otomatik</div>
+        </div>
+        <div style={{display:'flex',flexWrap:'wrap',gap:'8px',marginTop:'14px'}}>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'500'}}>sprint sözleşmesi</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'500'}}>evaluator rubriği</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'500'}}>karar günlüğü</span>
+          <span style={{background:'#F0F0EB',border:'1px solid rgba(14,20,23,0.12)',borderRadius:'8px',padding:'6px 12px',fontSize:'11.5px',fontWeight:'500'}}>kabul kriterleri</span>
+        </div>
+      </div>
+    </div>
+    <div style={{display:'flex',flexDirection:'column',justifyContent:'center',alignItems:'stretch',gap:'12px',minWidth:'220px'}}>
+      <div style={{fontSize:'10px',letterSpacing:'0.16em',fontWeight:'700',color:'#80807A',textAlign:'center'}}>BİRLEŞİM</div>
+      <div style={{background:'#0E1417',color:'#F0F0EB',borderRadius:'12px',padding:'22px 18px',textAlign:'center'}}>
+        <div style={{fontSize:'13px',letterSpacing:'0.14em',color:'#A5A59F',fontWeight:'600'}}>KARAR</div>
+        <div style={{fontSize:'15px',marginTop:'6px',color:'#F0F0EB'}}>iki katmanın<br/>kanıt buluşması</div>
+      </div>
+      <div style={{background:'#E5FF59',border:'1.4px solid #1A2300',borderRadius:'12px',padding:'14px 16px',textAlign:'center'}}>
+        <div style={{fontSize:'10px',letterSpacing:'0.14em',color:'#1A2300',fontWeight:'700'}}>SONUÇ</div>
+        <div style={{fontSize:'14px',fontWeight:'700',color:'#1A2300',marginTop:'4px'}}>kanıtlı karar</div>
+        <div style={{fontSize:'10.5px',color:'#1A2300',marginTop:'4px',opacity:'0.86'}}>varyans düşer</div>
+      </div>
+    </div>
+  </div>
+  <div style={{marginTop:'22px',background:'#0E1417',color:'#F0F0EB',borderRadius:'10px',padding:'14px 18px',fontFamily:'ui-monospace,Menlo,Monaco,monospace',fontSize:'12px',lineHeight:'1.7'}}>
+    <div style={{color:'#A5A59F',fontSize:'10px',letterSpacing:'0.16em',fontWeight:'600',marginBottom:'8px'}}>ÖRNEK TRACE</div>
+    <div>trace: session-2026-05-19</div>
+    <div>└─ span: F03 cart/items</div>
+    <div>   ├─ span: lint                <span style={{color:'#80807A'}}>[pass]</span></div>
+    <div>   ├─ span: unit_test           <span style={{color:'#80807A'}}>[pass]</span></div>
+    <div>   └─ span: e2e                 <span style={{color:'#E5FF59'}}>[fail → retry → pass]</span></div>
+  </div>
+</div>{/*
   <rect x="0" y="0" width="900" height="420" fill="#E8E8E3" />
 
   <rect x="24" y="18" width="262" height="86" rx="6" fill="#F0F0EB" stroke="#C5C5C0" />
@@ -95,7 +153,7 @@ Gözlemlenebilirlik, Düzenek Mühendisliği (Harness Engineering) için sonrada
   <circle cx="716" cy="328" r="4" fill="#1A2300" />
   <text x="786" y="334" font-size="13" font-weight="700" fill="#1A2300" text-anchor="middle">kanıtlı karar</text>
   <text x="786" y="354" font-size="10" fill="#1A2300" text-anchor="middle">varyans düşer</text>
-</svg>
+</svg> */}
 
 ## Dört semptom
 
