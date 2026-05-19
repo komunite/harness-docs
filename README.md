@@ -75,26 +75,20 @@ mint broken-links
 ├── images/                         # OG cover + brand assets
 ├── logo/                           # marka logosu
 ├── style.css                       # marka paleti override
-├── docs.json                       # Mintlify konfigürasyonu + SEO/OG
-└── vercel.json                     # Vercel → Mintlify proxy
+└── docs.json                       # Mintlify konfigürasyonu + SEO/OG
 ```
 
 ## Deploy
 
-Site Mintlify Cloud'da host edilir; Vercel proxy görevi görür.
+Site **Mintlify Cloud**'da host edilir. Üretim deploy'ı yalnızca
+`main` dalına push olunca tetiklenir (otomatik).
 
-```
-harness.lokomotif.ai (Vercel) → [subdomain].mintlify.app (Mintlify CDN)
-```
+- Özel alan adı: [harness.lokomotif.ai](https://harness.lokomotif.ai)
+- TLS Mintlify tarafından otomatik
+- Search ve AI assistant entegre
 
-`vercel.json` içindeki `YOUR-MINTLIFY-SUBDOMAIN` placeholder'ını
-Mintlify dashboard'unuzun verdiği gerçek subdomain ile değiştirin.
-
-DNS:
-- `harness.lokomotif.ai` CNAME → `cname.vercel-dns.com`
-- TLS Vercel tarafından otomatik
-
-Detaylı adımlar [CONTRIBUTING.md](CONTRIBUTING.md#deploy) içinde.
+Mintlify yapılandırması [`docs.json`](docs.json) içinde; SEO ve Open
+Graph yapılandırması `seo.metatags` bloğunda.
 
 ## Katkı
 

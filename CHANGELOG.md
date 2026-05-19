@@ -8,8 +8,16 @@ Format [Keep a Changelog](https://keepachangelog.com/) ve sürümleme
 ## [Unreleased]
 
 ### Eklenenler
-- Mintlify Cloud + Vercel proxy ile production deploy zinciri.
-- `harness.lokomotif.ai` özel alan adı yapılandırması.
+- Mintlify Cloud üzerinde production deploy + `harness.lokomotif.ai`
+  özel alan adı.
+
+### Değişenler
+- Vercel proxy yaklaşımı bırakıldı; Mintlify Cloud doğrudan host eder.
+
+### Düzeltmeler
+- CI: MDX safety scan ve broken-links artık `skill-pack/` ile
+  `projeler/*/{starter,solution}/` workspace dosyalarını atlıyor;
+  bu dizinler Mintlify tarafından sunulmuyor.
 
 ### Değişenler
 - _henüz yok_
@@ -60,9 +68,8 @@ Format [Keep a Changelog](https://keepachangelog.com/) ve sürümleme
 - `og:locale=tr_TR`.
 
 **Deploy**
-- `vercel.json` ile Vercel → Mintlify Cloud proxy.
-- Güvenlik header'ları (X-Frame-Options, X-Content-Type-Options,
-  Referrer-Policy, Permissions-Policy).
+- Mintlify Cloud üzerinde host edilen üretim sitesi.
+- `harness.lokomotif.ai` özel alan adı, otomatik TLS.
 
 **Açık kaynak hijyeni**
 - CC0 1.0 Universal lisansı.

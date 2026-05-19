@@ -18,6 +18,6 @@ Mimari ve sozleşme kararları. Her madde tarih + gerekce icerir.
   uzerinde sistematik olarak fazla guvenli kalibrasyon uretiyor.
 - 2026-05-15 — Hata mesajlari **ERROR / WHY / FIX** formatinda. Sebep:
   hata mesaji da bir prompt'tur; ajan bunu okuyup eyleme dokecek.
-- 2026-05-16 — PUT /notes/{nid} rowcount==0 icin 404 doner. Sebep: e2e
+- 2026-05-16 — `PUT /notes/{nid}` rowcount==0 icin 404 doner. Sebep: e2e
   test_put_missing_id_returns_404 onceki davranisi reddetti; FIX adimi
   uygulandi.

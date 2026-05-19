@@ -131,15 +131,11 @@ Bir güvenlik açığı bulduysan **kamuya açık issue açma**.
 
 ## Deploy
 
-Site Mintlify Cloud'da host edilir; Vercel proxy rolü oynar.
+Site **Mintlify Cloud**'da host edilir. Özel alan adı:
+[harness.lokomotif.ai](https://harness.lokomotif.ai). Üretim deploy'ı
+yalnızca `main` dalına push olunca tetiklenir (otomatik).
 
-```
-harness.lokomotif.ai (Vercel)
-  → rewrite → [subdomain].mintlify.app (Mintlify CDN)
-```
-
-Üretim deploy'ı yalnızca `main` dalına push olunca tetiklenir
-(otomatik). Production'a doğrudan dokunma; her zaman PR.
+Production'a doğrudan dokunma; her zaman PR.
 
 ## Teşekkür
 

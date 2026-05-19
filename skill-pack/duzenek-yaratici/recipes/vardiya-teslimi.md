@@ -47,7 +47,7 @@ Bu oturumda bağlayıcı bir karar verdin mi? Karar üç soruyu karşılar:
 - Bu seçim ileride değişirse maliyet üretir mi?
 - Hatırlanması gereken bir kısıt var mı?
 
-Üçü "evet" ise yeni bir giriş aç: tarih + başlık + neden + reddedilen alternatif + kısıt. Eski girişler kalır; bu karar geri çekilirse silmek yerine "iptal edildi: bkz. <yeni tarih>" notu ekle.
+Üçü "evet" ise yeni bir giriş aç: tarih + başlık + neden + reddedilen alternatif + kısıt. Eski girişler kalır; bu karar geri çekilirse silmek yerine `iptal edildi: bkz. <yeni-tarih>` notu ekle.
 
 ### 4. session_close.sh
 

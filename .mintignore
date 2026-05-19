@@ -8,3 +8,17 @@ drafts/
 
 # Skill pack landing — currently hidden from public docs
 yetenekler/
+
+# Skill paketinin kendisi: kullanıcı kopyala-kullan; Mintlify sunmaz
+skill-pack/
+
+# Proje workspace dosyaları: git clone + yerel çalıştırma; Mintlify render etmez
+projeler/*/starter/
+projeler/*/solution/
+
+# Topluluk dosyaları (kök) — Mintlify zaten ignore eder ama açık olalım
+SECURITY.md
+CODE_OF_CONDUCT.md
+CLAUDE.md
+MEMORY.md
+.github/

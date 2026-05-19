@@ -20,7 +20,7 @@ burada yaşar.
 | 5 | 2026-05-19 | [Terim migration: aparat → düzenek](#5-2026-05-19--terim-migration-aparat--duzenek) |
 | 6 | 2026-05-19 | [Kütüphane şablonları (8 sayfa)](#6-2026-05-19--kutuphane-sablonlari-8-sayfa) |
 | 7 | 2026-05-19 | [Proje kodları (6 starter/solution)](#7-2026-05-19--proje-kodlari-6-startersolution) |
-| 8 | 2026-05-19 | [Skill paketi + SEO/OG + Vercel](#8-2026-05-19--skill-paketi--seoog--vercel) |
+| 8 | 2026-05-19 | [Skill paketi + SEO/OG + deploy hazırlığı](#8-2026-05-19--skill-paketi--seoog--deploy-hazirligi) |
 | 9 | 2026-05-19 | [Açık kaynak hijyeni + CLAUDE/MEMORY](#9-2026-05-19--acik-kaynak-hijyeni--claudememory) |
 
 ## Terim haritası
@@ -56,15 +56,10 @@ sonradan elle düzeltildi.
 
 ## Sıradaki adımlar
 
-- [ ] Mintlify Cloud subdomain'i öğrenince `vercel.json` içindeki
-  `YOUR-MINTLIFY-SUBDOMAIN` placeholder'ını gerçek subdomain ile
-  değiştir + commit + push.
-- [ ] Vercel'de proje oluştur, DNS'te `harness.lokomotif.ai` →
-  `cname.vercel-dns.com` CNAME ekle.
-- [ ] Mintlify dashboard'da custom domain olarak da `harness.lokomotif.ai`
-  ayarla (OG / sitemap için).
+- [x] Mintlify Cloud üzerinde deploy edildi
+  (`harness.lokomotif.ai`); Vercel proxy yaklaşımı bırakıldı.
 - [ ] OG image production'da çalıştığını kontrol et — `og:image`
-  meta'sındaki URL artık `harness.lokomotif.ai/images/og-cover.png`
+  meta'sındaki URL `harness.lokomotif.ai/images/og-cover.png`
   olmalı; debugger: https://www.opengraph.xyz/url/
 - [ ] `mint validate` ve `mint broken-links`'i CI'da koştur (workflow
   bunu yapıyor; ilk PR'da görüleceğiz).
@@ -360,7 +355,7 @@ somut karşılığı.
 
 ---
 
-## 8. 2026-05-19 — Skill paketi + SEO/OG + Vercel
+## 8. 2026-05-19 — Skill paketi + SEO/OG + deploy hazırlığı
 
 **Hedef**: harness-creator (Düzenek Yaratıcı) skill paketi + arama
 motorları için SEO + sosyal paylaşımlar için OG image + production
@@ -416,18 +411,13 @@ logosu** (logo/light.svg'den) embed edildi. URL placeholder
 `yetenekler/duzenek-yaratici` sayfası gizlendiği için OG image'daki
 "harness-creator skill" CTA chip → "Türkçe müfredat" oldu.
 
-### Vercel + Mintlify
+### Deploy
 
-Mintlify hosted platform; Vercel proxy:
-
-```
-harness.lokomotif.ai (Vercel)
-  → rewrite → [subdomain].mintlify.app (Mintlify CDN)
-```
-
-`vercel.json` placeholder ile hazırlandı (`YOUR-MINTLIFY-SUBDOMAIN`).
-Security header'lar dahil (X-Frame-Options, X-Content-Type-Options,
-Referrer-Policy, Permissions-Policy).
+Önce Vercel'i proxy olarak düşündük (vercel.json hazırlandı), ama
+kullanıcı doğrudan Mintlify Cloud üzerinde deploy ettiğini bildirdi.
+Vercel adımı bırakıldı; `vercel.json` silindi. Mintlify Cloud doğrudan
+host eder, `harness.lokomotif.ai` özel alan adı Mintlify dashboard
+üzerinden ayarlandı, TLS otomatik.
 
 ### Yetenekler sayfası gizlendi
 

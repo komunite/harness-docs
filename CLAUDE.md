@@ -8,9 +8,9 @@ gerektiğini söyler.
 
 **Düzenek Mühendisliği (Harness Engineering)** — AI kod ajanlarını
 güvenilir kılan çevreyi tasarlayan Türkçe açık kaynak müfredat.
-12 ders + 6 proje + 8 şablon + skill paketi. Mintlify Cloud + Vercel
-proxy ile [harness.lokomotif.ai](https://harness.lokomotif.ai)
-adresinde host edilir.
+12 ders + 6 proje + 8 şablon + skill paketi. **Mintlify Cloud** üzerinde
+[harness.lokomotif.ai](https://harness.lokomotif.ai) adresinde host
+edilir; `main`'e push → otomatik deploy.
 
 ## Hızlı başlangıç
 
@@ -64,7 +64,6 @@ images/                           OG cover + brand assets
 logo/                             marka logosu (light/dark)
 style.css                         marka paleti override (paper/ink/lime)
 docs.json                         Mintlify konfigürasyonu + SEO/OG
-vercel.json                       Vercel → Mintlify proxy
 .mintignore                       Mintlify'ın görmezden geleceği yollar
 ```
 
@@ -76,7 +75,7 @@ Talimat ekleyeceğin alana göre **önce şu dosyaları oku**:
 | --- | --- |
 | Yeni içerik / ders güncelleme | [CONTRIBUTING.md](CONTRIBUTING.md), [MEMORY.md](MEMORY.md) |
 | Stil / palet değişikliği | [style.css](style.css), [MEMORY.md — Faz: marka paleti](MEMORY.md#2026-05-18--mintlify-kurulumu-ve-marka-paleti) |
-| Deploy / DNS / Vercel | [README.md — Deploy](README.md#deploy), [vercel.json](vercel.json) |
+| Deploy / DNS | [README.md — Deploy](README.md#deploy) — Mintlify Cloud, `main`'e push otomatik |
 | Skill paketi | [skill-pack/duzenek-yaratici/SKILL.md](skill-pack/duzenek-yaratici/SKILL.md) |
 | Güvenlik konuları | [SECURITY.md](SECURITY.md) |
 | Davranış | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |

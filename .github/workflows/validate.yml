@@ -56,27 +56,41 @@ jobs:
           import re, glob, sys
 
           hazards = []
+          # Mintlify yalnız projeler/*.mdx, dersler/*.mdx, kutuphane/*.mdx,
+          # index.mdx ve yetenekler/*.mdx'i sunar. Diğer markdown dosyaları
+          # (skill-pack, projeler workspace, kök community dosyaları) Mintlify
+          # tarafından parse edilmediği için MDX güvenlik taraması da onlara
+          # uygulanmaz.
+          SKIP_PREFIXES = (
+              'skill-pack/',
+              '.github/',
+              'node_modules/',
+          )
+          # projeler/<N>/starter/ ve projeler/<N>/solution/ kullanıcı workspace
+          # dosyalarıdır; Mintlify değil git clone ile tüketilir.
+          import re
+          WORKSPACE_RE = re.compile(r'^projeler/\d+/(starter|solution)/')
+
+          SKIP_FILES = {
+              'README.md',
+              'LICENSE',
+              'CHANGELOG.md',
+              'CONTRIBUTING.md',
+              'CODE_OF_CONDUCT.md',
+              'SECURITY.md',
+              'CLAUDE.md',
+              'MEMORY.md',
+          }
+
           for path in sorted(
               glob.glob('**/*.mdx', recursive=True)
               + glob.glob('**/*.md', recursive=True)
           ):
-              # skip skill-pack templates (they intentionally contain placeholders)
-              if 'skill-pack/' in path:
+              if any(path.startswith(p) for p in SKIP_PREFIXES):
                   continue
-              # skip community files and project READMEs
-              if any(
-                  path.endswith(name)
-                  for name in (
-                      'README.md',
-                      'LICENSE',
-                      'CHANGELOG.md',
-                      'CONTRIBUTING.md',
-                      'CODE_OF_CONDUCT.md',
-                      'SECURITY.md',
-                      'CLAUDE.md',
-                      'MEMORY.md',
-                  )
-              ):
+              if WORKSPACE_RE.match(path):
+                  continue
+              if any(path.endswith(name) for name in SKIP_FILES):
                   continue
               try:
                   text = open(path, encoding='utf-8').read()
