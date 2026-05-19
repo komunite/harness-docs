@@ -1,0 +1,110 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validate-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  mintlify:
+    name: Mintlify validate + broken links
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Mintlify CLI
+        run: npm install -g mint
+
+      - name: Validate docs structure
+        run: mint validate
+
+      - name: Check internal links
+        run: mint broken-links
+
+  mdx-safety:
+    name: MDX prose safety scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Scan for unsafe MDX patterns
+        run: |
+          python3 <<'PY'
+          import re, glob, sys
+
+          hazards = []
+          for path in sorted(
+              glob.glob('**/*.mdx', recursive=True)
+              + glob.glob('**/*.md', recursive=True)
+          ):
+              # skip skill-pack templates (they intentionally contain placeholders)
+              if 'skill-pack/' in path:
+                  continue
+              # skip community files and project READMEs
+              if any(
+                  path.endswith(name)
+                  for name in (
+                      'README.md',
+                      'LICENSE',
+                      'CHANGELOG.md',
+                      'CONTRIBUTING.md',
+                      'CODE_OF_CONDUCT.md',
+                      'SECURITY.md',
+                      'CLAUDE.md',
+                      'MEMORY.md',
+                  )
+              ):
+                  continue
+              try:
+                  text = open(path, encoding='utf-8').read()
+              except Exception:
+                  continue
+              in_code = False
+              for i, line in enumerate(text.split('\n'), start=1):
+                  s = line.lstrip()
+                  if s.startswith('```'):
+                      in_code = not in_code
+                      continue
+                  if in_code:
+                      continue
+                  non_code = re.sub(r'`[^`\n]+`', '', line)
+                  # < + digit/%/non-letter (excluding /, !, whitespace)
+                  for m in re.finditer(r'<([^a-zA-Z/!\s])', non_code):
+                      hazards.append((path, i, f"<{m.group(1)}", line.strip()[:120]))
+                  # raw {…} in prose (allow JSX prop patterns like cols={N})
+                  for m in re.finditer(r'\{[^}\n]+\}', non_code):
+                      ctx = non_code[max(0, m.start() - 30) : m.end()]
+                      if 'cols=' in ctx or 'href=' in ctx:
+                          continue
+                      hazards.append((path, i, f"curly {m.group(0)[:30]}", line.strip()[:120]))
+
+          if hazards:
+              print(f"Unsafe MDX patterns found: {len(hazards)}")
+              for p, ln, h, snippet in hazards[:20]:
+                  print(f"  {p}:{ln}  [{h}]  {snippet}")
+              sys.exit(1)
+          print("MDX prose safety: clean.")
+          PY

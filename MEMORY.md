@@ -1,0 +1,479 @@
+# MEMORY.md
+
+Bu dosya projenin **yapım hafızası**dır. Yeni bir oturumun ilk yapması
+gereken şey: en son fazı okumak, "şu an proje neresi" sorusuna cevap
+vermek. Her oturum kapanışında ya mevcut fazı tamamlamalı ya yeni
+bir faz eklemelidir.
+
+`CLAUDE.md` "kuralları" tutar; bu dosya **gerekçeleri** ve **hangi
+kararın neden alındığını** tutar. Compaction'ın kaybettiği "neden"
+burada yaşar.
+
+## Faz endeksi
+
+| # | Tarih | Faz |
+| --- | --- | --- |
+| 1 | 2026-05-18 | [Mintlify kurulumu ve marka paleti](#1-2026-05-18--mintlify-kurulumu-ve-marka-paleti) |
+| 2 | 2026-05-18 | [12 ders ilk taslak (skeleton)](#2-2026-05-18--12-ders-ilk-taslak-skeleton) |
+| 3 | 2026-05-18 | [Multi-source kalite pas'ı (12 ders)](#3-2026-05-18--multi-source-kalite-pasi-12-ders) |
+| 4 | 2026-05-18 | [Üç kalite kapısı (tutarlılık + dil + akış)](#4-2026-05-18--uc-kalite-kapisi-tutarlilik--dil--akis) |
+| 5 | 2026-05-19 | [Terim migration: aparat → düzenek](#5-2026-05-19--terim-migration-aparat--duzenek) |
+| 6 | 2026-05-19 | [Kütüphane şablonları (8 sayfa)](#6-2026-05-19--kutuphane-sablonlari-8-sayfa) |
+| 7 | 2026-05-19 | [Proje kodları (6 starter/solution)](#7-2026-05-19--proje-kodlari-6-startersolution) |
+| 8 | 2026-05-19 | [Skill paketi + SEO/OG + Vercel](#8-2026-05-19--skill-paketi--seoog--vercel) |
+| 9 | 2026-05-19 | [Açık kaynak hijyeni + CLAUDE/MEMORY](#9-2026-05-19--acik-kaynak-hijyeni--claudememory) |
+
+## Terim haritası
+
+| Türkçe | İngilizce | Kullanım |
+| --- | --- | --- |
+| **Düzenek Mühendisliği (Harness Engineering)** | Harness Engineering | Disiplin adı. Her geçtiğinde parantez içinde İngilizce karşılığıyla birlikte. |
+| **düzenek** | harness | Bütün sistem. İlk geçişte `düzenek (harness)`; sonra `düzenek`. |
+| **aparat** | element / component | Düzenek içindeki bir bileşen (talimat dosyası, durum dosyası, doğrulama scripti). |
+| **vardiya alımı / vardiya teslimi** | clock-in / clock-out | Oturum açılış/kapanış rutinleri. |
+| **bilgi görünürlüğü boşluğu** | knowledge visibility gap | Proje bilgisinin repoda yazılı olmayan oranı. |
+| **doğrulama boşluğu** | verification gap | Ajanın doğrulamadan "tamamlandı" demesi (en yaygın anti-örüntü). |
+| **erken zafer ilanı** | premature completion declaration | Aynı boşluğun tipik dışavurumu. |
+| **soğuk başlangıç** | cold-start | Yeni oturum, repo'yu sıfırdan okuyor. |
+| **sıcak başlangıç** | hot-start | Yeni oturum, init artefaktları sayesinde dakikalar içinde bağlam kuruyor. |
+| **temiz teslim** | clean handoff / clean exit | Oturum sonunda repo'nun beş boyutta temiz olması. |
+| **beş aparat** | five subsystems | Talimat, araç, ortam, durum, geri bildirim. |
+
+### Terim seçimi gerekçesi
+
+Önce **aparat** hem disiplin (Aparat Mühendisliği) hem bütün (aparat) hem
+de element için kullanılıyordu. Karışıklık ortaya çıkınca üç düzeyi ayırmak
+için **2026-05-19**'da migration yapıldı:
+
+- Disiplin = **Düzenek Mühendisliği (Harness Engineering)**
+- Bütün = **düzenek**
+- Element = **aparat**
+
+Migration script'i (Python) 170 word-form replacement + 28 alt sistem → aparat
++ 16 slug rename uyguladı. Tüm Türkçe ekler (aparatın → düzeneğin, aparatı →
+düzeneği, vb.) ele alındı. Bir partial-match bug'ı (aparatıni → aparatını)
+sonradan elle düzeltildi.
+
+## Sıradaki adımlar
+
+- [ ] Mintlify Cloud subdomain'i öğrenince `vercel.json` içindeki
+  `YOUR-MINTLIFY-SUBDOMAIN` placeholder'ını gerçek subdomain ile
+  değiştir + commit + push.
+- [ ] Vercel'de proje oluştur, DNS'te `harness.lokomotif.ai` →
+  `cname.vercel-dns.com` CNAME ekle.
+- [ ] Mintlify dashboard'da custom domain olarak da `harness.lokomotif.ai`
+  ayarla (OG / sitemap için).
+- [ ] OG image production'da çalıştığını kontrol et — `og:image`
+  meta'sındaki URL artık `harness.lokomotif.ai/images/og-cover.png`
+  olmalı; debugger: https://www.opengraph.xyz/url/
+- [ ] `mint validate` ve `mint broken-links`'i CI'da koştur (workflow
+  bunu yapıyor; ilk PR'da görüleceğiz).
+- [ ] `yetenekler/duzenek-yaratici` sayfasını ne zaman geri açacağına
+  karar ver: skill paketinin Claude Code Skills marketplace'inde
+  yayınlanması güzel bir tetikleyici.
+- [ ] (Uzun vade) İngilizce çeviri, ayrı `en/` dizini olarak.
+
+---
+
+## 1. 2026-05-18 — Mintlify kurulumu ve marka paleti
+
+**Hedef**: Boş repo'dan Türkçe Mintlify docs sitesi.
+
+### Yapıldı
+
+- `mintlify/starter` klonu üzerine inşa edildi.
+- Lokomotif.ai logosu `logo/{light,dark}.svg` olarak eklendi.
+- Marka paleti CSS override'ı yazıldı (`style.css`):
+  - **Surfaces**: paper `#E8E8E3`, paper-elev `#F0F0EB`
+  - **Text**: ink `#0E1417`, slate `#20333C`
+  - **Accent**: electric lime `#E5FF59`, accent-ink `#1A2300`
+  - **Mute ladder**: 50–600 (sıcak gri)
+  - **Rule**: `rgba(14, 20, 23, 0.08)` hairline
+- Callout, kart, kod bloğu, scrollbar, sidebar fade — hepsi paletle uyumlu.
+- Türkçe terim konvansiyonu: "Aparat Mühendisliği (Harness Engineering)"
+  her geçişte parantezli (sonradan 5. fazda değişti).
+
+### Önemli karar
+
+Mintlify, ana yüzey renklerini `--background-light` ve `--background-dark`
+CSS değişkenleri üzerinden **RGB triplet** (virgülsüz) olarak yönetiyor.
+Tailwind v3 modern color syntax: `rgb(var(--background-light) / <alpha>)`.
+
+Önce her sınıfı (`bg-background-light`, `bg-background-light/95`,
+`from-background-light`, `data-[is-opaque]:bg-background-light`) tek tek
+override etmeye çalıştık — kırılgan, eksik. **Çözüm**: değişkeni
+kaynağında override et:
+
+```css
+:root {
+  --background-light: 232 232 227;   /* paper */
+  --background-dark:  14 20 23;      /* dark paper */
+}
+```
+
+Tek atışta tüm opaklık varyantları doğru renge düşer.
+
+### Yan etki
+
+Sidebar üst fade gradient'i (`from-background-light`) otomatik palete
+döndü. Callout (Note) içindeki `[&_kbd]:bg-background-light` arbitrary
+variant'i, başlangıçta greedy `[class*="bg-background-light"]` selector
+ile yanlışlıkla yakalanmıştı; explicit liste'ye dönüldü.
+
+---
+
+## 2. 2026-05-18 — 12 ders ilk taslak (skeleton)
+
+**Hedef**: 12 dersin yapısı + temel içeriği yazılsın.
+
+### Yapıldı
+
+Tek tek elle yazıldı; her ders: hook → tez → anti-örüntü → mekanizma →
+pratik → veri → kontrol listesi → müfredat içindeki yer.
+
+Ders başlıkları (ilk versiyonda "Ders N — Why X" formundaydı):
+
+01. Yetkin Ajanlar Neden Hâlâ Başarısız Oluyor
+02. Aparat (Harness) Gerçekte Nedir
+03. Repo Neden Hakikat Kaynağı Olmalı
+04. Tek Büyük Talimat Dosyası Neden Başarısız Olur
+05. Uzun Süren Görevler Neden Süreklilik Kaybeder
+06. Başlangıç (Initialization) Neden Kendi Fazına Sahip Olmalı
+07. Ajanlar Neden Aşırıya Kaçar ve Yarım Bırakır
+08. Özellik Listeleri Neden Aparatın Temel Bileşenleridir
+09. Ajanlar Neden Erken Zafer İlan Eder
+10. Uçtan Uca Test Neden Sonuçları Değiştirir
+11. Gözlemlenebilirlik Neden Aparatın İçinde Olmalı
+12. Her Oturum Neden Temiz Bir Durum Bırakmalı
+
+Bu noktada içerik orijinal kaynağa (walkinglabs/learn-harness-engineering)
+yakın ve birincil kaynak tek (oradan türetilmiş).
+
+### Sorun
+
+11. ders'in tablosunda `<%80` yazılmıştı → MDX parser bunu JSX tag
+başlangıcı + geçersiz isim sayıp **tüm dosyanın parse'ını iptal etti**;
+title okunamadı; sidebar slug fallback'ine düştü
+(`11 gozlemlenebilirlik neden aparatin icinde olmali`). Düzeltme: `%80
+altı`. Bu olay MDX güvenlik kuralının doğmasına yol açtı.
+
+---
+
+## 3. 2026-05-18 — Multi-source kalite pas'ı (12 ders)
+
+**Hedef**: Tek kaynaktan çok kaynağa, dünya standardı kalite.
+
+### Yapıldı
+
+12 paralel subagent dispatch edildi. Her ajan:
+
+- 5 birincil kaynağı WebFetch ile çekti
+- Cross-check'lenmiş içerik üretti
+- Kaynaklarını body'de attribution ile sundu
+- Doğrulayamadığı sayıyı **çıkardı veya yumuşattı** (örn. OpenAI Codex
+  "1M satır" iddiası kaynak erişilemez olduğu için kaldırıldı)
+
+Yeni başlıklar (kitap bölümü gibi, daha az direkt çeviri kokulu):
+
+01. Aynı Model, Farklı Sonuç
+02. Aparatın Anatomisi
+03. Repo: Hakikat Kaynağı
+04. Şişmiş Talimat Sendromu
+05. Vardiya Defteri
+06. Önce Temel, Sonra Duvar
+07. WIP=1 Disiplini
+08. Özellik Listesi Bir Primitiftir
+09. Erken Zafer İlanı
+10. Üç Katmanlı Doğrulama Kapısı
+11. Aparatın Gözleri (sonradan: Düzeneğin Gözleri)
+12. Temiz Teslim
+
+### Yedirilen birincil kaynaklar
+
+- Anthropic: *Effective Harnesses for Long-Running Agents*, *Harness
+  Design for Long-Running Apps*, *Building Effective Agents*,
+  *Effective Context Engineering*, *Infrastructure Noise*,
+  *Demystifying Evals*, *Multi-Agent Research System*, *Writing Tools
+  for Agents*, *Code Execution with MCP*, *Claude Code Sandboxing*
+- OpenAI: *Harness Engineering for Codex*
+- HumanLayer: *Skill Issue*, *Writing a Good CLAUDE.md*, *12-Factor
+  Agents*, *Context-Efficient Backpressure*
+- Manus: *Context Engineering Lessons*
+- Thoughtworks (Martin Fowler): *Harness Engineering*, *Context
+  Engineering for Coding Agents*, *Anchoring to Reference*, *Assessing
+  Internal Quality*, *SDD-3-tools*
+- LangChain: *Anatomy of an Agent Harness*, *Improving Deep Agents
+  with Harness Engineering*
+- OpenHands: *Learning to Verify*, *Context Condensation*, *Evaluating
+  Agent Skills*
+- Inngest: *Your Agent Needs a Harness*
+- OpenTelemetry: GenAI semconv
+- Inspect AI (UK AISI)
+- ghuntley: Ralph pattern
+- Liu et al. 2023: *Lost in the Middle*
+
+Her ders kaynaklarını metin içinde named attribution ile sunuyor.
+
+---
+
+## 4. 2026-05-18 — Üç kalite kapısı (tutarlılık + dil + akış)
+
+**Hedef**: 12 paralel ajan farklı sesle yazdığı için yan yana okunduğunda
+tutarsızlık olabilir. Üç pas:
+
+### A) Cross-consistency sweep
+
+- 3 kanonik ifade hatası düzeltildi ("aparat Mühendisliği" →
+  "Aparat Mühendisliği")
+- 9 tekrarlanan `(harness)` glossu silindi (her derste sadece ilk
+  geçişte kalacak)
+- 7 `features.md` → `features.json` uyumu (Ders 06, 07'de — Ders 08
+  şemasıyla)
+
+### B) Türkçe prose editor (18 düzeltme)
+
+- Ondalık ayraç: prose'da virgül (`%90,2`), version string'lerde nokta
+  (`Python 3.11`)
+- Anglicism temizliği: "Slack thread'inde" → "iş parçacığında",
+  "commit'lendi" → "commit edildi", "pile of files" → "dosya yığını"
+- Sözcük sırası: "Doksan beş yüzde üstü" → "Yüzde doksan beş üstü"
+
+### C) Pedagojik akış audit
+
+- **Tüm 12 "Müfredat içindeki yeri" bölümü yeniden yazıldı** —
+  formülaik şablon yerine doğal geçiş cümleleri
+- Ders 08'deki 4-durum tablosu trim'lendi: Ders 07'nin listesini
+  tekrar yerine pointer + formalleşme
+- Ders 02 ve Ders 10'a bridge cümleleri eklendi
+
+Bu pas'tan sonra müfredat **dünya standardı kalite**ye yakın bir
+baseline.
+
+---
+
+## 5. 2026-05-19 — Terim migration: aparat → düzenek
+
+**Hedef**: Disiplin / bütün / element ayrımını netleştir.
+
+### Önce vs sonra
+
+| Anlam | Önce | Sonra |
+| --- | --- | --- |
+| Disiplin | Aparat Mühendisliği (Harness Engineering) | **Düzenek Mühendisliği (Harness Engineering)** |
+| Bütün | aparat | **düzenek** |
+| Element | (yoktu — alt sistem deniyordu) | **aparat** |
+
+### Sebep
+
+"Aparat" hem disiplin hem bütün için kullanılınca yazılı metinde
+hangisi olduğu belirsizleşiyordu. Yeni şema her seviyeyi ayrı sözcükle
+tutuyor: **düzenek = bütün**, **aparat = parça**.
+
+### Migration sonuçları
+
+- **170** word-form replacement (`aparat → düzenek`, tüm Türkçe ekleriyle)
+- **28** `alt sistem → aparat` (tüm ekler)
+- **16** slug update (`02-aparat-gercekte-nedir` →
+  `02-duzenek-gercekte-nedir`, vb.)
+- **5** dosya rename
+- **1** partial-match bug (aparatıni → aparatını) elle düzeltildi
+
+### Sidebar başlıkları
+
+- 02 "Aparatın Anatomisi" → **Düzeneğin Anatomisi**
+- 11 "Aparatın Gözleri" → **Düzeneğin Gözleri**
+
+Diğer 10 ders başlığı zaten "aparat" içermediği için değişmedi.
+
+---
+
+## 6. 2026-05-19 — Kütüphane şablonları (8 sayfa)
+
+**Hedef**: Her aparat tipi için kopyala-kullan şablon.
+
+### Yapıldı
+
+8 paralel subagent ile her biri 1 sayfa yazdı; sırasıyla:
+
+1. `AGENTS.md` — talimat aparatı (router + sıkı kısıtlar)
+2. `PROGRESS.md & DECISIONS.md` — durum aparatları
+3. `Makefile & init.sh` — ortam aparatları
+4. `features.json` — geri bildirim primitifi
+5. `verifier.md & Definition of Done` — doğrulama sözleşmesi
+6. Sprint sözleşmesi & rubrik — süreç gözlemlenebilirliği
+7. OpenTelemetry İz — runtime gözlemlenebilirliği
+8. Session Close & Quality Doc — kapanış aparatları
+
+Her sayfa: hook → ne işe yarar → şablon (kopyala-kullan) → konvansiyon
+→ özelleştirme → otomasyona bağlama → ilgili dersler.
+
+Birincil kaynaklara dayalı her sayfa (OTel için
+opentelemetry.io/docs/specs/semconv/gen-ai, AGENTS.md için
+agentsmd/agents.md vb).
+
+---
+
+## 7. 2026-05-19 — Proje kodları (6 starter/solution)
+
+**Hedef**: Her dersi gerçek çalıştırılabilir koda dönüştür.
+
+### Mimari karar
+
+Tüm 6 proje **aynı Notes API** üzerinde inşa edildi (FastAPI + SQLite +
+Bearer auth). Her proje önceki projenin solution'ı + dersinin
+uygulaması.
+
+```
+P01 starter (sıfır)
+P01 solution = baseline + AGENTS.md + Makefile + smoke test
+P02 starter = P01 solution + scattered docs (kötü)
+P02 solution = P01 solution + router AGENTS.md + topic docs
+P03 starter = P02 solution + half-done search endpoint
+P03 solution = P02 solution + PROGRESS + DECISIONS + init.sh + routines
+P04 starter = P03 solution + features.md (free-form)
+P04 solution = P03 solution + features.json + verify.sh + WIP=1
+P05 starter = P04 solution + executor.md + PUT-404 bug
+P05 solution = P04 solution + verifier.md + three_layer_check + DoD
+P06 starter = P05 solution + broken OTel attempt
+P06 solution = P05 solution + full OTel + Quality.md + session_close + cleanup
+```
+
+### Sonuç
+
+6 ajan paralel, 6 proje. Toplam **167 dosya** (`projeler/0N/starter` ve
+`projeler/0N/solution` altında).
+
+Her solution kendi smoke testini geçiyor:
+- P01: 4/4
+- P02: 4/4
+- P03: 2/2 + 2 bilinçli skip
+- P04: 6/6 + verify.sh WIP=1 enforce
+- P05: 14/14 (lint + 10 unit + 4 e2e); PUT-404 bug fix doğrulandı
+- P06: 8/8 + OTel JSON çıktısı stdout'a düşüyor
+
+### Pedagojik mekanizma
+
+Project 05'in kasıtlı bug'ı (`PUT /notes/{nid}` `rowcount==0` kontrolü
+yok) — tek başına executor'un kaçırdığı, sadece **verifier rolü +
+e2e test** ile yakalanabilen bir defekt. "Erken zafer ilanı" dersinin
+somut karşılığı.
+
+---
+
+## 8. 2026-05-19 — Skill paketi + SEO/OG + Vercel
+
+**Hedef**: harness-creator (Düzenek Yaratıcı) skill paketi + arama
+motorları için SEO + sosyal paylaşımlar için OG image + production
+deploy hazırlığı.
+
+### Skill paketi
+
+`skill-pack/duzenek-yaratici/` altında 25 dosya:
+
+```
+SKILL.md            README.md       INDEX.md
+workflow/   01-taslak  02-test  03-degerlendir  04-iyilestir
+recipes/    soguk-baslangic  vardiya-teslimi  verifier-kurulumu
+            gozlemlenebilirlik  temiz-teslim
+templates/  AGENTS.md.template  PROGRESS.md.template  ... (8 tane)
+scripts/    verify.sh  three_layer_check.sh  session_close.sh  cleanup.sh
+            (hepsi `set -euo pipefail`, idempotent, chmod +x)
+memory/PATTERNS.md
+```
+
+Müfredat döngüsü kapandı: **dersler → kütüphane şablonları →
+çalıştırılabilir skill paketi**. Reader artık
+`cp templates/* my-repo/` ile dersi koda dönüştürebilir.
+
+### SEO + Open Graph
+
+`docs.json` içinde `seo.metatags` bloğu eklendi:
+
+- `og:site_name`, `og:type`, `og:locale=tr_TR`
+- `og:image=/images/og-cover.png` (w 1200, h 630, alt yazısıyla)
+- `twitter:card=summary_large_image`, `twitter:site=@lokomotifai`
+- `keywords`, `author`, `theme-color`, `robots`, `googlebot`
+  (max-image-preview:large), `referrer`, `format-detection`
+
+Page title + description'ları Mintlify otomatik `og:title` ve
+`og:description`'a yansıtıyor; ek frontmatter gerekmedi.
+
+Index page title önce site adıyla aynıydı → `"X - X"` duplikasyonu;
+**düzeltildi**: title = "Açık kaynak müfredat",
+sidebarTitle = "Genel Bakış".
+
+### OG image
+
+`images/og-cover.html` (paper background + hairline grid + paper-elev
+çerçeve + ink başlık + slate alt başlık + lime accent + Lokomotif.ai
+gerçek logosu + chips + URL) → chrome-headless-shell ile
+`images/og-cover.png` olarak render (1200×630, ~84 KB).
+
+İlk versiyonda custom marka SVG vardı; sonradan **gerçek Lokomotif.ai
+logosu** (logo/light.svg'den) embed edildi. URL placeholder
+`harness-docs.lokomotif.ai` → `harness.lokomotif.ai`.
+
+`yetenekler/duzenek-yaratici` sayfası gizlendiği için OG image'daki
+"harness-creator skill" CTA chip → "Türkçe müfredat" oldu.
+
+### Vercel + Mintlify
+
+Mintlify hosted platform; Vercel proxy:
+
+```
+harness.lokomotif.ai (Vercel)
+  → rewrite → [subdomain].mintlify.app (Mintlify CDN)
+```
+
+`vercel.json` placeholder ile hazırlandı (`YOUR-MINTLIFY-SUBDOMAIN`).
+Security header'lar dahil (X-Frame-Options, X-Content-Type-Options,
+Referrer-Policy, Permissions-Policy).
+
+### Yetenekler sayfası gizlendi
+
+Kullanıcı isteği üzerine `yetenekler/duzenek-yaratici` sayfası şimdilik
+sakladı:
+
+- `docs.json` navigation'dan Yetenekler grubu kaldırıldı
+- `index.mdx` CardGroup'taki 4. kart kaldırıldı (CardGroup cols=3)
+- `.mintignore`'a `yetenekler/` eklendi → direkt URL 404
+- Skill paketi (`skill-pack/`) saldı; sadece docs sayfası gizli
+
+---
+
+## 9. 2026-05-19 — Açık kaynak hijyeni + CLAUDE/MEMORY
+
+**Hedef**: Repo public oldu; global standartlarda açık kaynak hijyeni.
+
+### Eklenenler
+
+- **LICENSE** — Mintlify MIT 2023 yerine **CC0 1.0 Universal** (Türkçe
+  + İngilizce nezaket atfı önerisiyle).
+- **README.md** — badges, what/why, install, structure, deploy,
+  contribute, license sections.
+- **CODE_OF_CONDUCT.md** — Contributor Covenant 2.1 (Türkçe).
+- **CONTRIBUTING.md** — katkı türleri, terim haritası, stil, MDX
+  güvenliği, PR akışı.
+- **SECURITY.md** — gizli bildirim kanalları, yanıt süreleri, eğitim
+  amaçlı kasıtlı kusurların listesi.
+- **CHANGELOG.md** — Keep a Changelog, v1.0.0 ilk sürüm.
+- **CLAUDE.md** — router talimat (sıkı kısıtlar + içerik haritası +
+  vardiya rutinleri).
+- **MEMORY.md** — bu dosya.
+- **.github/ISSUE_TEMPLATE/** — bug + feature + config.yml.
+- **.github/PULL_REQUEST_TEMPLATE.md**.
+- **.github/workflows/validate.yml** — mint validate + broken-links +
+  Python MDX safety scan.
+
+### Karar gerekçeleri
+
+- **Neden CC0**: Müfredat içerik + öğretici kod; en geniş yeniden
+  kullanılabilirlik. Awesome harness ekosistemi (walkinglabs vb.) de
+  CC0.
+- **Neden Türkçe community files**: Hedef kitle Türkçe konuşan
+  geliştiriciler; bilingual fragmentation yerine tek dil.
+- **Neden ayrı CLAUDE.md ve MEMORY.md**: Ders 04'ün kuralı. CLAUDE.md
+  **kuralları** (router); MEMORY.md **gerekçeleri** (compaction
+  kaybetmesin diye).
+- **Neden Python MDX safety scan**: 2. fazda yaşadığımız `<%80` bug'ı
+  bir daha tekrar etmesin. CI gate.

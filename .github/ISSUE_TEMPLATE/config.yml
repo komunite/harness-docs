@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Soru sor (Discussions)
+    url: https://github.com/lokomotifai/harness-docs/discussions
+    about: Hata/öneri değil de sadece soru ya da tartışma için Discussions'ı kullan.
+  - name: Güvenlik açığı
+    url: https://github.com/lokomotifai/harness-docs/security/advisories/new
+    about: Güvenlik raporları için kamuya açık issue açma — özel raporlama kanalı.
+  - name: Mintlify Cloud sorunları
+    url: https://mintlify.com/support
+    about: Mintlify platformuna özgü sorunlar için doğrudan Mintlify desteğine ulaş.
