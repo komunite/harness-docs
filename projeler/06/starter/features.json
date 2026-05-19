@@ -1,0 +1,40 @@
+{
+  "features": [
+    {
+      "id": "F01",
+      "name": "Bearer auth",
+      "status": "DONE",
+      "test": "tests/test_notes.py::test_auth_required"
+    },
+    {
+      "id": "F02",
+      "name": "CRUD endpoints",
+      "status": "DONE",
+      "test": "tests/test_notes.py::test_create_and_get"
+    },
+    {
+      "id": "F03",
+      "name": "Parameterized search",
+      "status": "DONE",
+      "test": "tests/test_notes.py::test_search"
+    },
+    {
+      "id": "F04",
+      "name": "PUT 404 fix",
+      "status": "DONE",
+      "test": "tests/test_notes.py::test_put_missing_returns_404"
+    },
+    {
+      "id": "F05",
+      "name": "Delete endpoint",
+      "status": "DONE",
+      "test": "tests/test_notes.py::test_delete"
+    },
+    {
+      "id": "F06",
+      "name": "OpenTelemetry instrumentation",
+      "status": "TODO",
+      "test": "manual: bash scripts/verify.sh ile span ciktilari konsola dusmeli"
+    }
+  ]
+}

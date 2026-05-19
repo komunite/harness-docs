@@ -1,0 +1,156 @@
+---
+title: "PROGRESS.md & DECISIONS.md"
+description: "Vardiya defteri ile gerekçe günlüğü: süreklilik kaybını yapısal olarak engelleyen iki durum aparatı."
+---
+
+## Vardiya değişimi
+
+Ustabaşı şantiyeyi terk ederken iki şey bırakır: işin nereye geldiğini söyleyen bir defter ve neden kırmızı tuğla değil de mavi seçildiğini anlatan bir karar günlüğü. Ertesi sabah gelen usta önce bu iki belgeyi okur; sonra elini taşa sürer. Yazılmadıysa, gün dünden değil sıfırdan başlar — daha kötüsü, dün takılan pencere bugün sökülür. Düzenek Mühendisliği (Harness Engineering) içinde `PROGRESS.md` ve `DECISIONS.md` tam olarak bu iki belgenin karşılığıdır: düzenek (harness) içinde yaşayan, oturumlar arası süreklilik taşıyan iki durum aparatıdır.
+
+## Ne işe yarar
+
+`PROGRESS.md` **vardiya defteridir**. Şu anki durumu, tamamlananı, devam edeni, bilinen sorunları ve sıradaki adımı tek dosyada tutar. Vardiya alımında (clock-in) ilk okunan, vardiya tesliminde (clock-out) son güncellenen aparattır. Compaction "ne yapıldı" sorusunu çoğunlukla korur; ama "şu anda nerede kaldım" sorusunun dakikası dakikasına cevabı yalnızca bu dosyadadır.
+
+`DECISIONS.md` **gerekçe günlüğüdür**. Her bağlayıcı karar için tarih, başlık, neden, reddedilen alternatif ve kısıt yazılır. Bu aparat doğrudan compaction'ın kör noktasını hedefler: özet "ne"yi korur, "neden"i kaybeder. Bir hafta sonra başka bir oturum aynı kararı tersine çevirmek istediğinde, gerekçeli reddetmenin tek dayanağı burasıdır.
+
+İki dosya da repo kökünde, git izli ve düz markdown olarak yaşar. 12-Factor Agents'ın 5. faktörü — "execution state ile business state'i tek olay akışında birleştir" — bu sadeliği ister: durum, önemsiz biçimde serileştirilebilir, kolayca yeniden okunabilir olmalı.
+
+## Şablon — PROGRESS.md
+
+```markdown
+# Proje İlerleme
+
+_Son güncelleme: 2026-05-18 18:42 — vardiya kapanışı_
+
+## Şu anki durum
+- Son commit: a7f3c21 (feat: parola sıfırlama akışı — token üretimi)
+- Test: 87/89 geçiyor
+  - test_reset_token_expiry başarısız (timezone karşılaştırması)
+  - test_email_template_render iskelet — henüz yazılmadı
+- Lint: temiz (ruff)
+- Type-check: temiz (mypy strict)
+- `make check`: KIRMIZI (yukarıdaki iki test nedeniyle)
+- Çalışan dal: feature/password-reset
+
+## Tamamlandı
+- [x] PasswordResetToken modeli ve migration
+- [x] POST /auth/password-reset/request endpoint
+- [x] Token üretimi (32 byte secrets.token_urlsafe)
+- [x] Rate limit middleware (IP başına 5/saat)
+
+## Devam ediyor
+- [ ] Token süre sonu doğrulaması (%70 — UTC karşılaştırma bug'ı)
+- [ ] E-posta şablonu render testi (iskelet var)
+
+## Bilinen sorunlar
+- test_reset_token_expiry: datetime.utcnow() yerine timezone-aware
+  datetime.now(UTC) kullanılmalı; iki yerde duruyor
+- Brute-force koruması: rate limit IP bazlı; aynı kullanıcıya farklı
+  IP'lerden istek geldiğinde devre dışı kalıyor — bekleyen karar
+
+## Sıradaki adımlar
+1. test_reset_token_expiry'yi UTC-aware'e çevir, yeşile al
+2. E-posta şablonu için Jinja2 render testi yaz
+3. DECISIONS.md'ye "rate limit user+IP kombinasyonu" kararını ekle
+4. `make check` yeşilken commit; mesaj: "fix: password reset UTC timing"
+
+## Açık sorular (kullanıcıya)
+- Token TTL 15 dakika mı, 1 saat mi? Güvenlik vs UX tradeoff'u
+- Reset linkinde frontend domain'i env'den mi gelmeli?
+```
+
+Her vardiya kapanışında **son güncelleme** satırı tarihlenir; sıradaki adımlar yeniden yazılır. Açık sorular asla örtük bırakılmaz — listeye girer ya da `DECISIONS.md`'de cevaplanır.
+
+## Şablon — DECISIONS.md
+
+```markdown
+# Tasarım Kararları
+
+Bu dosya bağlayıcı kararların kayıt defteridir. Her giriş tarih ve
+başlıkla başlar; gerekçe, reddedilen alternatif ve kısıt zorunludur.
+
+---
+
+## 2026-05-12 — Parola hash'i için Argon2id, bcrypt değil
+
+- **Neden**: OWASP 2024 önerisi Argon2id; GPU saldırılarına karşı
+  memory-hard. Bizim kullanıcı tabanımız küçük; CPU maliyeti tolere
+  edilebilir (login başına ~50ms).
+- **Reddedilen alternatif**: bcrypt — kütüphane olgunluğu iyi ama
+  memory-hard değil; uzun vadede daha kırılgan.
+- **Kısıt**: argon2-cffi >= 23.1; time_cost=3, memory_cost=65536,
+  parallelism=4. Bu parametreler değişirse migration yazılmalı.
+
+---
+
+## 2026-05-15 — Auth token taşıyıcısı: HttpOnly cookie, Authorization
+header değil
+
+- **Neden**: XSS yüzeyini daraltır; SPA tarafında token yönetim kodu
+  sıfıra iner. CSRF için SameSite=Lax + double-submit token yeterli.
+- **Reddedilen alternatif**: Authorization: Bearer — mobil
+  istemcilerde rahat; ama şu an mobil yok, web öncelikli.
+- **Kısıt**: Cookie Secure + HttpOnly + SameSite=Lax. Cross-site
+  embed isteyen ileri özellik gelirse bu karar yeniden açılmalı.
+
+---
+
+## 2026-05-18 — Parola sıfırlama rate limit'i user+IP kombinasyonu
+
+- **Neden**: Salt IP yetersiz: NAT arkasındaki ofislerde meşru
+  istekler engellenir; ayrıca aynı kullanıcıya farklı IP'lerden
+  saldırı IP-only kuralı atlatır.
+- **Reddedilen alternatif**: Sadece user — anonim spam (geçerli
+  e-postaları toplayan brute force) açık kalır.
+- **Kısıt**: Window 1 saat; user başına 5 istek; IP başına 20 istek;
+  ikisi de aşılınca 429. Redis TTL ile sayım.
+
+---
+```
+
+Yatay çizgiler girişleri ayırır; tarih + başlık formatı ızgaralanabilir, grep ile aranır. Bir karar geri çekilirse silinmez — yeni bir giriş eklenir ve eskisi "iptal edildi: bkz. 2026-06-02" notuyla kalır.
+
+## Konvansiyon
+
+Tek kural: **vardiya kapanışında yaz, vardiya açılışında oku, her oturum kapanışında commit et.** Pratik karşılığı üç satır:
+
+1. Oturum açılışında ilk iş `cat PROGRESS.md && cat DECISIONS.md`.
+2. Oturum kapanışında son iş `PROGRESS.md` güncelle, gerek varsa `DECISIONS.md`'ye giriş ekle, `make check` yeşil, commit at.
+3. Açık sorular `PROGRESS.md`'nin "Açık sorular" bölümüne yazılır; kullanıcıya iletilir; cevap geldiğinde `DECISIONS.md`'ye taşınır.
+
+Bu üç adım 12-Factor Agents'ın 6. faktörünün (clean pause-resume) tabandaki uygulamasıdır: durum dosyalanmışsa, oturum iki dakikada da iki haftada da kaldığı yerden devam eder.
+
+## Özelleştirme
+
+**Açık sorular.** Tek bir oturumda cevaplanamayan her şey `PROGRESS.md` içindeki "Açık sorular" listesine düşer. Liste asla boş bırakılmak için temizlenmez — cevap gelene kadar orada durur, gelince `DECISIONS.md`'ye taşınır ve listeden silinir.
+
+**Engellenmiş işler.** "Devam ediyor" altında parantez içine engelleyicisi yazılır: `[ ] Webhook teslimi (bekliyor: prod queue erişimi)`. Engelleyici kalkmadan sıradaki adımlara yazılmaz.
+
+**Çoklu ajan.** Birden çok ajan aynı repoda çalışıyorsa `PROGRESS.md` ajan başına bir başlığa bölünür: `## Ajan A — şu anki durum`, `## Ajan B — şu anki durum`. `DECISIONS.md` ortak kalır; her karar girişine "öneri: Ajan B" notu eklenir. Çatışan kararlar listenin altına "açık tartışma" başlığı altında biriktirilir; insan operatör kararı bağlayıcılaştırır.
+
+## Otomasyona bağlama
+
+`PROGRESS.md`'nin commit'siz kalmasını engellemek için pre-commit hook'u kullanılır. Aşağıdaki kontrol, commit'lenmek üzere olan değişiklik kümesinde `PROGRESS.md` dokunulmuşsa geçer; aksi halde uyarı verir:
+
+```bash
+#!/usr/bin/env bash
+# .git/hooks/pre-commit (veya .pre-commit-config.yaml içinde local hook)
+set -euo pipefail
+
+if ! git diff --cached --name-only | grep -qx "PROGRESS.md"; then
+  echo "uyarı: PROGRESS.md bu commit'te güncellenmedi."
+  echo "vardiya kapanışı değilse 'git commit --no-verify' ile geçebilirsin."
+  exit 1
+fi
+```
+
+Sertlik düzeyi tercihe bağlıdır: küçük fix commit'lerini engellemek istemiyorsan kontrolü yalnız "vardiya kapanışı" etiketli commit'lere bağla (mesaj `chore(shift):` ile başlıyorsa zorla). CI tarafında ek bir kontrol: PR'da `PROGRESS.md`'nin son satırındaki tarih bugüne ait değilse pipeline kırmızı yanar. Bu kural Anthropic'in initializer ajan deseninin sürekli karşılığıdır — her oturum kendi git checkpoint'ini bıraktığı sürece düzenek geriye dönülebilir kalır.
+
+## İlgili dersler
+
+- [Ders 05 — Uzun görevler neden süreklilik kaybeder](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder)
+- [Ders 06 — Başlangıç neden kendi fazına sahip olmalı](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali)
+- [Ders 12 — Her oturum neden temiz durum bırakmalı](/dersler/12-her-oturum-neden-temiz-durum-birakmali)
+- [Kütüphane — AGENTS.md](/kutuphane/agents-md)
+- [Kütüphane — Bootstrap kontrol listesi](/kutuphane/bootstrap)
+- [Kütüphane — Oturum kapanış sözleşmesi](/kutuphane/session-close)

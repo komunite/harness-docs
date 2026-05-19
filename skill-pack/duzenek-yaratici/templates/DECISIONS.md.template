@@ -1,0 +1,31 @@
+# Tasarım Kararları
+
+Bu dosya bağlayıcı kararların kayıt defteridir. Her giriş tarih ve
+başlıkla başlar; gerekçe, reddedilen alternatif ve kısıt zorunludur.
+
+---
+
+## YYYY-MM-DD — <Karar başlığı>
+
+- **Neden**: <Bu kararın temel gerekçesi; tek paragraf.>
+- **Reddedilen alternatif**: <Hangi yol denenmedi, neden değil?>
+- **Kısıt**: <Bu kararın geçerli kaldığı koşullar; değişirse karar yeniden açılmalı.>
+
+---
+
+## YYYY-MM-DD — <İkinci karar>
+
+- **Neden**: ...
+- **Reddedilen alternatif**: ...
+- **Kısıt**: ...
+
+---
+
+<!--
+Konvansiyon:
+- Yatay çizgi (---) girişleri ayırır.
+- Tarih + başlık formatı grep'lenebilir.
+- Bir karar geri çekilirse silinmez; yeni bir giriş eklenir ve
+  eskisi "iptal edildi: bkz. YYYY-MM-DD" notuyla kalır.
+- Üç bilgi de zorunlu: neden, reddedilen alternatif, kısıt.
+-->

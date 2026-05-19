@@ -1,0 +1,181 @@
+---
+title: "10 — Üç Katmanlı Doğrulama Kapısı"
+description: "Birim testler bileşen sınırlarına mimari olarak kördür. Yalnız uçtan uca test sistem düzeyi kusurların yokluğunu kanıtlar — ve ajanın davranışını değiştirir."
+---
+
+## Electron file-export davası
+
+Gerçek bir vaka. Electron tabanlı bir not uygulamasına "kullanıcı notlarını dışa aktar" özelliği eklendi. Birim testlerin tümü yeşildi. Üretimde **beş ayrı kusur** çıktı:
+
+1. Renderer ile preload arasında dosya yolu formatı uyumsuz (Windows ile POSIX karışmış).
+2. IPC üzerinden progress bar tetiklenmiyor — kullanıcı otuz saniye boyunca uygulamanın donduğunu sanıyor.
+3. Büyük dışa aktarımlarda bellek sızıntısı.
+4. Paketlenmiş ortam izinleri geliştirme ortamından farklı.
+5. İstisnalar katmanlar arası yayılmıyor; sessiz başarısızlık.
+
+**Birim testler beş kusurun beşini de yakalamadı: 0/5.** Uçtan uca test ekledikten sonra hepsi onbeş saniyede çıktı: 5/5.
+
+Sebep mimaridir: birim test **izolasyon için tasarlanır**. İzolasyon, kusurların yaşadığı **bileşen sınırlarını mock'larla siler**. Sınırı silen bir araç sınır hatalarını yakalayamaz.
+
+[Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)'da kullandığımız koro metaforu burada da geçerli — solo provalar kusursuzdur; ama tempo, nefes ve akustik ancak topluluk söylerken duyulur.
+
+## Tez
+
+> **Yalnız uçtan uca test, sistem düzeyi kusurların olmadığını kanıtlayabilir. Üstüne, uçtan uca test ajanın davranışını da değiştirir.**
+
+Doğrulayıcı, üretici tarafından okunan bir sözleşmedir. Ajan farklı doğrulamaya bakarak farklı kod yazar.
+
+## Birim testin mimari körlüğü
+
+Birim test üç şeyi göremez:
+
+- **Bileşen sınırını**: çünkü sınırı mock'lar.
+- **Süreç sınırını**: ana-renderer, IPC, child process; hepsi mock arkasında.
+- **Paketleme sınırını**: kod imzalama, sandbox, OS izinleri test koşumunda yok.
+
+Anthropic'in eval kılavuzu bu farkı şöyle ifade eder: bir uçuş rezervasyon ajanı "uçuşunuz alındı" diyebilir, ama **outcome** veritabanında rezervasyon olup olmadığıdır ([Anthropic, "Demystifying Evals"](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)). Birim test transcript'i okur; e2e dünyanın gerçek durumunu sorgular.
+
+## Test Yeterliliği Gradiyenti
+
+```
+Birim test'in yakaladığı kusurlar  ⊆
+  Entegrasyon test'in yakaladığı kusurlar  ⊆
+    Uçtan uca test'in yakaladığı kusurlar
+```
+
+Her seviye bir öncekini içerir. Düzenek Mühendisliği (Harness Engineering) seviyesinde sonuç: e2e en pahalısıdır, ama atlandığında **görünmeyen kusurlar üretir**. Görünmeyen kusurlar şikayet olarak değil, "neden yine bozuldu" telefonlarıyla geri döner.
+
+SWE-bench Verified bu fikrin endüstri ölçeğindeki halidir: beş yüz mühendis onaylı gerçek GitHub issue'su, her biri **gerçek test paketiyle** doğrulanır. Ajan yamasını uygular, repo'nun kendi test suite'i koşar, geçtiyse kusur giderilmiş sayılır ([SWE-bench](https://www.swebench.com/SWE-bench/)). Burada da doğrulama yöntemi mühendisin kendi kullandığı yöntemdir, yapay bir refleks değil.
+
+## Mimari sınırları test edilebilir kılmak
+
+Test öncesi bir adım vardır: **mimari sınırlar yazılı olmalı**. Aksi halde düzenek hangi sınırı doğrulayacağını bilemez.
+
+Örnek katmanlı domain mimarisi:
+
+```
+Types  →  Config  →  Repo  →  Service  →  Runtime  →  UI
+```
+
+Soldan sağa tek yönlü bağımlılık. UI Types'a dokunabilir; Types UI'a asla. Bu bir "kural" değil; **lint ile uygulanan bir kanıttır**.
+
+```bash
+# src/renderer'ın doğrudan fs erişimi yasak
+if grep -rn "require('fs')" src/renderer/; then
+  echo "VIOLATION: renderer'da doğrudan fs erişimi"
+  exit 1
+fi
+echo "OK: renderer dosya erişimi yok"
+```
+
+Bu küçük script bir doküman cümlesini **otomatik uygulanan** bir kontrole çevirir. Doküman cümlesi nazikçe ihmal edilir; lint nazik değildir.
+
+## Doğrulama Hiyerarşisi
+
+`AGENTS.md` veya `docs/testing-standards.md`'nin tepesinde duran blok:
+
+```markdown
+## Validation Hierarchy
+- Seviye 1: Lint + tip kontrolü      (geçmek zorunda)
+- Seviye 2: Birim testler            (geçmek zorunda)
+- Seviye 3: Entegrasyon testleri     (geçmek zorunda)
+- Seviye 4: Uçtan uca testler        (bileşenler-arası
+                                       değişikliklerde
+                                       geçmek zorunda)
+- Herhangi bir zorunlu seviyenin atlanması = NOT COMPLETE
+```
+
+Doğrulama scripti bu hiyerarşiyi sırayla koşar; bir seviye düşerse sonrakine geçilmez. Ajan "%80 testler geçti" diyemez — yazılı eşik geçmek **veya** geçmemektir.
+
+## Pratik
+
+### Mimari kısıtı lint kuralına dönüştürmek
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "→ Katman bağımlılık denetimi"
+
+# Types asla aşağı bakmaz
+if grep -rn "from '\.\./service" src/types/; then
+  echo "VIOLATION: types -> service ters bağımlılık"; exit 1
+fi
+
+# Repo doğrudan UI bilmemeli
+if grep -rn "from '\.\./ui" src/repo/; then
+  echo "VIOLATION: repo -> ui ters bağımlılık"; exit 1
+fi
+
+echo "OK: katman sınırları korunuyor"
+```
+
+Custom lint kuralı, ajanın PR'ı yeşillendirmek için **uymak zorunda** olduğu bir kapıdır. Doküman bir öneridir; lint bir engeldir.
+
+### ERROR / WHY / FIX hata mesajı
+
+E2E test başarısızlığı ajan tarafından okunabilir olmalı:
+
+```
+ERROR: e2e/test_export.spec.ts:42 başarısız
+WHY:   renderer'da doğrudan fs.readFileSync çağrısı —
+       IPC olmadan paketlenmiş ortamda izin reddediliyor.
+FIX:   Dosya işlemini src/preload/file-ops.ts'e taşı ve
+       window.api.readFile() üzerinden çağır.
+       Referans: docs/architecture.md "İzole renderer".
+```
+
+OpenHands'in deterministik doğrulayıcı tanımı buraya tam oturur: iyi bir skill değerlendirmesi **sınırlı görev**, **deterministik doğrulayıcı** ve **skill-yok temel çizgisi** ister ([OpenHands, "Evaluating Agent Skills"](https://openhands.dev/blog/evaluating-agent-skills)). ERROR/WHY/FIX bloku bu üçlünün hata tarafıdır.
+
+### Eval harness primitifleri
+
+Inspect AI üç primitif üzerinde durur: **solver** (üretici stratejisi), **scorer** (çıktıyı puanlayan), **sandbox** (Docker/Kubernetes ile izole koşum) ([Inspect AI](https://inspect.aisi.org.uk/)). Düzeneğin e2e katmanı, scorer + sandbox'ın yerel karşılığıdır: izole bir ortam, deterministik bir puanlayıcı, sürüm-arası karşılaştırılabilir bir skor.
+
+OpenAI'ın eval-skills yazısı bu süreci **trace → check → skor** olarak özetler: prompt, yakalanan koşum, küçük bir kontrol kümesi, zaman içinde karşılaştırılabilir bir puan; minimum on-yirmi prompt ve en az bir "tetiklenmemeli" negatif kontrol ([OpenAI Developers, "Eval Skills"](https://developers.openai.com/blog/eval-skills/)). Düzeneğin e2e suite'i bu tarifin proje-ölçeği halidir.
+
+## Review Feedback Promotion
+
+İnsanın PR'ı incelerken yazdığı her **tekrar eden** yorum, gelecekteki bir e2e testin tohumudur. Aynı yorumu üç kez yazmışsan, dördüncüde otomatikleştir:
+
+```
+İnsan yorumu  →  şablonlaşmış kural  →  lint script veya e2e test
+```
+
+Her döngü sonunda düzenek bir adım daha sağlam, insan bir adım daha az aynı şeyi yazar.
+
+## Davranışı değiştiren ikinci etki
+
+Birim testlere bakan ajan farklı kod yazar; e2e testlere bakan ajan **daha bütünlüklü** kod yazar. Çünkü doğrulama biçimi neyin "kabul edilebilir" olduğunu yeniden tanımlar.
+
+Anthropic'in trajectory vs outcome ayrımı burada bir kez daha çalışır: ajan transcript'i süslemekten vazgeçtiğinde, çünkü süslü transcript skor üretmiyor — outcome üretiyor. Düzenek Mühendisliği (Harness Engineering) içinde e2e suite varsa, ajan onu okuyup ona göre yazar. Suite yoksa ajan mock'larla yetinir ve "bitti" der.
+
+## Sayılarla
+
+Aynı Electron projesi, aynı sekiz görev:
+
+| Test seviyesi                       | Yakalanan kusur | Toplam süre |
+| ----------------------------------- | --------------- | ----------- |
+| Yalnız birim                        | 0 / 5           |  2 sn       |
+| Birim + entegrasyon                 | 1 / 5           |  8 sn       |
+| Birim + entegrasyon + e2e           | **5 / 5**       | 15 sn       |
+
+On üç saniyelik fark, üretim hatalarının tamamını açıklar.
+
+Karşılaştırma için: SWE-bench Verified beş yüz görev üzerinde aynı prensibi koşar — her görevde repo'nun **kendi** test paketi doğrulayıcıdır. Doğrulama yöntemi mühendisin kullandığı yönteme ne kadar yakınsa, skor o kadar anlamlıdır.
+
+## Pratik kontrol listesi
+
+- [ ] `docs/architecture.md` mimari sınırları yazılı.
+- [ ] En az bir mimari sınır custom lint kuralıyla uygulanıyor.
+- [ ] `AGENTS.md` içinde Validation Hierarchy bloku var; atlama = NOT COMPLETE.
+- [ ] `make check` lint → unit → integration → e2e sırasıyla koşar; bir kapı düşerse durur.
+- [ ] E2E test başarısızlıkları ERROR / WHY / FIX formatında.
+- [ ] E2E suite izole bir sandbox'ta koşar (Docker veya eşdeğeri).
+- [ ] Tekrar eden review yorumları yeni e2e testlere veya lint kurallarına terfi ediliyor.
+- [ ] CI yalnız `make check` çağırır; ajan da yalnız `make check` çağırır.
+
+## Müfredat içindeki yeri
+
+[Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) doğrulamayı dışsallaştırmıştı; bu ders en üst katmanı somutlaştırdı. Birim testin mimari körlüğü, mimari sınırın lint kuralına çevrilmesi, doğrulama hiyerarşisinin atlanmazlığı ve doğrulayıcının ajan davranışını şekillendirmesi — hepsi e2e'yi bir yatırım değil, bir sözleşme yaptı. [Ders 11 — Düzeneğin Gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali) bir adım geri çekilir: test geçtiğinde "neden geçti", geçmediğinde "neden geçmedi" sorusunu runtime ve süreç katmanlarıyla cevaplar.
+
+Pratik karşılığı: [Proje 05 — Öz-Doğrulama ve Rol Ayrımı](/projeler/05-oz-dogrulama-ve-rol-ayrimi).

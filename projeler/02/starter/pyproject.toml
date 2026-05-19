@@ -1,0 +1,10 @@
+[project]
+name = "notes-api"
+version = "0.1.0"
+description = "Minimal Notes API — Proje 02 starter (bloated AGENTS.md)"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+pythonpath = ["."]

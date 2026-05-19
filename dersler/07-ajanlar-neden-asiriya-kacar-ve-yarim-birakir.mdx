@@ -1,0 +1,165 @@
+---
+title: "07 — WIP=1 Disiplini"
+description: "Aşırıya kaçmak ve yarım bırakmak aynı madalyonun iki yüzüdür. Kanban'dan WIP=1, Little's Law ve VCR ile Düzenek Mühendisliği (Harness Engineering) bu simbiyozu kırar."
+---
+
+## 12 dosya, 800 satır, sıfır tamamlanma
+
+Görev tek cümle: "Kullanıcı kimlik doğrulamayı ekle."
+
+Düzenek (harness) çizmediği için ajan iki saatte şunları yapar — veritabanı şemasını değiştirir, üç route yazar, frontend formunu kurar, hata middleware'ini refactor eder, e-posta servisinin yapılandırmasına dokunur, parola sıfırlama akışını yarıda iskeletler. Oturum bitince repo bu hale gelmiştir:
+
+- **12 değiştirilmiş dosya**
+- **~800 satır kod**
+- **Uçtan uca geçen senaryo: 0/5**
+- **Final tamamlanma: %0**
+
+Hiçbir akış baştan sona çalışmaz. Görüntü "çok iş yapıldı"; gerçeklik hiçbir işin bitmediği. Bu davranış modelin değil **düzeneğin** hatasıdır — sınırı sen çizmedin, model de çizmedi.
+
+## Tez
+
+Aşırıya kaçma ile yarım bırakma rastlantı değil, **simbiyozdur**: aynı madalyonun iki yüzü, aynı ekonominin iki sonucu. Kanban'dan ödünç alınan **WIP=1** kuralı ile Little's Law'un sayısal kaldıracı, Düzenek Mühendisliği (Harness Engineering) içinde birleşince bu simbiyoz kırılır. Düzenek tek bir cümleyle özetlenir: **bir an'da yalnız bir feature aktif, ve aktif feature uçtan uca doğrulanmadan ikinci feature başlatılamaz.**
+
+## Simbiyoz — neden iki başarısızlık aynı kişide yan yana durur
+
+İki uç görünüşte zıttır, ekonomileri aynıdır:
+
+- **Bir sonraki fikri üretmek ucuzdur.** Birkaç yüz token, sıfır risk. Yeni bir fonksiyon iskeleti yazmak ajan için en düşük direnç yoludur.
+- **Bir şeyi gerçekten bitirmek pahalıdır.** Edge-case bulma, gerçek HTTP isteği atma, test yazma, hatayı izleme. Saatler.
+
+Doğal yokuş ucuz tarafa iner. Geoffrey Huntley'nin Ralph pattern üzerine notu bunu somutlar: "To get good outcomes with Ralph, you need to ask Ralph to do one thing per loop. **Only one thing**." Sebep mistik değil mekanik — bir loop'ta birden fazla iş tıkıştırdığın anda model bağlamı kaybeder, hiçbirini bitiremez, hepsini yarım bırakır. Aşırıya kaçma = yarım bırakma.
+
+## Little's Law — matematik tarafımızda
+
+Kuyruk teorisinin en eski formülü:
+
+```
+L = λ × W
+```
+
+- **L** = sistemde aynı anda olan iş (WIP)
+- **λ** = tamamlanma hızı (feature/saat)
+- **W** = ortalama lead time (bir feature'ın başlangıçtan `passing`'e geçişine kadar süre)
+
+**λ** ajanın ham hızı; sabit kabul edilir. **L**'yi artırmak **W**'yi zorunlu olarak büyütür. Sekiz feature'a aynı anda dokunmak, sekizini sırayla bitirmenin sekiz katı hızlı olmaz — tam tersine, her birinin lead time'ı sekiz katına çıkar ve büyük olasılıkla **hiçbiri** doğrulanma eşiğini geçemeden bağlam taşar.
+
+Pratik sonuç: yüksek WIP = uzun lead time = yarım kalan iş. WIP=1 = kısa lead time = bitirilen iş.
+
+## "Done" yeniden tanımlanır
+
+Yarım bırakmanın altındaki kavramsal hata "done"un yanlış tanımlanmasıdır. Düzenek dilinde:
+
+> **Done, "kod yazıldı" değildir. "Davranış doğrulandı"dır.**
+
+Anthropic'in *Effective harnesses for long-running agents* yazısı bunu kalın çizgilerle koyar: ajan testleri kaldıramaz veya düzenleyemez, çünkü "this could lead to missing or buggy functionality." Doğrulama browser otomasyonu (Puppeteer MCP gibi) ile **"as a human user would"** yapılır — birim test değil, uçtan uca davranış. Kod yazımı bir adımdır; doğrulanma başka bir adımdır. Düzenek aradaki uçurumu kapatır.
+
+## Mekanizma — üç destekleyici parça
+
+### 1) Feature DAG — dört durumlu makine
+
+Feature listesi düz markdown değil, durum makinesidir. Dört durum:
+
+- `not_started` — henüz başlanmadı
+- `active` — şu an üzerinde çalışılıyor (yalnız bir tane!)
+- `blocked` — açık soru veya bağımlılık engeli
+- `passing` — uçtan uca doğrulama scripti yeşil
+
+Anthropic harness örneği Claude.ai klonunda **200'den fazla feature** ile başlar; hepsi başta "failing", sırayla `passing`'e çevrilir. Liste bir kez kuruldu mu, ajanın "yeni bir fikrim var" diyebileceği serbest alan yoktur — yapacağı iş listededir, sıradadır, doğrulanabilirdir.
+
+### 2) VCR — Verified Completion Rate
+
+Düzeneğin izlediği basit oran:
+
+```
+VCR = doğrulanmış (passing) feature sayısı / aktive edilmiş feature sayısı
+```
+
+VCR sub 1.0 ise **yeni feature aktive edilemez.** Bu kural `AGENTS.md`'ye yazılır, doğrulama scripti uygular, ajanın değiştirme yetkisi yoktur. Aşırıya kaçma kapısı mekanik olarak kapatılır.
+
+### 3) Geri basınç (backpressure)
+
+HumanLayer'in *context-efficient backpressure* yazısı kavramı kısa devre yapar: ajan ~75k tokenlık "smart zone"da en iyi çalışır; üstüne çıktığı an "dumb zone"a geçer. Her bitmemiş feature, her gereksiz log satırı bu zonu doldurur. Düzenek görevi: değer üretmeyen her şeyi sıkıştır, bitmemiş işin görünür kalmasını sağla. Geçmemiş feature sayısı **sistem basıncıdır**. Sıfır basınç = proje tamam. Pozitif basınç = bitirilmeyi bekleyen iş var. Yeni feature ancak basınç düştükçe eklenir.
+
+## Ralph pattern — minimal düzenek referansı
+
+Ralph (Geoffrey Huntley) bir düzeneğin minimum işleyen halidir:
+
+```bash
+while :; do cat PROMPT.md | claude-code ; done
+```
+
+Üç prensip görünür:
+
+1. **Tek görev döngüsü** — her iterasyonda yalnız bir iş. WIP=1, mekanik olarak.
+2. **Deterministik prompt stack** — her loop'a aynı dosyalar aynı sırada bindirilir: `@PROMPT.md`, `@fix_plan.md`, `@specs/*`, `@AGENTS.md`. Bağlam rastgele şişmez, dikkat dağılmaz.
+3. **Sınırlı paralel subagent** — arama/yazma için 500'e kadar, **ama build/test için yalnız 1**. Doğrulama tarafında paralellik yok; buradaki tek darboğaz geri basıncı korumak için bilinçli.
+
+Huntley'nin verisi: bir $50k'lık sözleşme **$297 ile** teslim. Düşük WIP, doğru düzenek = ölçek.
+
+## Sayılarla
+
+Aynı 8 feature, iki düzenek sözleşmesi altında koşturuldu. Sayılar bir iç ölçümden (Claude Sonnet, 4 oturum/koşum):
+
+| Kuruluş | E2E geçen | Final tamamlanma | Dokunulan dosya | Ortalama lead time |
+| --- | --- | --- | --- | --- |
+| Sınırsız WIP (buffet) | 1,6/8 (%20) | 3/8 (%37,5) | 31 | 2,4 saat |
+| WIP=1 + VCR (tek tabak) | **8/8 (%100)** | **7/8 (%87,5)** | **9** | **0,6 saat** |
+
+Yorum: WIP=1 sadece bitirme oranını üçe katlamadı, dokunulan dosya sayısını da **3,4 kata** indirdi. Az ama biten her zaman çoktan bir kısmını bitirenden iyidir.
+
+Destekleyici çevre verisi:
+
+- Anthropic *claude-code-sandboxing*: kurallı sınırlar onay isteklerini **%84 azalttı**. Sınır koymak hız kaybı değil hız kazancı.
+- HumanLayer: "every line of `PASS src/utils/helper.test.ts` is waste" — gürültü token = kaybedilen dikkat.
+
+## Pratik
+
+### `AGENTS.md` içine konacak blok
+
+```markdown
+## Feature Liste Kuralları
+- Feature kaynak dosyası: docs/features.json
+- Aynı anda yalnız tek feature 'active' olabilir (WIP=1).
+- 'passing' durumuna geçiş yalnızca doğrulama scriptinin yeşil çıktısıyla olur.
+- Durumları elle düzenleme — scripts/verify.sh günceller.
+- VCR sub 1.0 iken yeni feature 'active'e alınamaz.
+- 'blocked' bir feature varsa, önce engeli aç; yeni feature açma.
+```
+
+### Feature kaydı — dörtlü zorunluluk
+
+```yaml
+F03:
+  behavior: "Kullanici girisi — POST /api/login basariyla 200 ve cookie doner"
+  verification: |
+    bash scripts/verify_login.sh
+    # icinde: curl + jq + status kontrolu + cookie kontrolu
+  state: active
+  evidence: ""   # passing olunca commit hash + log linki buraya
+```
+
+Dört alan — `behavior`, `verification`, `state`, `evidence` — olmadan feature, feature değildir; sadece bir niyettir. OpenHands ekibinin prompt-injection yazısı confirmation-mode'un tek başına "security theater" olduğunu söyler; aynı mantık burada — durum etiketi tek başına bir şey ifade etmez, **doğrulama kanıtı** ifade eder.
+
+## Pratik kontrol listesi
+
+- [ ] `docs/features.json` mevcut, makine-okunabilir (JSON).
+- [ ] Her feature'da `behavior`, `verification`, `state`, `evidence` dördü tam.
+- [ ] Aynı anda yalnız 1 feature `active`; doğrulama scripti bunu zorlar.
+- [ ] VCR hesaplanıyor; VCR sub 1 iken yeni aktivasyon mekanik olarak yasak.
+- [ ] `AGENTS.md`'de WIP=1 kuralı yazılı ve ajanın değiştiremeyeceği bölümde.
+- [ ] Build/test paralelliği 1'e kilitli; arama/yazma paralelliği sınırlı (Ralph kuralı).
+- [ ] Geri basınç görünür: bitmemiş feature sayısı dashboard'da/log'da.
+
+## Müfredat içindeki yeri
+
+[Ders 06](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali) init fazından bir feature listesi çıkarmıştı; bu ders listenin tüketim kuralını koydu — WIP=1, VCR, geri basınç. Aşırıya kaçma ile yarım bırakmanın simbiyozu, ekonominin doğal yokuşunu mekanik bir kilitle ters çevirir. [Ders 08 — Özellik Listesi Bir Primitiftir](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir) aynı listeyi bir veri yapısı olarak resmileştirir: scheduler, verifier, handoff reporter ve progress tracker hep onun üzerinde çalışır.
+
+Pratik karşılığı: [Proje 04 — Çalışma Zamanı Geri Bildirimi ve Kapsam Kontrolü](/projeler/04-calisma-zamani-geri-bildirimi). WIP=1 ve VCR'ı doğrulama scriptiyle birlikte gerçek bir koşumda kurarsınız.
+
+## Kaynaklar
+
+- Anthropic — *Effective harnesses for long-running agents* (feature listesi, "one feature at a time", 200+ feature örneği, e2e doğrulama).
+- HumanLayer — *Context-efficient backpressure* (75k "smart zone", gürültü-token = kaybedilen dikkat, deterministik filtreleme).
+- Geoffrey Huntley — *Ralph* (WIP=1 loop, deterministik prompt stack, 500/1 paralellik asimetrisi, $50k → $297 vaka).
+- Anthropic — *Claude Code sandboxing* (kurallı sınır + %84 onay isteği azalması; sınır = hız).
+- OpenHands — *Mitigating prompt injection attacks in software agents* (confirmation mode tek başına yetersiz; sınır + kanıt birlikte gerekir).

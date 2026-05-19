@@ -1,0 +1,168 @@
+---
+title: "03 — Repo: Hakikat Kaynağı"
+description: "Düzenek Mühendisliği (Harness Engineering) için repo, ajanın tek hakikat kaynağıdır. Repoda olmayan bilgi, ajan için yoktur."
+---
+
+## Camekanlı blueprint ile masaya yapışmış kâğıt
+
+Eski bir fabrika ofisinde iki harita asılıdır. İlki, üretim hattının yanına bantla yapıştırılmış, kenarları kıvrılmış, üzerine kalemle notlar düşülmüş bir kâğıt. İkincisi, müdürün odasında camekânın ardında, ölçekli, mühürlü mimarî blueprint. Yangın çıkışını ararken hangisi işe yarar?
+
+İkincisi teknik olarak üstündür. Ama yanlış yerdedir. **Camekânın arkasındaki bilgi pratikte yoktur.**
+
+Aynı asimetri AI ajanları için de geçerli. Confluence sayfasında, Slack iş parçacığında, Jira yorumunda veya kıdemli mühendisin kafasında duran karar, ajan oturumunun bağlam penceresine düşmez. Düzenek (harness) açısından bakınca tek bir kural kalır: **repoda olmayan bilgi, ajan için yoktur.**
+
+Bu ders, Düzenek Mühendisliği (Harness Engineering) müfredatının en sert iddiasını koyuyor: repo, ajanın tek hakikat kaynağı (system of record) olmalı.
+
+## Tez
+
+Karar, sözleşme, ilerleme ve gerekçe — hepsi git ile takip edilen dosyalarda yaşamalı. Sohbet uçucudur; Confluence asenkronken bile ajanın eline geçmez; insanın hafızası tek bir oturumda kullanılabilir değildir. Yalnızca repo, hem insan hem ajan için ortak ve tekrar üretilebilir gerçeği taşır.
+
+Bu ilke, Claude Code dokümantasyonunun da temelidir: "`CLAUDE.md` projenizin köküne eklediğiniz, Claude Code'un her oturumun başında okuduğu bir markdown dosyasıdır" ([code.claude.com/docs](https://code.claude.com/docs)). Oturumlar arası süreklilik buradan çıkar; ajanın "hafızası" hafıza değildir, repodur.
+
+## Anti-örüntü: Bilgi Görünürlüğü Boşluğu
+
+Bir projeyi taradığında pratikte sorulan ilk soru şu: proje hakkında bildiğin şeylerin yüzde kaçı repoda yazılı? Geri kalan kısma **Bilgi Görünürlüğü Boşluğu (Knowledge Visibility Gap)** denir. Boşluk büyüdükçe ajan hata yapar; çünkü her boşluk, ajanın tahmin etmek zorunda kalacağı bir kısıttır.
+
+Boşluğun dört somut maliyeti vardır:
+
+1. **Sürekli yanlış tahminler** — "Tüm sorgular parametreli olmalı" yazılı değilse, ihlal sessizce gelir.
+2. **Bağlam bütçesi keşfe akar** — repoyu tanımak için ilk 20 dakika harcayan ajan, esas işe daha az pay bırakır.
+3. **Örtük kısıtlar tekrar tekrar ihlal edilir** — kararın "neden"i kaybolmuştur.
+4. **Oturumlar arası bilgi kurtarılamaz** — yarınki ajan, bugünkü kararın gerekçesini bulamaz.
+
+Saha gözlemi: 30 mikroservisli bir e-ticaret platformunda mimari kararlar Confluence + Slack + Jira'ya dağıtılmıştı. Görev başarı oranı düşüktü. Bilgi modül başına `ARCHITECTURE.md` ve `CONSTRAINTS.md` dosyalarına taşındığında oran kategorik biçimde yükseldi. Önce bilginin yerini değiştirdik, sonra ajan "daha akıllı" göründü.
+
+## Mekanizma: dört ilke
+
+### 1) Bilgi kodun yanında yaşar
+
+Merkezî bir "tüm dokümanlar burada" dizini iki yıl içinde çürür. HumanLayer'ın CLAUDE.md kılavuzu bu çürümeye karşı **progressive disclosure** önerir: kök dosya kısa kalır, alt başlıklar `agent_docs/building_the_project.md` gibi ayrı dosyalara devredilir ve ajan ihtiyaç duyduğunda yönlendirilir ([humanlayer.dev](https://www.humanlayer.dev/blog/writing-a-good-claude-md)). Pratiğe çevirisi: her modülün içine, o modülün dokümanını koy.
+
+### 2) Standardize bir giriş dosyası
+
+`AGENTS.md` (veya proje konvansiyonuna göre `CLAUDE.md`) repo kökünde durur. Bu, ajanın iniş sayfasıdır. Açık format spesifikasyonu — geliştirme ortamı ipuçları, test talimatları, PR kuralları — `agentsmd/agents.md` projesinde tanımlıdır ([github.com/agentsmd/agents.md](https://github.com/agentsmd/agents.md)). İçeriğin yapılandırılması Ders 04'ün konusudur.
+
+### 3) Minimum ama tam
+
+HumanLayer'ın kuralı net: frontier modeller "makul tutarlılıkla yaklaşık 150–200 talimat takip edebilir", ve Claude Code'un sistem prompt'u zaten ~50 talimat içerir. CLAUDE.md "300 satırın altında, ideali daha kısa" tutulmalı; HumanLayer'ın kendi kök dosyası 60 satırın altındadır. Bir bilgi parçasını yazmadan önce şunu sor: **fresh bir oturum, repoya bakarak bu soruyu cevaplayabilmeli mi?** Cevap evet ise yazıya dök; hayır ise ya gereksizdir, ya başka bir dosyanın işidir.
+
+### 4) Kodla birlikte güncelle
+
+Dokümantasyon kod değiştiğinde değişmiyorsa çürümüştür. CI'a kural koy: belirli dosyalar değişirse ilgili `.md` dosyasının da değişmesi beklenir. PR template'ine "Doküman güncellendi mi?" checkbox'ı ekle. Bu, Sawin Yh'nin vibecoded repolar için önerdiği **ratchet pre-commit hook'lar** prensibinin bir uygulamasıdır: "Yeni dosyalar 300 satırı geçemez; 300 satırı geçmiş mevcut dosyalar düzenlenebilir, ama satır sayısı sadece aynı kalabilir veya küçülebilir" ([sawinyh.com](https://sawinyh.com/blog/greenfield-vs-brownfield-ai-codebases)).
+
+## Soğuk başlangıç testi
+
+Reponun hakikat kaynağı olup olmadığını ölçen tek pratik test. Yepyeni bir oturum aç ve şu beş soruya **yalnızca reponun içine bakarak** cevap verilebilmeli:
+
+- Bu proje nedir?
+- Nasıl çalıştırılır?
+- Nasıl doğrulanır?
+- Şu an ilerleme nerede?
+- En son hangi kararın neden alındığı nerede yazılı?
+
+Birine bile cevap verilemiyorsa o bilgi henüz repoya inmemiştir.
+
+## Brownfield ve greenfield: aynı kural, farklı uygulama
+
+Sawin Yh'nin taksonomisinde üç tür kod tabanı vardır: **greenfield AI-first** (ilk commit'ten ajanlar için tasarlanmış), **gerçek brownfield legacy** (yedi yıllık monolit, ekibi gitmiş) ve **vibecoded inheritance** (altı aylık, linter'sız, testsiz). Tanı kriteri tek: "Repoda çalışan korkuluklar var mı? Linter, formatter, type checker, pre-commit hook'lar, CI'da testler, bir `CLAUDE.md` veya eşdeğeri?"
+
+Greenfield'da hakikat kaynağı sıfırdan kurulur. Brownfield ve vibecoded'da ise ratchet yaklaşım gerekir:
+
+- **Katmanlı CLAUDE.md kuralları**: "Kök dosya proje genelinde geçerli konvansiyonları tutar; `.claude/rules/*.md` alana özel olanları; yerel override'lar modül tuhaflıklarını. Ajan onları otomatik bileşir."
+- **Baseline'lı lint ihlalleri**: Mevcut ihlaller checked-in baseline'a snapshot'lanır; CI yalnızca ihlal sayısı **artarsa** patlar. Borç görünür ve sınırlanmıştır.
+- **Diff'e kapsamlanmış CI**: Lint yalnızca değişen dosyalarda koşar — "A modülündeki bir bug fix, B modülündeki ihlallere takılmaz."
+
+Bu üç araç, brownfield'da hakikat kaynağı inşasını "bir kerede temizle" seferberliğine dönüştürmek yerine, **monoton düşen bir borç** olarak modelliyor.
+
+## Bir referans uygulamaya çapalama
+
+Soyut talimat tek başına yetmez. Martin Fowler'ın bültenindeki gözlem net: somut bir reference application sağlamak, ajana abstract instruction setinden daha tutarlı sonuç verir ([martinfowler.com](https://martinfowler.com/articles/exploring-gen-ai/anchoring-to-reference.html)). Yazar, markdown'da kod örneği tutmayı "üniversitede Java sınavlarımı kurşunkalemle yazmaya — kodun gerçekten compile olduğundan emin olamazsın" benzetir. Yaşayan, derlenen bir referans uygulama bu sorunu çözer: örnekler her zaman geçerli ve güncel kalır.
+
+Pratik kayıt: reponun bir köşesinde `examples/` veya `reference-app/` dizini tutulur; ajana "yeni endpoint'i bu örneğe benzet" denildiğinde, talimat artık abstract değil, çapalanmıştır.
+
+## Pratik
+
+### Klasör düzeni
+
+```
+project/
+├── AGENTS.md                       # ajanın iniş sayfası
+├── .claude/
+│   └── rules/
+│       ├── style.md
+│       └── security.md
+├── src/
+│   ├── api/
+│   │   ├── ARCHITECTURE.md
+│   │   └── handlers.go
+│   └── db/
+│       ├── CONSTRAINTS.md
+│       └── migrations/
+├── examples/
+│   └── reference-endpoint/         # çapa
+├── PROGRESS.md
+└── Makefile
+```
+
+### AGENTS.md iskeleti
+
+```markdown
+# AGENTS.md
+
+## Proje
+Bir cümlelik açıklama. Linkler: ARCHITECTURE.md, CONTRIBUTING.md.
+
+## Geliştirme ortamı
+- Setup: `make setup`
+- Dev: `make dev`
+- Test: `make test`
+- Verify: `make check`
+
+## Mimari ilkeler
+- Tüm SQL parametreli.
+- Yeni endpoint'ler `examples/reference-endpoint/` örneğini takip eder.
+- 300 satırdan büyük yeni dosya kabul edilmez.
+
+## PR kuralları
+- Doküman değiştir.
+- `make check` yeşil.
+- Commit mesajı: tek mantıksal değişim.
+```
+
+### ACID — ajan durumu için
+
+Veritabanı dünyasından ödünç, düzenek için doğrudan geçerli bir çerçeve:
+
+| Özellik | Düzenek karşılığı |
+| --- | --- |
+| **Atomicity** | Her mantıksal işlem tek bir git commit. Yarıda kalırsa `git stash` veya checkpoint ile geri alınır. |
+| **Consistency** | Doğrulama predikatları (`make check`) tanımlı; ajan her işlemden sonra koşar. |
+| **Isolation** | Eşzamanlı ajanlar ayrı branch veya ayrı progress dosyaları kullanır. |
+| **Durability** | Kritik proje bilgisi git ile izlenen dosyalarda yaşar. |
+
+"Bir ajan yarıda kaldığında repo neye benzer?" sorusunun cevabı buradadır: ya tamamlanmış bir commit, ya temiz bir geri alma noktası — başka bir hâl kabul edilmez.
+
+## Sayılarla
+
+- **300**: HumanLayer'ın önerdiği CLAUDE.md üst satır sınırı; "300'ün altı, ideali daha kısa."
+- **60**: HumanLayer'ın kendi kök CLAUDE.md dosyasının satır sayısı.
+- **150–200**: Frontier modellerin makul tutarlılıkla takip ettiği talimat üst sınırı.
+- **50**: Claude Code sistem prompt'unun zaten içerdiği talimat sayısı — yani CLAUDE.md'nin bütçesi sınırlı.
+- **5/5**: Sağlıklı bir reponun soğuk başlangıç testi skoru.
+
+## Pratik kontrol listesi
+
+- [ ] Repo kökünde `AGENTS.md` veya `CLAUDE.md` var, 300 satır altında.
+- [ ] Her ana modülde `ARCHITECTURE.md` veya `CONSTRAINTS.md` var.
+- [ ] `PROGRESS.md` günceldir (son commit tarihiyle karşılaştırıldı).
+- [ ] Soğuk başlangıç testi 5/5.
+- [ ] Mimari kararların **gerekçesi** yazılı (sadece "ne" değil, "neden").
+- [ ] `examples/` veya `reference-app/` çapa dizini var.
+- [ ] CI: kritik dosya değişirse ilgili `.md` değişikliği bekleniyor.
+- [ ] Lint ihlalleri baseline'lanmış; sayı sadece düşebiliyor.
+
+## Müfredat içindeki yeri
+
+[Ders 02](/dersler/02-duzenek-gercekte-nedir) düzeneğin beş aparatını açtı; bu ders onlara bir adres verdi: hepsi repoda yaşamak zorunda. Bilgi Görünürlüğü Boşluğu, soğuk başlangıç testi ve ratchet kuralları, repoyu hakikat kaynağı tutmanın saha araçlarıdır. [Ders 04 — Şişmiş Talimat Sendromu](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) reponun içinde talimat dosyasının yapılandırılma sırasını ele alır: tek dev `AGENTS.md` neden çöker.
+
+Pratik karşılığı: [Proje 02 — Ajan-Okunabilir Çalışma Alanı](/projeler/02-ajan-okunabilir-calisma-alani). Boş bir repodan `AGENTS.md` + konu dokümanları + ilerleme dosyaları + referans çapa yapısını uçtan uca kurarsınız.

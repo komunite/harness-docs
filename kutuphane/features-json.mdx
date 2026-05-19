@@ -1,0 +1,163 @@
+---
+title: "features.json"
+description: "Düzeneğin (harness) geri bildirim aparatının primitifi — scheduler, verifier, handoff reporter ve progress tracker'ın okuduğu makine-okunabilir özellik listesi."
+---
+
+## Kod yazıldı, tamamlandı mı?
+
+Düzenek Mühendisliği (Harness Engineering) dünyasında bu iki ifade aynı şey değildir. Bir ajan oturumu biter; raporlar: "F02 tamam." Açarsın — endpoint cevap veriyor ama dönen JSON'da alan eksik, log'da silent error var, end-to-end senaryo geçmemiş. "Kod yazıldı" doğrudur; "davranış doğrulandı" değildir. `features.json` bu uçurumun üzerine konan tahtadır — özelliklerin makine tarafından okunan, durum geçişleri otomatik yürütülen veri yapısı. İnsan için not değil, sistem için primitif.
+
+## Ne işe yarar
+
+`features.json` bir doküman değildir, bir primitiftir. Düzeneğin (harness) dört temel aparat komponenti onu okur:
+
+- **Scheduler** — `not_started` listesinden bağımlılığı tamam olan ilk özelliği seçer, `active` yapar.
+- **Verifier** — aktif özelliğin `verification` komutunu çalıştırır, sıfır çıkış kodunda `passing`'e döndürür.
+- **Handoff reporter** — oturum sonunda durum dağılımını özetler ve bir sonraki oturuma devreder.
+- **Progress tracker** — `passing` oranını, geri basıncı, lead time'ı hesaplar.
+
+Aparat dördü de aynı dosyayı okur. Liste insan için "ne yapıldı" notu olsaydı, dördü için ayrı türetmeler yapılırdı — uyumsuzluk kaçınılmaz olurdu. JSON olduğu için tek kaynak, dört tüketici.
+
+Anthropic'in *Effective harnesses for long-running agents* yazısı bunu somutlar: claude.ai klonu deneyinde "over 200 features" tek bir JSON dosyasında tutulmuş ve **hepsi başta `failing` olarak işaretlenmiştir**. Varsayılan kritiktir — ajan `passing`'e çevirmek için kanıt üretmek zorundadır; tersi geçerli değil. GitHub spec-kit aynı fikri sözle koyar: "specifications become executable, directly generating working implementations rather than just guiding them."
+
+## Şablon — features.json
+
+```json
+[
+  {
+    "id": "F01",
+    "behavior": "POST /signup form verisi ile 201 ve session cookie doner",
+    "verification": "bash scripts/verify_F01.sh",
+    "state": "passing",
+    "depends_on": [],
+    "evidence": {
+      "commit": "abc123de",
+      "log": "artifacts/F01.log"
+    }
+  },
+  {
+    "id": "F02",
+    "behavior": "GET /cart aktif sepeti JSON olarak doner (kullanici authenticated)",
+    "verification": "bash scripts/verify_F02.sh",
+    "state": "active",
+    "depends_on": ["F01"],
+    "evidence": null
+  },
+  {
+    "id": "F03",
+    "behavior": "POST /cart/items product_id ve quantity alir, 201 ve guncel sepet toplami doner",
+    "verification": "bash scripts/verify_F03.sh",
+    "state": "not_started",
+    "depends_on": ["F02"],
+    "evidence": null
+  }
+]
+```
+
+Beş alan zorunlu: `id` deterministik referans; `behavior` dışarıdan gözlenebilir tek cümle; `verification` çıkış kodu üreten komut; `state` dört değerden biri; `depends_on` topolojik sıra için. `evidence` `passing` olmadan boştur; `passing`'e geçince verifier doldurur.
+
+## Durum makinesi
+
+Dört durum, üç geçiş:
+
+| Geçiş | Tetikleyici | Yazan |
+| --- | --- | --- |
+| `not_started` → `active` | bağımlılıkları `passing`, WIP slot boş | scheduler |
+| `active` → `blocked` | açık soru veya dış bağımlılık | ajan (gerekçe ile) |
+| `active` → `passing` | `verification` sıfır çıkış kodu | yalnız verifier |
+| `blocked` → `active` | engel kalktı | scheduler |
+
+`passing` durumu geri alınamaz. Geri dönüyorsa özellik baştan yanlış kesilmiştir, kaldırılıp yeniden tanımlanır.
+
+## Konvansiyon
+
+Üç değişmez:
+
+1. **Pass-state gating** — yalnızca verifier scripti `passing` yazar. Ajanın bu alana doğrudan yazma yetkisi yoktur; `AGENTS.md` bunu açıkça yasaklar. Anthropic'in kuralı: "Only mark features as 'passing' after careful testing." Düzenek bunu mekanik kapıyla zorlar, kibarlıkla değil.
+2. **WIP=1 invariant** — `active` durumundaki özellik sayısı her an en fazla bir. Scheduler ikinciyi açmaz; ajan zorla açamaz. Geçmemiş `active` özellik varken `not_started`'tan yeni aktivasyon mekanik olarak yasaktır.
+3. **depends_on grafiği döngüsüzdür** — `features.json` bir DAG'dir. Döngü oluşursa scheduler hata verir; bağımlılığı `passing` olmayan özellik `active`'e geçemez.
+
+200+ özellikli bir projede bu üçü olmadan liste rastgele bir TODO'ya iner. Üçü beraber, listenin primitif olduğunu garanti eder.
+
+## Özelleştirme
+
+**YAML alternatifi.** JSON dışında YAML da olur; uzun davranış açıklamaları okunabilir. Verifier parse edebildiği sürece tek format yeter.
+
+```yaml
+- id: F02
+  behavior: |
+    GET /cart aktif sepeti JSON olarak doner.
+    Kullanici authenticated olmali; aksi halde 401.
+  verification:
+    - bash scripts/verify_F02_happy.sh
+    - bash scripts/verify_F02_auth.sh
+  state: active
+  depends_on: [F01]
+  evidence: null
+```
+
+**Birden çok doğrulama komutu.** `verification` dizi olabilir; verifier sırayla çalıştırır, ilki sıfır-dışı verirse `active` kalır. Happy path + auth + edge case ayrı dosyalara dağılır.
+
+**evidence alanları.** Verifier en az `commit` (hash) ve `log` (yol) yazar. İstenirse `screenshot`, `trace_id`, `verified_at` eklenir. Boş `evidence` ile `passing` geçersiz sayılır.
+
+## Otomasyona bağlama
+
+Verifier `features.json` üzerinde döner, `active` özelliğin komutunu çalıştırır, çıkış koduna göre state ve evidence yazar.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+FEATURES="docs/features.json"
+ACTIVE_ID=$(jq -r '.[] | select(.state=="active") | .id' "$FEATURES")
+
+if [ -z "$ACTIVE_ID" ]; then
+  echo "No active feature; scheduler should pick the next one."
+  exit 0
+fi
+
+CMD=$(jq -r --arg id "$ACTIVE_ID" '.[] | select(.id==$id) | .verification' "$FEATURES")
+LOG="artifacts/${ACTIVE_ID}.log"
+mkdir -p artifacts
+
+if bash -c "$CMD" > "$LOG" 2>&1; then
+  COMMIT=$(git rev-parse --short HEAD)
+  jq --arg id "$ACTIVE_ID" --arg c "$COMMIT" --arg l "$LOG" \
+    '(.[] | select(.id==$id) | .state) = "passing"
+     | (.[] | select(.id==$id) | .evidence) = {commit:$c, log:$l}' \
+    "$FEATURES" > "$FEATURES.tmp" && mv "$FEATURES.tmp" "$FEATURES"
+  echo "PASS $ACTIVE_ID"
+else
+  echo "FAIL $ACTIVE_ID — see $LOG"
+  exit 1
+fi
+```
+
+Progress tracker aynı dosyadan beslenir:
+
+```bash
+jq -r '
+  group_by(.state)
+  | map({state: .[0].state, count: length})
+  | .[]
+  | "\(.state): \(.count)"
+' docs/features.json
+```
+
+Çıktı:
+
+```
+active: 1
+not_started: 1
+passing: 1
+```
+
+İnsan için okunabilir, ajan için de.
+
+## İlgili dersler
+
+- [Ders 07 — WIP=1 Disiplini](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)
+- [Ders 08 — Özellik Listesi Bir Primitiftir](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir)
+- [Kütüphane — AGENTS.md](/kutuphane/agents-md)
+- [Kütüphane — Verifier ve DoD](/kutuphane/verifier-dod)
+- [Kütüphane — Bootstrap](/kutuphane/bootstrap)

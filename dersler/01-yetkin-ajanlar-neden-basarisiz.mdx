@@ -1,0 +1,124 @@
+---
+title: "01 — Aynı Model, Farklı Sonuç"
+description: "Aynı model, aynı prompt, farklı çevre. Çıktı kategorik olarak farklı. Modelden önce sorgulanması gereken şey düzenektır."
+---
+
+Anthropic'in "Harness Design for Long-Running Application Development" başlıklı saha yazısında çarpıcı bir karşılaştırma var: aynı görev — küçük bir 2D retro oyun yapımı — aynı modele iki kez veriliyor. Tek değişen, modelin etrafındaki mühendislik. Yalın yürütmede iş 20 dakikada 9 dolara bitiyor; çıktı çalışmıyor. Tam düzeneklı koşuda iş 6 saat sürüyor, 200 dolara mâl oluyor ve oynanabilir bir oyun çıkıyor. Maliyet 22 katına çıkıyor; çıktının değeri kıyaslanamayacak kadar artıyor.
+
+Bu deneyde model sabit, prompt sabit. Değişen tek şey **düzenek (harness)** — modeli kuşatan plan, ortam, doğrulama ve durum altyapısı. Bu ders bu tek cümlenin kanıtıdır: bir şey başarısız olduğunda önce modeli değiştirme; önce düzeneği sorgula.
+
+## Tez
+
+Düzenek Mühendisliği (Harness Engineering), modeli sabit kabul edip onu çevreleyen yapıyı tasarlama disiplinidir: zayıf sonuçlar çoğu zaman model değil düzenek problemleridir.
+
+## Doğrulama boşluğu — en yaygın başarısızlık biçimi
+
+Yetkin bir ajanın en sık yaptığı hata yanlış kod yazmak değildir. Yanlış kod yazdığını fark etmeden "tamamlandı" demesidir. HumanLayer'ın "Skill Issue: Harness Engineering for Coding Agents" yazısı bu davranışı tek cümlede özetliyor: *"Bir problemi bir kodlama ajanıyla başarıyla çözme olasılığınız, ajanın kendi işini doğrulayabilme yeteneğiyle güçlü biçimde ilişkilidir."* Aynı yazının teşhisi daha keskin: *"Bu bir model problemi değil. Bir konfigürasyon problemi."*
+
+Doğrulama boşluğu (verification gap) yalnız gelmez. Pratik tabloda beş başarısızlık modu birbirine yapışıktır; her birinin altında düzeneğin belirli bir katmanı eksiktir:
+
+1. **Belirsiz görev tanımı** — Ajan "bir şey balık yapacaksın" kıvamında bir prompt'la masaya oturur, neyin "tamam" sayılacağını tahmin etmek zorunda kalır.
+2. **Eksik mimari sözleşme** — SQLAlchemy 2.0 zorunluluğu, OAuth kuralı, dizin yapısı gibi örtük kararlar repo'nun içinde değildir; sohbet penceresinde her seferinde yeniden anlatılır.
+3. **Eksik yürütme ortamı** — Bağımlılıklar yok, sürüm uyumsuz, tek komutla kurulum mümkün değil.
+4. **Doğrulayıcı yok** — Yazılan kodun gerçekten çalışıp çalışmadığını söyleyecek hiçbir komut tanımlı değil.
+5. **Bağlam endişesi (context anxiety)** — Bağlam penceresi dolmaya yaklaşınca ajan, sınavın bitmesine az kalmış bir öğrenci gibi rastgele doldurmaya başlar; doğrulamayı atlar ve kapatır.
+
+Bağlam endişesi anekdotal bir gözlem değil. Anthropic, çok ajanlı oyun yapımcısının erken sürümlerinde modellerin *"algılanan sınırlara yaklaştıkça erken tamamlama"* davranışı sergilediğini açıkça yazıyor; Opus 4.6'nın uzun bağlam kapasitesi ve otomatik sıkıştırma ile bu davranış ortadan kalkıyor. Tek başına bu, "model güçlendi" değil, "düzenek değişti" hikâyesidir.
+
+## Beş savunma katmanı
+
+Düzenek bu başarısızlıkların her birine ayrı bir katmanla cevap verir. Görev şartnamesi, bağlam sağlama, yürütme ortamı, doğrulama geri bildirimi ve durum yönetimi — bu beş katman ders boyunca tekrar tekrar karşımıza çıkacak.
+
+<Steps>
+  <Step title="Görev şartnamesi">
+    Ne yapılacağı, hangi davranışın "tamam" sayılacağı, neyin kapsam dışı olduğu yazılı. Anthropic bunu *"sprint kontratı"* olarak adlandırıyor: kod yazılmadan önce müzakere edilmiş, test edilebilir başarı kriterleri.
+  </Step>
+  <Step title="Bağlam sağlama">
+    Mimari kararlar, sürüm kısıtları, kabul kriterleri reponun içinde — sohbet penceresinde değil. HumanLayer'ın uyarısı net: *"Daha az talimat daha iyidir"* ve *"CLAUDE.md içeriğini öz ve genel geçer tut."*
+  </Step>
+  <Step title="Yürütme ortamı">
+    `make setup`, `make test`, `make check` tek komutla çalışır. Ajan kendi kodunu kendi koşturur.
+  </Step>
+  <Step title="Doğrulama geri bildirimi">
+    Davranışı kanıtlayan komutlar. Birim test → entegrasyon → uçtan uca. Anthropic'in oyun yapımcısında bu işi Playwright MCP üzerinden uygulamayı gerçekten test eden bir "Evaluator" ajanı üstleniyor.
+  </Step>
+  <Step title="Durum yönetimi">
+    `PROGRESS.md`, `DECISIONS.md` gibi yapılandırılmış dosyalar ile oturumlar arası süreklilik.
+  </Step>
+</Steps>
+
+Tanı döngüsü (diagnostic loop) bu beş katmanın doğrudan sonucudur: **çalıştır → başarısızlığı gözle → spesifik bir katmana ata → o katmanı düzelt → yeniden çalıştır.** Düzenek mühendisinin işi modeli yargılamak değil, başarısızlığı bir katmana indirgemektir.
+
+## En yüksek getirili ilk adım: `AGENTS.md`
+
+Repoya bugün tek bir şey ekleyebilecek olsanız, o `AGENTS.md` olurdu. Repo köküne konur; teknoloji yığınını, mimari sözleşmeleri ve doğrulama komutlarını anlatır. HumanLayer burada ısrarcı: *"Otomatik oluşturmaktan kaçının. İçeriği en iyi sonuçlar için özenle kurun."*
+
+```markdown
+# AGENTS.md
+
+## Proje
+Python 3.11 + FastAPI, PostgreSQL 15.
+
+## Hızlı başlangıç
+- Kurulum: `make setup`
+- Geliştirme: `make dev`
+- Test: `make test`
+- Tam doğrulama: `make check`
+
+## Sıkı kısıtlar
+- Tüm endpoint'ler OAuth 2.0 ile kimlik doğrular.
+- Tüm DB sorguları SQLAlchemy 2.0 sözdizimini kullanır.
+- Her PR `pytest + mypy --strict + ruff check` geçer.
+
+## Konu dokümanları
+- docs/api-patterns.md — yeni endpoint eklerken oku.
+- docs/database-rules.md — DB değiştirirken oku.
+- docs/testing-standards.md — test yazarken referans.
+```
+
+Bu yüz satırlık dosya çoğu zaman daha pahalı bir modele geçmekten daha fazla iyileştirme sağlar. Anahtar, *evrensel ve kalıcı* olanı yazıya dökmektir; her görev için değişen şeyler `AGENTS.md`'de yer almaz.
+
+## "Tamam"ı kim tanımlar?
+
+Ajan kendi başına "tamamlandı" diyemez. Tamamlanmanın anlamını **siz** yazıya dökmelisiniz. Görev şartnamesinin içine bir "Definition of Done" (Tamamlanma Tanımı) yerleştirilir:
+
+```markdown
+## Tamamlanma kriterleri
+- Yeni endpoint: GET /api/search?q=...
+- Sayfalama: varsayılan 20 kalem
+- Sonuçlar vurgulanmış parçacıklar (highlighted snippets) içerir
+- `pytest` ve `mypy --strict` tüm yeni kodda geçer
+- E2E test: arama akışı Playwright ile yeşil
+```
+
+Bu liste yokken ajanın "tamamladım" demesi yapısal olarak yanlıştır; çünkü neyi tamamlayacağı yazılı değildir. Anthropic bu noktayı *"uygulama başlamadan önce müzakere edilmiş açık tamamlanma sözleşmesi"* diye formüle ediyor.
+
+## Sayılarla — düzenek tek başına ne yapıyor?
+
+Her sayı doğrudan birincil kaynağa dayanır.
+
+- **Anthropic, 2D oyun deneyi**: Aynı görev, aynı model. Yalın yürütme **20 dk / 9 \$**, kırık çıktı. Tam düzenek **6 saat / 200 \$**, oynanabilir çıktı. Maliyet 22 katına çıkıyor; sonuç kategorik olarak farklı.
+- **Anthropic, "Infrastructure Noise in Agentic Coding Evals"**: Terminal-Bench 2.0 üzerinde en iyi ve en kötü kaynak tahsisli kurulumlar arasındaki fark **6 puan (p < 0,01)**. Tek bir görev üzerinde sıkı kısıttan 3× kaynağa geçildiğinde başarı oranı **%5,8'den %2,1'e** düşüyor (p < 0,001). SWE-bench üzerinde 1× → 5× RAM artışı **1,54 puan** daha yüksek skora yetiyor. Yazarların kendi sonucu çarpıcı: *"Birkaç puanlık bir fark gerçek bir kabiliyet farkını işaret edebilir — ya da sadece daha büyük bir sanal makineyi."*
+- **LangChain, "Improving Deep Agents with Harness Engineering"**: gpt-5.2-codex modeli sabit, *yalnızca düzenek değişti*. Terminal-Bench 2.0 skoru **%52,8'den %66,5'e** çıktı — **+13,7 puan**. Aynı değişiklikler arasında "akıl yürütme sandviçi" (planlama ve doğrulamada yüksek, uygulamada orta düzey reasoning) tek başına **%53,9'dan %63,6'ya** taşıdı. Aynı düzenek Claude Opus 4.6 ile **%59,6** verdi; düzenek optimizasyonu modele özgüdür.
+- **HumanLayer**: çıkarsama tek satıra sığıyor — *"Başarı olasılığınız, ajanın kendi işini doğrulayabilme yeteneğiyle güçlü biçimde ilişkilidir."*
+
+Bu sayıların ortak mesajı şu: lider tablolarındaki model farklarından daha büyük etkiler, modelin etrafındaki kuruluma gizlenmiştir.
+
+## Pratik kontrol listesi
+
+Ajan başarısız olduğunda modele dokunmadan önce şu sırayı yürüt:
+
+- [ ] Görev şartnamesi yazılı mı, "Definition of Done" tanımlı mı?
+- [ ] `AGENTS.md` mevcut mu, kısa mı, güncel mi?
+- [ ] Tek komutla doğrulama mümkün mü (`make check` veya muadili)?
+- [ ] Ajan bağlam endişesine girmedi mi (kalan token, oturum uzunluğu)?
+- [ ] `PROGRESS.md` son oturum durumunu yansıtıyor mu?
+- [ ] Yürütme ortamı tekrarlanabilir mi (kaynak, RAM, sürümler sabit mi)?
+
+Altıdan biri "hayır" ise modeli değiştirmek erken bir karardır.
+
+## Müfredat içindeki yeri
+
+Bu ders teşhisi koydu: başarısızlığı önce düzeneğe indirgeyen tanı döngüsünü, beş katmanın iskeletini ve `AGENTS.md`'nin neden ilk hamle olduğunu. [Ders 02 — Düzeneğin Anatomisi](/dersler/02-duzenek-gercekte-nedir) aynı beş katmanı operasyonel bir tanımla — *Agent = Model + Harness* — yeniden açar ve düzeneğin bir prompt dosyası olmadığını gösterir.
+
+Pratik karşılığı: [Proje 01 — Yalnız Prompt vs Kural Öncelikli](/projeler/01-yalniz-prompt-vs-kural-oncelikli) aynı görevi iki düzenek seviyesinde koşturup farkı kendi reponuzda ölçmenizi sağlar.

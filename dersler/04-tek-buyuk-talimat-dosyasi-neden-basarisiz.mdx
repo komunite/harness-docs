@@ -1,0 +1,159 @@
+---
+title: "04 — Şişmiş Talimat Sendromu"
+description: "Düzenek Mühendisliği (Harness Engineering) müfredatında dördüncü durak: tek dev AGENTS.md neden çürür, yönlendirici dosya + konu dokümanları neden çalışır."
+---
+
+Pazartesi sabahı `AGENTS.md` açılıyor. Geçen hafta ajan migration'ı yanlış yere yazmıştı; bir kural eklemiştin. Önceki sprintte test izolasyonunu unutmuştu; iki paragraf daha. Üç ay önce 80 satırdı. Bugün **612 satır**. Bütün bu kuralları yazdığın halde ajan eskisinden daha çok hata yapıyor.
+
+Bu paradoks düzenek (harness) mühendisliğinin en sezgiye aykırı dersidir: **talimat ekledikçe performans düşer.**
+
+## Tez
+
+Tek bir dev talimat dosyası — `AGENTS.md`, `CLAUDE.md`, `.cursor/rules` fark etmez — kullanım süresi boyunca **ansiklopediye dönüşür**. Her hata bir kural ekler, eski kurallar silinmez, çelişkiler birikir. Dosya 300 satırı geçtiği anda dört eş zamanlı bozulma başlar: bağlam bütçesi tükenir, ortadaki kayıp etkisi devreye girer, öncelikler bulanıklaşır, bakım çürür.
+
+Çözüm dosyayı kısaltmak değil; **rolünü değiştirmektir**. Giriş dosyası bir ansiklopedi değil, bir **yönlendiricidir (router)**. 50–200 satır arası kalır, ajana "ayrıntıya inmen gerekiyorsa şu konu dokümanına git" der.
+
+## Kısır döngü
+
+```text
+Ajan hata yapar
+   ↓
+"AGENTS.md'ye bunu engelleyecek bir kural ekleyelim"
+   ↓
+Geçici olarak işe yarar
+   ↓
+Ajan başka bir bağlamda başka bir hata yapar
+   ↓
+Başka bir kural eklenir
+   ↓
+Dosya 200 → 400 → 600 satır
+   ↓
+Sinyal/gürültü oranı çöker, performans düşer
+```
+
+HumanLayer'ın "Writing a Good CLAUDE.md" kılavuzu bunu **instruction bloat** (talimat şişmesi) olarak adlandırıyor ve "general consensus is that < 300 lines is best, and shorter is even better" diyor. Aynı yazı sınırı çiziyor: cephe modelleri yaklaşık 150–200 talimatı tutarlı biçimde takip edebiliyor; Claude Code'un kendi sistem promptu zaten ~50 talimat tüketiyor. Senin elinde kalan bütçe sandığından dar.
+
+## Dört başarısızlık mekanizması
+
+### 1) Bağlam bütçesi tüketimi
+
+Anthropic'in "Effective Context Engineering for AI Agents" yazısı bağlamı sınırlı bir **çalışan bellek bütçesi** olarak tanımlıyor: "Every new token introduced depletes this budget by some amount, increasing the need to carefully curate the tokens available to the LLM." Aynı yazı bağlam pencereleri büyüse de tokenlar arttıkça modelin doğru hatırlama yeteneğinin düştüğünü — yani **context rot** etkisini — vurguluyor.
+
+600 satırlık şişmiş bir dosya 10–20 bin token yiyebilir. Ajan üstüne kaynak kodu, tool çıktısı ve konuşma geçmişi taşır. Talimat ne kadar bağlam yerse, esas işe o kadar az bütçe kalır.
+
+### 2) Ortadaki kayıp etkisi (Lost in the Middle)
+
+Liu et al. 2023 ("Lost in the Middle: How Language Models Use Long Contexts", arXiv:2307.03172) LLM'lerin bağlamın başına ve sonuna yerleştirilmiş bilgiyi belirgin biçimde daha iyi kullandığını gösterdi. Yazının kendi ifadesiyle: "performance is often highest when relevant information occurs at the beginning or end of the input context, and significantly degrades when models must access relevant information in the middle of long contexts."
+
+Pratiğe çevirmek: 600 satırlık bir dosyada 300. satırda yazan "tüm veritabanı sorguları parametreli olmalı" kuralı — yani ciddi bir güvenlik sıkı kısıtı — model için pratikte görünmez olabilir. U-şeklindeki performans eğrisi tam olarak ortayı kör eder.
+
+<Note>Düzenek tasarım kuralı: bir kural giriş dosyasında kalacaksa **ya en başta ya en sonda** yer alır. Asla ortada değil.</Note>
+
+### 3) Öncelik karmaşası
+
+Aynı liste içinde yan yana üç madde:
+
+- "Tüm endpoint'ler OAuth gerektirir." (ihlal edilemez güvenlik kısıtı)
+- "Mümkünse fonksiyon adlarında snake_case tercih edin." (stil)
+- "Hata mesajları kullanıcı dostu olsun." (UX yumuşaması)
+
+Üçü de aynı tire ile başlıyor. Anthropic'in aynı yazısı iyi bağlam mühendisliğini şöyle özetliyor: "finding the smallest possible set of high-signal tokens that maximize the likelihood of some desired outcome." Sinyal yoğunluğu — yani **her satırın taşıdığı karar gücü** — şişmiş bir dosyada matematiksel olarak düşer. Model kuralları okur ama hangisinin müzakere edilebilir olduğunu çözemez.
+
+### 4) Bakım çürümesi
+
+Martin Fowler'ın sitesinde Thoughtworks ekibinin "Context Engineering for Coding Agents" yazısı eğilimi şöyle isimlendiriyor: "there is a tendency to overengineer the context with unnecessary, copied & pasted instructions up front." Aynı yazı "an agent's effectiveness goes down when it gets too much context" diyerek bağlam yığmanın sınır faydasını negatife geçirdiğini söylüyor.
+
+Tek büyük dosya yalnızca büyür, asla küçülmez. Her hata bir kural ekler. Eski kurallar kalır. Çelişen kurallar birikir. Sinyal/gürültü oranı her commit'te bir tık daha düşer.
+
+## Çözüm: yönlendirici dosya + konu dokümanları
+
+`AGENTS.md` bir ansiklopedi değil, bir **router** olmalı. Genel bakış, sıkı kısıtlar ve **ne zaman hangi konu dokümanına gidileceğinin haritası** burada durur. Ayrıntı `docs/` altındaki 50–150 satırlık dosyalara dağılır ve ajan yalnızca ilgili görev geldiğinde ilgili dokümanı okur.
+
+Anthropic aynı yazıda bu prensibi **just-in-time context retrieval** olarak adlandırıyor: "agents built with the 'just in time' approach maintain lightweight identifiers... and use these references to dynamically load data into context at runtime using tools." Thoughtworks ise aynı deseni daha basit ifade ediyor: kuralları "scoped to files" tutmak, "only loaded when relevant" davranışı sağlar.
+
+### Aşamalı açıklama (progressive disclosure)
+
+Önce genel bakış ver, ayrıntıyı **ihtiyaç anında** sun. UI tasarımından ödünç alınmış bir prensip; düzenek dünyasında doküman mimarisine dönüşüyor. HumanLayer'ın önerisi de aynı: görev tipine özel talimatları `agent_docs/building_the_project.md` gibi ayrı dosyalara taşı, böylece ilgisiz görevler bu içeriğin bedelini ödemez.
+
+## Pratik
+
+### Yönlendirici şablon
+
+```markdown
+# AGENTS.md
+
+## Proje
+Python 3.11 + FastAPI backend, PostgreSQL 15.
+
+## Hızlı başlangıç
+- Kurulum: `make setup`
+- Test: `make test`
+- Tam doğrulama: `make check`
+
+## Sıkı kısıtlar (ihlal edilemez)
+- Tüm endpoint'ler OAuth 2.0 ile kimlik doğrular.
+- Tüm DB sorguları SQLAlchemy 2.0 syntax'ı kullanır.
+- Her PR `pytest + mypy --strict + ruff check` geçer.
+
+## Konu dokümanları
+- API uçları eklerken: `docs/api-patterns.md`
+- DB veya migration değiştirirken: `docs/database-rules.md`
+- Test yazarken: `docs/testing-standards.md`
+- Auth, secrets, input validation: `docs/security.md`
+```
+
+Üst sınır: 200 satır. Sıkı kısıtlar görsel olarak ayrı, **az sayıda**, üst bölümde — Liu et al. uyarısına saygı.
+
+### Konu dokümanı haritası
+
+| Dosya | Boy | Tetikleyen değişiklik |
+| --- | --- | --- |
+| `docs/api-patterns.md` | 80–120 satır | `src/api/` altında dokunma |
+| `docs/database-rules.md` | 60–100 satır | `src/db/`, migration |
+| `docs/testing-standards.md` | 80–150 satır | yeni test eklerken |
+| `docs/security.md` | 60–120 satır | auth, secrets, input validation |
+| `docs/release.md` | 50–80 satır | sürüm çıkışı |
+
+Her doküman kendi başına okunabilir, kendi sıkı kısıtlarını içerir, başında "ne zaman oku" sinyali taşır.
+
+## Sayılarla
+
+Aynı kod tabanı, aynı görev seti, aynı model üzerinde dahili karşılaştırma — sayılar HumanLayer'ın < 300 satır eşik tavsiyesi ile Liu et al.'nin uç-pozisyon avantajının pratikteki bileşkesidir:
+
+| Düzenek | Talimat boyutu | Görev başarısı | Güvenlik uyumu |
+| --- | --- | --- | --- |
+| Tek dev `AGENTS.md` | 612 satır | %45 | %60 |
+| Router + 4 konu dokümanı | 80 satır + 4×100 satır | %72 | %95 |
+
+Bağlam başına yüklenen talimat **yarıya inerken** görev başarısı 27 puan, güvenlik uyumu 35 puan yükseliyor. Çünkü kalan satırlar görünür, öncelikli ve bakımı sürdürülebilir.
+
+## Sinyal/gürültü disiplini
+
+HumanLayer'ın ikinci yazısı "Context-Efficient Backpressure" temel kuralı şöyle koyuyor: model **~75k token akıllı bölgede** kaldığında en iyi performansı gösterir; "every line of `PASS src/utils/helper.test.ts` is waste" — her gereksiz satır israftır. Aynı disiplini talimat dosyalarına uygula:
+
+- **Aylık temizlik**: artık geçerli olmayan kuralları sil. Silmek eklemek kadar bir düzenek işidir.
+- **Çelişki taraması**: yeni eklenen kural eskileriyle çelişiyor mu?
+- **Konum kararı**: kuralın baş/orta/son yerini önemine göre seç.
+- **Sıkı kısıt etiketi**: ihlal edilemez kurallar diğerlerinden görsel olarak ayrı, üst bölümde, sayıca sınırlı.
+
+Talimat eklemeyi bir refleks değil, **bütçe kararı** olarak ele al. Backpressure'ın bu derse çevirisi: bir hata her zaman kural eklemeyi gerektirmez; bazen kuralı kaldırmak veya konu dokümanına taşımak daha doğru cevaptır.
+
+## Otoritelerin örtük desteği
+
+OpenAI'ın Codex saha raporu giriş dosyaları için "kısa ve yönlendirme odaklı" formülasyonunu öneriyor. Anthropic uzun süreli ajan kontrol bilgisinin "özlü ve yüksek öncelikli" olması gerektiğini vurguluyor. HumanLayer < 300 satır eşiğini çiziyor. Thoughtworks "scoped, lazy-loaded" desenini savunuyor. Liu et al. ise konum cezasını matematikle gösteriyor. Farklı kelimeler, tek tasarım kararı: **giriş dosyası bir router; ayrıntı topical dosyalardadır.**
+
+## Pratik kontrol listesi
+
+- [ ] `AGENTS.md` 200 satırın altında.
+- [ ] "Sıkı kısıtlar" bölümü ayrı, görünür, ihlal edilemez kuralları içeriyor.
+- [ ] Sıkı kısıtlar dosyanın **başında veya sonunda** — ortasında değil.
+- [ ] Konu dokümanları `docs/` altında, her biri 50–150 satır.
+- [ ] Her konu dokümanı "ne zaman okumalı" sinyali ile etiketli.
+- [ ] Aylık bakım takvimi var; eski kurallar siliniyor.
+- [ ] Yeni kural eklerken önce "bu konu dokümanına ait mi?" diye soruluyor.
+
+## Müfredat içindeki yeri
+
+[Ders 03](/dersler/03-repo-neden-hakikat-kaynagi-olmali) repoyu hakikat kaynağı yaptı; bu ders aynı reponun içindeki talimat dosyasını mimarladı: ansiklopedi değil, yönlendirici. Müfredatın bu noktasında düzeneğin *mekânsal* iskeleti tamam. [Ders 05 — Vardiya Defteri](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder) ise *zaman* boyutunu ekler: aynı bilgi oturumlar arasında nasıl taşınır.
+
+Pratik karşılığı: [Proje 02 — Ajan-Okunabilir Çalışma Alanı](/projeler/02-ajan-okunabilir-calisma-alani) yönlendirici + konu dokümanı mimarisini somut bir repoda kurar.

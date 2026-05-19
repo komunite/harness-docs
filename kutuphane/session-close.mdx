@@ -1,0 +1,110 @@
+---
+title: "Session Close & Quality Doc"
+description: "Bir oturum ya commit ile ya rollback ile biter; ortada kalış yok. İki aparat: çıkış kontrol listesi ve modül başına sağlık tablosu."
+---
+
+Veritabanı işlemleri net bir kural izler: bir transaction ya commit ya rollback ile biter; ortada kalış yok. Yarım satırlar yan tabloyu kirletmez, kilitler çürümez, sonraki sorgu temiz bir state üzerinden başlar. Düzenek (harness) için aynı disiplin geçerlidir. Bir oturum geride yorum içine alınmış üç fonksiyon, kalkanı düşmüş bir env dosyası ve "yarın temizlerim" notu bırakıyorsa, sonraki oturum bugünün hatalarını miras alır. Bu sayfa iki aparatı tanımlar: **Session Close kontrol listesi** (AGENTS.md içine girer, temiz çıkışı zorlar) ve **Quality Document** (modül başına makine-okunur sağlık notu).
+
+## Ne işe yarar
+
+İki aparat birlikte tamamlanma tanımına (DoD) **operasyonel hijyen** halkasını ekler. Session Close listesi "kod çalışıyor, test geçiyor" iddiasının ötesine geçer: build, test, ilerleme notu, artefakt temizliği ve standart açılış yolunun aynı anda yeşil olmasını şart koşar. Quality Document ise sonraki oturuma "nereden başla" cevabını sezgiye değil A/B/C notlarına bağlar. Martin Fowler'ın düzenek yazısı bu pratiği net adlandırır: *"recurring 'garbage collection' that scans for drift and has agents suggest fixes"* — düzenek, entropiye karşı yürüyen bir çöp toplayıcıdır.
+
+## Beş boyut
+
+Beş boyutun beşi de aynı anda doğru olmalı. Birinde çatlak diğer dördünü çürütür.
+
+- **Build** — `npm run build` müdahalesiz yeşil.
+- **Test** — testlerin tümü geçer; flaky yok, atlanan yok.
+- **Progress** — `PROGRESS.md` son durumu, sıradakini ve takıldığı yeri yazar.
+- **Artifact** — bayat artefakt yok: debug log, geçici dosya, yorum içi kod, yarım TODO.
+- **Startup** — standart açılış yolu (`make dev`) müdahalesiz açar.
+
+## Şablon — Session Close kontrol listesi (AGENTS.md içine)
+
+Tek bir kalem işaretlenmediyse oturum bitmez. Liste `AGENTS.md` içinde sözleşme olarak yer alır; pre-push hook ya da CI gate zorlar.
+
+```markdown
+## Oturum Çıkış Kontrol Listesi
+
+- [ ] Build geçer (`npm run build` ya da `make build`)
+- [ ] Tüm testler geçer (`npm test` ya da `make test`)
+- [ ] features.json güncellendi (yeni özellik, kaldırılan özellik, durum)
+- [ ] Debug kod yok (console.log, debugger, yarım TODO/FIXME)
+- [ ] Standart açılış yolu çalışır (`make dev` müdahalesiz)
+- [ ] PROGRESS.md son durumu yazılı (yapıldı, sürüyor, sıradaki)
+- [ ] DECISIONS.md yeni karar varsa eklendi (ADR formatında)
+- [ ] CI yeşil (son push'tan sonra tüm job'lar geçti)
+- [ ] Quality Document son 7 gün içinde güncellendi
+- [ ] Tüm değişiklikler commit edildi; çalışma dizini temiz (`git status --porcelain` boş)
+```
+
+Liste kısadır ama beş boyutu örter. Ajan her satıra kanıt ekler.
+
+## Şablon — Quality Document
+
+Makine-okunur sağlık tablosu. Yeni oturum tabloya bakar, en düşük puanlı modülden başlar. "Önce buraya gir" oku sezgiyi değil kanıtı kodlar.
+
+```markdown
+# Quality Document — 2026-05-18
+
+| Modül              | Doğrulama | Ajan-okunabilirlik | Test kararlılığı | Mimari sınır | Konvansiyon |
+| ------------------ | --------- | ------------------ | ---------------- | ------------ | ----------- |
+| src/api            | A         | A                  | B                | A            | A           |
+| src/db             | A         | B                  | B                | A            | B           |
+| src/ui             | C         | C                  | C                | B            | C  ← Önce buraya gir |
+| src/jobs           | B         | A                  | C                | B            | A           |
+| src/observability  | B         | B                  | A                | A            | B           |
+```
+
+Sütunlar: **Doğrulama** testler/linter'lar kapı mı? **Ajan-okunabilirlik** dosya isimleri, README, tipler modülü anlatıyor mu? **Test kararlılığı** flaky var mı? **Mimari sınır** modül yetki alanında mı? **Konvansiyon** kurallar tutarlı mı? A "temiz", B "çalışır ama borç var", C "müdahale gerek".
+
+## Şablon — idempotent cleanup script
+
+Aynı script kaç kez çağrılırsa aynı sonucu üretmeli; hata kaynağı olamaz.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Geçici log dosyalarını sil
+rm -f /tmp/debug-*.log
+
+# Yerel env dosyasını şablona döndür
+git checkout -- .env.local 2>/dev/null || true
+
+# Test koş — kanıt üret
+npm test
+
+# Build kanıtı
+npm run build
+
+# State raporu — boş olmalı
+git status --porcelain
+```
+
+Son satır kritik: `git status --porcelain` çıktısı boş değilse oturum kapanamaz. Hook çıktıyı okur, boş değilse exit kodu sıfır olmaz.
+
+## Otomasyona bağlama
+
+Aparatlar dökümana yazıldığında kâğıtta kalır; otomasyona bağlandığında düzeneğin parçası olur.
+
+**Pre-push hook** — her push öncesi cleanup koşar; başarısızsa push bloklanır:
+
+```bash
+# .git/hooks/pre-push
+#!/usr/bin/env bash
+set -euo pipefail
+./scripts/session-close.sh
+```
+
+**Haftalık cron** — periyodik harness sadeleştirme. Pazar gecesi koşan job dependency audit yapar, bayat feature'ları işaretler, Quality Document'i regenerate eder ve bir düzenek bileşenini geçici kapatıp benchmark koşar. Sonuç bozulmuyorsa aparat kalıcı kaldırılır. Düzenek büyümeye eğilimlidir; periyodik sadeleştirme olmadan kendi ağırlığı altında çürür.
+
+Pause-resume burada ayrı kazançtır. 12-Factor Agents faktör 5'i *"unify execution state and business state — one source of truth for all state"*, faktör 6 *"launch/pause/resume with simple APIs"* olarak tanımlar. Tek olay günlüğü serileştirilip geri yüklenebilir — ama yalnızca oturum temiz teslim edilmişse. Kirli state deserializable değildir.
+
+## İlgili dersler
+
+- [Ders 12 — Temiz Teslim](/dersler/12-her-oturum-neden-temiz-durum-birakmali)
+- [Kütüphane — AGENTS.md](/kutuphane/agents-md)
+- [Kütüphane — PROGRESS.md ve DECISIONS.md](/kutuphane/progress-decisions)
+- [Kütüphane — Verifier ve DoD](/kutuphane/verifier-dod)
+- [Kütüphane — OTel Trace](/kutuphane/otel-trace)

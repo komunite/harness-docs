@@ -1,0 +1,184 @@
+---
+title: "08 — Özellik Listesi Bir Primitiftir"
+description: "Düzenek Mühendisliği (Harness Engineering) içinde özellik listesi (feature list) insan için bir not değil, scheduler, verifier, handoff reporter ve progress tracker'ın okuduğu işletim primitifidir."
+---
+
+## Hiçbir şey yapmayan "Ödeme Yap" butonu
+
+Bir e-ticaret projesinde ajan "sepet ve ödeme akışını ekle" görevini alır. Bir oturum sonunda raporlar: "Tamamlandı." Frontend'de "Ödeme Yap" butonu vardır, stiller yerinde, hata mesajı yok. Tıklayınca **hiçbir şey olmaz**. Form submit edilmiyor, ağ isteği gitmiyor, log'da iz yok. Bir sonraki ajan oturumu yarım saat boyunca neyin yapıldığını çözmeye çalışır.
+
+Ne yanlış? Ajan kendi içsel standardıyla "tamamlandı" dedi. O standart yazılı değildi, ölçülemiyordu, kimse imza atmamıştı. "Kod yazıldı, syntax hatası yok" ajanın işine geldi. Davranışsal doğrulama yoktu, durum geçişi otomatik değildi, kayıt yapılandırılmamıştı.
+
+Bu problemin kökünde tek bir eksik vardır: **yapılandırılmış bir özellik listesi.**
+
+## Tez
+
+Düzenek Mühendisliği (Harness Engineering) dünyasında bir özellik listesi (feature list) insan için bir doküman değil, **sistem için bir primitiftir**. Düzeneğin (harness) dört temel komponenti — scheduler, verifier, handoff reporter, progress tracker — hepsi bu primitife dayanır. Liste yoksa düzenek çöker; çünkü her komponentin okuyacağı bir veri yapısı kalmaz.
+
+> **Dokümanlar insanın okuması içindir; primitifler sistemin işletmesi içindir. Doküman atlanabilir; primitif atlanamaz.**
+
+Anthropic'in uzun süreli ajanlar için yayımladığı çerçeve bu fikri açıkça koyar: "Set up a feature list file: based on the input spec, set up a structured JSON file with a list of end-to-end feature descriptions." Liste JSON'dur, satır içi notlar değil. claude.ai klonu deneyinde 200'den fazla özellik bu yapıda tutulmuş ve başlangıçta hepsi `failing` olarak işaretlenmiştir.
+
+## Özelliğin üçlüsü
+
+Her özellik **üç bileşenden** oluşur. Üçü olmadan o şey özellik değildir, sadece bir niyettir.
+
+```
+(davranış tanımı, doğrulama komutu, mevcut durum)
+```
+
+- **Davranış (behavior):** Sistem ne yapacak, dışarıdan nasıl gözlenecek?
+- **Doğrulama (verification):** Hangi komut çalıştırıldığında "yapıldı" diyebiliriz?
+- **Durum (state):** Şu an hangi aşamadadır?
+
+```json
+{
+  "id": "F03",
+  "behavior": "POST /cart/items {product_id, quantity} -> 201",
+  "verification": "bash scripts/verify_F03.sh",
+  "state": "passing",
+  "evidence": "commit abc123, test log artifacts/F03.log"
+}
+```
+
+GitHub'ın spec-kit projesi de aynı şeyi sözle ifade eder: "specifications become executable, directly generating working implementations rather than just guiding them." Spesifikasyon iskele değil, çıktı üretendir. Özellik listesi de aynıdır: bir görsel değil, çalıştırılabilir bir yapıdır.
+
+## Dört durumlu makine
+
+[Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir) bu dört durumu (`not_started`, `active`, `blocked`, `passing`) WIP=1 kuralının üzerine oturtmuştu. Burada onları bir geçiş diyagramına resmileştiriyoruz:
+
+```
+not_started ──► active ──► passing
+                  │
+                  └──► blocked ──► active (engel kalkınca)
+```
+
+### Pass-state kapısı — geri alınamaz, otomatik
+
+`passing`'e geçiş **iki özelliğe sahiptir**:
+
+1. **Geri alınamaz.** Bir özellik `passing` olduktan sonra normal akışta geri dönmez. Geri dönüyorsa o özellik baştan yanlış tanımlanmıştır.
+2. **Otomatiktir.** Ajan kendi başına `passing` yazamaz. Geçiş, doğrulama komutu sıfır çıkış koduyla bittiğinde script tarafından yapılır.
+
+Anthropic bu kuralı net koyar: "Self-verify all features. Only mark features as 'passing' after careful testing." Ajan, browser otomasyonu gibi son-kullanıcı düzeyinde araçlarla davranışı doğrular; birim test geçti ya da dev server açıldı denilmesi yeterli değildir.
+
+Bu, düzenek için bir köşe taşıdır: **ajan kendi notunu kendi vermez.** [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) bu kuralın derinleştirilmiş "neden"ini açıklar.
+
+## Listeyi okuyan dört komponent
+
+Aynı veri yapısı, dört farklı düzenek komponentine girer.
+
+### 1) Scheduler — sıradaki işi seçer
+
+`not_started` durumundaki özellikleri sıralı okur, ilk bağımlılığı tamam olanı `active` yapar. Düzenek ajana ne yapacağını söyler; ajan ne yapacağına karar vermez.
+
+### 2) Verifier — kapıyı tutar
+
+Aktif özelliğin doğrulama komutunu çalıştırır. Çıkış kodu sıfırsa durumu `passing`'e döndürür. Değilse `active` kalır. Anthropic'in tool tasarımı yazısı verifier'ın özelliklerini ayrı bir bağlamda ama aynı sözlerle koyar: doğrulamayı her "evaluation prompt" için "a verifiable response or outcome" ile eşleştirin; bu basit string karşılaştırması da olabilir, daha karmaşık bir judge de.
+
+### 3) Handoff reporter — özet üretir
+
+Oturum sonunda otomatik özet üretir: kaç özellik `passing`'e geçti, kaç tanesi `blocked`, kaç tanesi `not_started`. Anthropic deneyinde bu role karşılık gelen yapı bir `claude-progress.txt` dosyası ve init script'idir. Yazı şöyle der: "An initial git repo and progress notes file is written." Bu artifact, bir sonraki oturum açıldığında durum çıkarımının başlangıç noktasıdır.
+
+### 4) Progress tracker — durum dağılımı
+
+Tüm projenin sağlık fotoğrafı:
+
+```
+12 özellik toplam
+  passing:     7  (yüzde 58)
+  active:      1
+  blocked:     1
+  not_started: 3
+```
+
+Yüzdelerin değişmesi ilerlemenin nesnel göstergesidir. Bir ekran görüntüsü değil, bir metriktir.
+
+## Granülerlik — tek oturumda biten
+
+Özellik granülerliğinin altın kuralı: **tek bir düzenek oturumunda init'ten doğrulamaya kadar tamamlanabilmelidir.** Çok büyükse parçalanır, çok küçükse birleştirilir.
+
+> Biftek kesmek gibidir — bütün parçayı tabağa koymazsın; ama et makinesinden geçirip kıyma da yapmazsın. Çatalla alıp ısırılacak büyüklükte dilim.
+
+Doğru granülerlik testi: hangi özellik **bir oturumda init → kod → doğrulama → commit** akışından geçebiliyorsa doğru kesilmiştir.
+
+## Pratik
+
+### `docs/features.json`
+
+```json
+[
+  {
+    "id": "F01",
+    "behavior": "Kullanıcı /signup formunu doldurup gönderir; 201 ve session cookie döner",
+    "verification": "bash scripts/verify_F01.sh",
+    "state": "passing",
+    "depends_on": []
+  },
+  {
+    "id": "F02",
+    "behavior": "GET /cart kullanıcının aktif sepetini JSON olarak döner",
+    "verification": "bash scripts/verify_F02.sh",
+    "state": "active",
+    "depends_on": ["F01"]
+  },
+  {
+    "id": "F03",
+    "behavior": "POST /cart/items ile ürün eklenir, 201 ve güncel toplam döner",
+    "verification": "bash scripts/verify_F03.sh",
+    "state": "not_started",
+    "depends_on": ["F02"]
+  }
+]
+```
+
+### `AGENTS.md` içindeki özellik kuralları
+
+```markdown
+## Özellik Listesi Kuralları
+- Liste konumu: docs/features.json
+- Aynı anda yalnız bir özellik active olabilir.
+- Doğrulama komutu sıfır çıkış kodu vermeden passing yok.
+- Durum değerlerini elle yazma; verifier script otomatik günceller.
+- Yarım kalan özellik blocked durumuna alınır ve neden açıklanır.
+- Yeni özellik ekleme yalnızca init fazında veya açık kullanıcı talebiyle.
+```
+
+## Geri basınç — listenin gerilimi
+
+`passing` olmamış özellik sayısı, düzeneğin ajan üzerine bindirdiği gerilimdir. **Geri basınç sıfır = proje tamam.** Aksi her durum yapılacak iş demektir. Düzenek bu basıncı düşürmek için vardır; ajan basıncı azaltır ama tanımlamaz.
+
+## Sayılarla
+
+Aynı 12 özellik, iki farklı kuruluş:
+
+| Yapı | Tamamlanma | Mükerrer uygulama | Oturum başlangıç teşhis süresi |
+| --- | --- | --- | --- |
+| Serbest progress notları | yüzde 45 | Var | yaklaşık 15 dk |
+| Yapılandırılmış özellik listesi | **yüzde 90** | **0** | **yaklaşık 3 dk** |
+
+İyi tutulan yapılandırılmış kayıtlar, Anthropic'in yayımladığı uzun süreli ajan çerçevesinin işaret ettiği yönde, oturum açılış teşhis süresinde **yüzde 60 ile 80 arası** bir azalmaya karşılık gelir. Yazı şunu söyler: yapılandırılmış handoff "eliminated the need for an agent to have to guess at what had happened."
+
+## Pratik kontrol listesi
+
+- [ ] `docs/features.json` mevcut ve makine-okunabilir formatta.
+- [ ] Her özellikte davranış, doğrulama, durum üçlüsü var.
+- [ ] Dört durumlu makine uygulanıyor: `not_started`, `active`, `blocked`, `passing`.
+- [ ] Aynı anda yalnız bir özellik `active`.
+- [ ] Doğrulama scripti durumu otomatik günceller; ajan elle yazmaz.
+- [ ] Scheduler / verifier / handoff reporter / progress tracker dördü de aynı liste üzerinden çalışıyor.
+- [ ] Özellik granülerliği "tek oturumda biten" testini geçiyor.
+- [ ] `passing` özellikler için kanıt (commit, log dosyası) referansı tutuluyor.
+
+## Müfredat içindeki yeri
+
+[Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir) WIP=1 disiplinini koydu; bu ders o disiplinin altındaki veri yapısını resmileştirdi. Liste artık insan için bir not değil, dört düzenek komponentinin işlettiği bir primitif; özelliklerin üçlüsü ve dört durumlu makine bunu mekanikleştirir. [Ders 09 — Erken Zafer İlanı](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) en kritik geçişin — `passing`'in — neden ajandan alınıp düzeneğe verilmesi gerektiğini ölçer.
+
+Pratik karşılığı: [Proje 04 — Çalışma Zamanı Geri Bildirimi ve Kapsam Kontrolü](/projeler/04-calisma-zamani-geri-bildirimi).
+
+## Kaynaklar
+
+- Anthropic — **Effective harnesses for long-running agents**: "feature list", "self-verification", "handoff artifact" vokabüleri buradan gelir.
+- GitHub — **spec-kit**: Spesifikasyonların doküman değil, çalıştırılabilir primitif olduğu fikrinin yazılı kaynağı.
+- Anthropic — **Writing tools for agents**: Doğrulanabilir çıktı kuralı ("a verifiable response or outcome") buradan.
+- Martin Fowler / Birgitta Böckeler — **Spec-Driven Development tools**: Spec-driven yaklaşımın eleştirel değerlendirmesi; "agent ultimately not follow all the instructions" gözlemi neden otomatik kapıların gerekli olduğunu açıklar.

@@ -1,0 +1,115 @@
+# AGENTS.md — <Proje adı>
+
+> Bu dosya bir router'dır. Detay konu dokümanlarındadır.
+> Üst sınır: 200 satır. Şu an: <satır sayısı>.
+
+## Proje
+
+<Bir cümle: ne, kimin için, hangi yığın.>
+Örnek: "B2B fatura kesme servisi. Python 3.11 + FastAPI + PostgreSQL 15."
+
+İlgili dosyalar: `ARCHITECTURE.md`, `CONTRIBUTING.md`, `examples/reference-endpoint/`.
+
+---
+
+## Sıkı kısıtlar (ihlal edilemez)
+
+1. Tüm DB sorguları parametreli; ham string concat yasak.
+2. Tüm endpoint'ler OAuth 2.0 ile kimlik doğrular.
+3. Secret'lar yalnız `.env` ve `vault://` üzerinden; repoya commit edilmez.
+4. Her PR `make check` yeşilken açılır.
+5. 300 satırdan büyük yeni dosya kabul edilmez (ratchet kuralı).
+
+---
+
+## Definition of Done
+
+- Feature complete = uçtan uca davranış doğrulandı.
+  "Kod yazıldı" yetmez. "Birim test geçti" yetmez.
+- Üç zorunlu doğrulama seviyesi (sıra atlanamaz):
+  1. Sözdizimi: lint + type-check + derleme.
+  2. Davranış: unit + integration testleri.
+  3. Uçtan uca: gerçek HTTP, gerçek veritabanı,
+     gerçek protokol; tarayıcı varsa headful senaryo.
+- Katman N başarısızken N+1'e geçme.
+- Öncelik sırası: doğruluk > performans > stil.
+- Tamamlanma yargısı verifier'dan gelir, executor'dan değil.
+  "passing" yazma yetkisi yalnız verifier'da.
+- Her özellik için features.json içinde state alanı
+  verifier tarafından güncellenir; manuel değişiklik yasak.
+
+---
+
+## Dev Environment Tips
+
+- Kurulum: `make setup`
+- Yerel geliştirme: `make dev`
+- Python sürümü: `.python-version` dosyasında sabit.
+- Node sürümü: `.nvmrc` dosyasında sabit.
+- Bağımlılık ekleme: `uv add <paket>` (pip değil).
+- Yeni modül: `examples/reference-endpoint/` örneğini kopyala.
+
+## Testing Instructions
+
+- Tüm testler: `make test`
+- Tek bir dosya: `pytest tests/test_<isim>.py -x`
+- Tip denetimi: `mypy src/ --strict`
+- Lint: `ruff check src/`
+- Tam doğrulama (CI'nin de koştuğu): `make check`
+
+Ajan teslim etmeden önce `make check` koşar ve çıktısını PR
+açıklamasına yapıştırır. Yeşil olmayan diff teslim edilmez.
+
+## PR Instructions
+
+- Commit mesajı: `[<modül>] <tek mantıksal değişim>`
+- Bir PR = bir mantıksal değişim. Karışık PR reddedilir.
+- `PROGRESS.md` ve `DECISIONS.md` değişiklikle birlikte güncellenir.
+- İlgili konu dokümanı değişti mi? Checkbox işaretle.
+- `make check` çıktısı PR gövdesinde.
+
+---
+
+## Konu dokümanları
+
+Aşağıdaki haritayı oku; ilgili görev geldiğinde **yalnız ilgili dosyayı** aç.
+
+| Görev | Dosya |
+| --- | --- |
+| API uçları eklerken / değiştirirken | `docs/api-patterns.md` |
+| DB şema, migration, sorgu | `docs/database-rules.md` |
+| Yeni test yazarken | `docs/testing-standards.md` |
+| Auth, secrets, input validation | `docs/security.md` |
+| Sürüm çıkışı | `docs/release.md` |
+
+## Durum ve karar
+
+- Aktif iş: `PROGRESS.md`
+- Karar günlüğü (neden, alternatif, sonuç): `DECISIONS.md`
+- Özellik listesi: `features.json`
+- Kalite tablosu: `Quality.md`
+
+---
+
+## Oturum Çıkış Kontrol Listesi
+
+Tek bir kalem işaretlenmediyse oturum bitmez.
+
+- [ ] 1. `make test` yeşil.
+- [ ] 2. `make check` yeşil (üç katman).
+- [ ] 3. `features.json` güncel — durum kanıtlanmış.
+- [ ] 4. `PROGRESS.md` son durumu yansıtıyor (bugün tarihli).
+- [ ] 5. `DECISIONS.md` yeni karar varsa eklendi.
+- [ ] 6. `Quality.md` modül notları güncel; "buradan başlayın" işareti var.
+- [ ] 7. Debug log/temp dosya yok.
+- [ ] 8. `make dev` müdahalesiz açılır.
+- [ ] 9. `git status --porcelain` ya boş ya commit hazır.
+- [ ] 10. `bash scripts/session_close.sh` exit code 0.
+
+---
+
+## Gözlemlenebilirlik
+
+- OTel çıktısı sessize alınmaz; console exporter trace'leri stdout'a yazar.
+- Her oturum bir trace ID; her feature span; her verify adımı alt span.
+- `gen_ai.*` attribute'ları semconv'a bağlı; `harness.*` namespace'i düzeneğe özgü.

@@ -1,0 +1,165 @@
+---
+title: "12 — Temiz Teslim"
+description: "Entropi varsayılan. Düzenek Mühendisliği (Harness Engineering) uzun vadeli güvenilirliği işletim disiplinine bağlar. Temiz state, tamamlanma tanımının parçasıdır."
+---
+
+## 30 dakika kaybı
+
+Pazartesi sabahı projeyi açıyorsun. Geçen Cuma "yarın temizlerim" diyerek bıraktığın dal hâlâ kirli: yorum içine alınmış üç fonksiyon, kalkanı düşmüş bir `.env.local`, makinede çalışıp CI'da düşen bir test, ne yaptığını anlatmayan bir `PROGRESS.md`. İlk 30 dakika ajanın değil senin. Çünkü ajana hangi state'ten devam edeceğini sen söyleyemiyorsun — ve ajan o state'i kendi başına çıkaramıyor.
+
+Aynı senaryo 12 hafta üst üste tekrar ederse, proje şu hale gelir:
+
+| Metrik | Hafta 1 | Hafta 12 (temizliksiz) | Hafta 12 (temizlikli) |
+| --- | --- | --- | --- |
+| Build başarı oranı | %100 | %68 | %97 |
+| Test geçme oranı | %100 | %61 | %95 |
+| Açılış süresi | 5 dk | 60+ dk | 9 dk |
+| Bayat artefakt sayısı | 0 | 103 | 11 |
+
+Aynı kod tabanı, aynı görev tipi, aynı ajan. Tek değişken: oturum sonunda **temiz state** bırakma disiplini.
+
+## Tez
+
+Uzun vadeli güvenilirlik tek koşumun başarısına değil, **işletim disiplinine** dayanır. Bir oturumun çıktısı yalnız üretilen değişiklik değil, aynı zamanda **bıraktığı durumdur**. Düzenek Mühendisliği (Harness Engineering) "temiz state"i tamamlanma tanımının (DoD) parçası kabul eder; aksi halde yarınki oturum bugünkünün hatalarını miras alır.
+
+## Entropi varsayılandır — Lehman yasaları
+
+Manny Lehman'ın yazılım evrimi yasaları nettir: **kullanılan bir sistem, korunmadıkça çürür.** İkinci yasa (artan karmaşıklık): bir sistem evrildikçe karmaşıklığı artar, ancak aktif olarak azaltılırsa azalır. Yedinci yasa (azalan kalite): aktif bakım yapılmayan bir sistemin algılanan kalitesi zamanla düşer.
+
+Bu fizik kuralı kadar serttir. Düzenek üzerine kurduğun her şey — talimat, araç, ortam, durum, geri bildirim — aynı çürümeye tabi. **Aktif temizlik olmadan, çalışan düzenek dahi 12 haftada açılış maliyetinin 12 katına bakar.**
+
+Martin Fowler'ın düzenek mühendisliği yazısı bu fikri operasyonel bir alışkanlığa indirger: ekiplerin sürdürmesi gereken şey, *"recurring 'garbage collection' that scans for drift and has agents suggest fixes"*. Yani düzenek, entropiye karşı yürüyen bir çöp toplayıcıdır. Sen toplamazsan, kimse toplamaz.
+
+## "Sonra temizlerim" tuzağı
+
+> "Sonra temizlerim" pratikte **asla temizlemem** demektir.
+
+Eve geç gelen bir misafirin tabağı sabaha bırakmasıyla aynı dinamik. Sabah olduğunda tabakları yıkamanın maliyeti iki katına çıkar; yorgunluk birikir; bir gün bulaşık makinesi hiç koşmaz.
+
+Düzenek söz konusu olduğunda kuralı tek satıra sıkıştır: **bir oturum, ya commit ile ya rollback ile biter.** Veritabanı işlemi gibi. Ortada yarım kalmış dosya yığını yok.
+
+## Temiz state — beş boyut
+
+Bir oturumun "temiz" sayılması için **beş boyutun hepsi** aynı anda doğru olmalıdır:
+
+| Boyut | Anlam | Kanıt |
+| --- | --- | --- |
+| **Build** | Derlenir | `npm run build` / `make build` yeşil |
+| **Test** | Var olan testler geçer | `npm test` / `make test` yeşil |
+| **Progress** | Yapıldı / sürüyor / sıradaki yazılı | `PROGRESS.md` güncel |
+| **Artifact** | Bayat artefakt yok | Debug log, geçici dosya, yorum içine alınmış kod yok |
+| **Startup** | Standart açılış yolu çalışır | `make dev` veya `npm run dev` müdahalesiz çalışır |
+
+Beşi eşit önemde. Birinde çatlak diğer dördünü çürütür. Build geçer ama açılış 20 dakika sürüyorsa, ajan bir sonraki oturumda yine aynı duvarla karşılaşır. Testler geçer ama `PROGRESS.md` boşsa, ajan ne yapacağını sıfırdan çıkarmak zorunda kalır.
+
+## İki kademeli temizlik
+
+Bellek yönetiminde iki klasik strateji vardır: reference counting (anlık) ve tracing GC (periyodik). Düzenek temizliği de aynı ikiliyi kullanır.
+
+### 1) Anlık temizlik — her oturum sonu
+
+Küçük, hızlı, idempotent. Aynı script kaç kez çağrılırsa çağrılsın aynı sonucu üretir.
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Geçici log'ları sil
+rm -f /tmp/debug-*.log
+
+# Yerel env dosyasını şablona döndür
+git checkout -- .env.local 2>/dev/null || true
+
+# Testleri tekrar koştur (kanıt üret)
+npm test
+
+# Build kanıtı
+npm run build
+
+# State raporu
+git status --porcelain
+```
+
+İdempotans burada kritik. Temizlik script'i kendisi bir hata kaynağı olamaz; iki kez çalıştırmak hiç çalıştırmamakla aynı veya daha güvenli olmalıdır.
+
+### 2) Periyodik temizlik — haftalık veya iki haftada bir
+
+Tam tarama, yapısal düzeltme, benchmark. Reference counting'in yakalayamadığı döngüsel çöpü tracing GC nasıl topluyorsa, periyodik temizlik de anlık script'in göremediği bayatlığı toplar:
+
+- Dependency güncellemesi ve security audit
+- Bayat feature listesi temizliği
+- Eski branch'lerin kapatılması
+- **Periyodik düzenek sadeleştirme**: bir düzenek bileşenini geçici olarak kapat, benchmark koş. Sonuç bozulmuyorsa o bileşeni **kalıcı olarak kaldır**.
+
+Düzenek bir kez kurulduktan sonra büyümeye eğilimlidir. Ama büyüme her zaman değer üretmez. Düzenli sadeleştirme, Fowler'ın "garbage collection against entropy" çerçevesinin saha karşılığıdır.
+
+## Quality Document — modül başına sağlık
+
+Düzeneğin izleyebileceği makine-okunur bir sağlık tablosu. Her modül için A/B/C notları:
+
+```markdown
+# Quality Document — 2026-05-18
+
+| Modül | Doğrulama | Ajan-okunabilirlik | Test kararlılığı | Mimari sınır | Konvansiyon |
+| --- | --- | --- | --- | --- | --- |
+| src/api  | A | A | B | A | A |
+| src/db   | A | B | B | A | B |
+| src/ui   | C | C | C | B | C  ← Önce buraya gir |
+| src/jobs | B | A | C | B | A |
+```
+
+Yeni oturum bu tabloya bakar, **en düşük puanlı modülden başlar**. Düzenek "nereden başlayacağım" sorusunu sezgiye değil kanıta dayandırır. 12-Factor AgentOps bunu sertçe formüle eder: *"Your agent's context is now an engineering artifact, not chat history."* Quality Document, o engineering artifact'in sağlık göstergesidir.
+
+## Oturum çıkış kontrol listesi
+
+`AGENTS.md` veya `docs/session-close.md` içinde **sözleşme** olarak yer alır. Tek bir kalem işaretlenmediyse oturum bitmez.
+
+```markdown
+## Oturum Çıkış Kontrol Listesi
+- [ ] Build geçer (`npm run build` / `make build`)
+- [ ] Tüm testler geçer (`npm test` / `make test`)
+- [ ] Feature listesi güncellendi
+- [ ] Debug kod yok (console.log, debugger, yarım TODO/FIXME)
+- [ ] Standart açılış yolu çalışır (`npm run dev` / `make dev`)
+- [ ] PROGRESS.md son durumu yazılı
+- [ ] DECISIONS.md yeni karar varsa eklendi
+- [ ] CI yeşil
+- [ ] Tüm değişiklikler commit edildi; çalışma dizini temiz
+```
+
+## Pause-resume — durum bilen bir düzenek
+
+12-Factor Agents çerçevesi pause-resume'u temel bir düzenek özelliği sayar. Faktör 5 ve 6: *"unify execution state and business state"* ve *"launch/pause/resume with simple APIs"*. Tek bir olay günlüğü serileştirilebilir ve geri yüklenebilir — bu, oturumun temiz teslim edilmiş olmasını gerektirir. Kirli state, deserializable değildir; ajan onu yeniden inşa etmek için saatler harcar.
+
+Citadel projesinin pratik karşılığı bu fikrin uygulaması: *"Multi-session work survives context compression and session boundaries. Start an architecture overhaul today, close your laptop, pick it up tomorrow — the campaign state, decisions, and progress are all preserved."* `.planning/` dizini hem Claude Code hem Codex altında aynı şekilde okunur — çünkü oturumlar **temiz commit'lerle** bitirilir, "yarım kalmış dosya yığını" ile değil.
+
+Ralph minimal harness pattern (Geoffrey Huntley) aynı disiplini başka bir yönden test eder: `while :; do cat PROMPT.md | claude-code ; done`. Döngünün her turunda aynı `@fix_plan.md` ve şartname stack'e deterministik olarak yığılır. Tur sonunda `git add -A` ve `git commit` — *zorunlu temiz teslim*. Aksi takdirde bir sonraki turun stack'i bozulur. Ralph kanıtlıyor: en yalın düzenek bile temiz state olmadan dönmez.
+
+## Sayılarla
+
+| Metrik | Hafta 1 | Hafta 12 (temizliksiz) | Hafta 12 (temizlikli) | Fark |
+| --- | --- | --- | --- | --- |
+| Build pass | %100 | %68 | %97 | **+29 pp** |
+| Test pass | %100 | %61 | %95 | **+34 pp** |
+| Startup | 5 dk | 60+ dk | 9 dk | **6,7×** |
+| Bayat artefakt | 0 | 103 | 11 | **9,4×** |
+| İlk 30 dk verim | tam | sıfır | tam | — |
+
+Bu rakamlar sezgisel projeksiyonlardır; saha gözleminde nokta nokta dağılım gösterir, ama yönü değişmez. Lehman yasaları kadar tutarlı: aktif bakım olmadan eğri aşağı gider.
+
+## Pratik kontrol listesi
+
+- [ ] Oturum çıkış kontrol listesi `AGENTS.md`'de.
+- [ ] Anlık temizlik script'i (idempotent) mevcut, CI'da koşuyor.
+- [ ] Periyodik temizlik (haftalık) takvimde.
+- [ ] Quality Document mevcut, son 7 gün içinde güncellendi.
+- [ ] Beş boyutun (build/test/progress/artifact/startup) beşi de oturum sonunda yeşil.
+- [ ] Aylık düzenek sadeleştirme planı var; en az bir bileşen geçici kapatılıp ölçüldü.
+- [ ] Yarım commit'e izin yok — commit veya rollback.
+- [ ] Pause-resume bir oturum boyunca test edildi: kapat, aç, devam et.
+
+## Müfredat içindeki yeri
+
+[Ders 11](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali) düzeneği görünür kıldı; bu son ders onu sürdürülebilir kıldı. Beş boyutlu temiz state, iki kademeli temizlik, Quality Document ve oturum çıkış kontrol listesi — entropiye karşı yürüyen çöp toplayıcının somut parçalarıdır. Lehman yasaları kadar serttir: aktif bakım yoksa çalışan düzenek bile çürür. Müfredat burada bitiyor; disiplin buradan başlıyor.
+
+Tüm halkalar tek bir koşumda birleşsin diye: [Proje 06 — Bütünleşik Düzenek (Capstone)](/projeler/06-butunlesik-duzenek-capstone). Beş aparat, doğrulama kapısı, e2e suite, gözlemlenebilirlik ve temiz teslim aynı düzenekte toplanır. İyi bir düzeneğin ölçüsü tek koşum değildir; otuzuncu koşumda hâlâ yarı saniyede açılabilmesidir.

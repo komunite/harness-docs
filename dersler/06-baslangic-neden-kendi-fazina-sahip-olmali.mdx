@@ -1,0 +1,159 @@
+---
+title: "06 — Önce Temel, Sonra Duvar"
+description: "Başlangıç (initialization) ayrı bir fazdır, ayrı bir optimizasyon hedefi vardır. Uygulama ile karıştırıldığında dört yerden birden çatlar. Düzenek Mühendisliği (Harness Engineering) müfredatının altıncı dersi."
+---
+
+## Temel kurumadan duvar örülmez
+
+Şantiyede temel betonu döküldükten sonra usta beklemek zorundadır. Beton kürünü tamamlamadan duvar örülürse ya temel oturduğunda çatlaklar başlar, ya zemin eğri kalır, ya sıva tutmaz. Süre kısaltılırsa kalite alınır.
+
+Yazılımda düzenek (harness) kurarken bu kuralı bilinçli olarak ihlal ediyoruz. Ajana "kullanıcı girişi ekle" diyoruz; ajan tek oturumda hem `package.json` kurar, hem test çatısını yapılandırır, hem `Makefile` yazar, hem feature kodunu yazmaya başlar, hem de commit eder. Dördü de yarım kalır, hiçbiri sağlam olmaz.
+
+## Tez
+
+Başlangıç (initialization) ve uygulama (implementation), farklı optimizasyon hedefleri olan farklı fazlardır. Başlangıcın hedefi "altyapı sağlam ve yeniden başlatılabilir olsun"; uygulamanın hedefi "feature kabul kriterini geçsin"dir. Bu iki hedef tek pencerede aynı anda çözülmeye çalışılırsa ajan çoklu-amaç bir optimizasyon problemiyle karşılaşır ve hepsini kötü çözer.
+
+Anthropic'in *Effective harnesses for long-running agents* yazısında bu ayrım açıkça kurulur: ilk bağlam penceresi özel olarak "initializer agent" adıyla anılan dar kapsamlı bir ajana verilir; bu ajanın görevi `init.sh`, `claude-progress.txt` ve "hangi dosyaların eklendiğini gösteren bir ilk git commit" üretmektir. Feature kodu daha sonraki ajanların işidir.
+
+## Karıştırmanın dört maliyeti
+
+Başlangıç ile uygulama tek oturumda yapıldığında dört tipik hata görülür.
+
+### 1) Düzensiz altyapı
+
+Feature kodu yazılırken altyapı önemsizleşir. Ajan zamanın yüzde sekseninden fazlasını feature'a, kalan sürede "şöyle bir Makefile da olsun"a ayırır. İlk gün çalışır görünür; üçüncü oturumda `make test` başka bir ortamda kırılır.
+
+### 2) Doğrulanamamış kod birikimi
+
+Test çatısı yapılandırılmadan yazılan feature kodu doğrulanmadan repoya iner. Sonradan test eklendiğinde, mevcut kodun bir kısmının testi geçemediği keşfedilir. 12-factor agentops doktrini bunu Faktör VI altında "Lock Progress Forward" olarak adlandırır: yalnızca doğrulanmış iş kalıcı kontrol noktasına yazılmalıdır.
+
+### 3) Örtük varsayım mayınları
+
+Init fazında alınan kararlar yazıya dökülmediyse, ileride çelişen kararlar üretilir. "Auth için JWT mi session mi?" sorusunun cevabı `DECISIONS.md` dosyasında yoksa, bir hafta sonra başka bir oturum tersini seçebilir. Faktör II'nin "git'te değilse olmamıştır" kuralı bu mayınları en aza indirir.
+
+### 4) Bağlam bütçesi israfı
+
+Altyapı bağlam ister: dosyalar okunur, hata mesajları görülür, komutlar denenir. Feature aynı pencerede ele alınınca iki iş de aynı bütçeden beslenir. Pencere dolduğunda ikisi de eksik kalır.
+
+## Bootstrap Sözleşmesi — dört koşul
+
+Bir başlangıç fazı, aşağıdaki dört koşulun **tamamı** sağlandığında bitmiş kabul edilir. Üçü tamam, biri eksikse iş hâlâ başlangıç fazındadır.
+
+1. **Başlatılabilir** — Temiz bir klonda `make setup` hatasız çalışır.
+2. **Test edilebilir** — `make test` çalışır ve en az bir smoke testi geçer.
+3. **İlerleme görünür** — `PROGRESS.md` ilk satırları yazılı; bir sonraki ajan ne yapılacağını okuyabilir.
+4. **Devamı belli** — Sıralı bir feature listesi (`features.json`) mevcuttur.
+
+Bu sözleşme, Anthropic'in `init.sh + claude-progress.txt + ilk commit` üçlüsünün genişletilmiş halidir ve AGENTS.md formatının önerdiği üç bölümle (Dev Environment Tips / Testing Instructions / PR Instructions) doğrudan eşleşir.
+
+## Beş teslim çıktısı
+
+Bir init fazı şu beş artefaktı teslim eder. Eksik herhangi biri, fazın bitmediği anlamına gelir.
+
+<Steps>
+  <Step title="Çalıştırılabilir ortam">
+    Bağımlılıklar kurulu, sürüm kısıtları net. `.nvmrc`, `.python-version`, `pyproject.toml`, `package-lock.json` veya `uv.lock` gibi kilit dosyaları mevcut. Tek komut: `make setup`.
+  </Step>
+  <Step title="Doğrulanabilir test iskelesi">
+    En az bir smoke testi yazılı ve geçiyor. CI (GitHub Actions veya benzeri) yeşil ilk koşusunu vermiş durumda. Anthropic'in initializer ajanının `init.sh` ile ürettiği "çalışıyor mu" sinyalinin karşılığıdır.
+  </Step>
+  <Step title="Bootstrap sözleşmesi dokümanı">
+    Başlangıç komutları (`make setup`, `make dev`, `make test`, `make check`), bağımlılıkların güncel durumu, proje yapısı `AGENTS.md` dosyasında açıkça yazılı. Üç bölüm minimum: dev environment, testing, PR conventions.
+  </Step>
+  <Step title="Görev kırılımı (feature list)">
+    Sıralı, kabul kriterli, kısa bir liste. Anthropic'in claude.ai klonu örneğinde initializer'ın ürettiği JSON 200'den fazla feature içeriyor ve her biri başlangıçta "failing" olarak işaretleniyor. Senin projende bu, basit bir `features.json` olabilir:
+
+    ```json
+    [
+      { "id": "F01", "behavior": "POST /login JWT döner", "state": "not_started" },
+      { "id": "F02", "behavior": "GET /me JSON döner",    "state": "not_started" },
+      { "id": "F03", "behavior": "GET /search?q=... eşleşmeleri döner", "state": "not_started" }
+    ]
+    ```
+  </Step>
+  <Step title="Git checkpoint">
+    Init tamamlandığı anda temiz tek bir commit: `init: bootstrap complete`. Bu, sonraki oturumların geri dönüş noktasıdır. 12-factor agentops'un Faktör VI'sının çıktısı: validated work, recorded checkpoint.
+  </Step>
+</Steps>
+
+## Pratik
+
+### Init kabul kontrol listesi
+
+Bu liste ihlal edilemez. Listeden tek bir kalem eksikken feature çalışmaya başlanmaz.
+
+```markdown
+## Init Acceptance
+- [ ] `make setup` temiz bir klonda hatasız çalışıyor
+- [ ] `make test` en az bir smoke testi geçiriyor
+- [ ] `make check` lint + type + test'i sırayla koşturuyor
+- [ ] AGENTS.md doldurulmuş (dev / test / PR bölümleri)
+- [ ] PROGRESS.md ilk durumu yazılı
+- [ ] DECISIONS.md "init kararları" bölümü mevcut
+- [ ] features.json en az 3 sıralı feature içeriyor
+- [ ] Tüm değişiklikler tek "init: bootstrap complete" commit'inde
+- [ ] CI yeşil
+```
+
+### Minimal Makefile iskeleti
+
+Düzeneğin geri kalanı bu dört hedef üzerine kurulur.
+
+```makefile
+.PHONY: setup dev test check
+
+setup:
+	uv sync
+	pre-commit install
+
+dev:
+	uv run python -m app
+
+test:
+	uv run pytest -q
+
+check: 
+	uv run ruff check .
+	uv run mypy .
+	uv run pytest -q
+```
+
+`make check` CI'da çağrılacak tek komuttur. Bu kural ileride ders 09'daki "kalite kapısı"nın temelini atar.
+
+## Sayılarla
+
+### Sıcak başlangıç (hot-start) ile soğuk başlangıç (cold-start)
+
+İyi bir init, sonraki **soğuk başlangıçları** ucuzlatır. Yeni bir oturum açıldığında ajan iki şeyden birini yaşar:
+
+- **Cold-start (init'siz)**: oturumun ilk 10–20 dakikası "burada ne var, nasıl çalıştırılır, testler nerede?" sorularına gider. Bağlam penceresinin kayda değer bir kısmı keşif maliyetine yanar.
+- **Hot-start (init'li)**: oturum `make setup && cat PROGRESS.md && cat features.json` ile dakikalar içinde bağlam kurar. Bağlam penceresi feature işine ayrılır.
+
+### Anthropic'in çoklu-ajan ölçümleri
+
+Anthropic'in *How we built our multi-agent research system* yazısında belgelenen ölçüm: rolleri ayrılmış çoklu-ajan kurulumu (lead Opus 4 + subagent Sonnet 4) tek-ajanlı Claude Opus 4'ü iç değerlendirmede **yüzde 90,2 oranında** geride bıraktı. Aynı yazı çoklu-ajan kurulumlarının sohbete kıyasla **yaklaşık 15 kat** daha fazla token tükettiğini de söyler.
+
+Bu iki sayı birlikte okunduğunda init'in maliyeti şöyle dengelenir: init'i ayrı bir ajana ya da ayrı bir oturuma vermek pahalıdır, ama feature ajanı bu yatırımı bir sonraki üç-dört oturum içinde geri kazanır çünkü hot-start her oturumda keşif maliyetini sıfıra yakın indirir.
+
+### Initializer ajan kavramı
+
+Anthropic vokabülerinde *initializer agent*, ilk bağlam penceresini tüketen, dar kapsamlı, özel promptlu bir alt ajandır. Görevi yalnızca bootstrap: `init.sh` üretmek, `claude-progress.txt`'yi başlatmak, ilk git commit'ini atmak ve feature listesini JSON olarak teslim etmek. Feature yazan ajandan bilinçli olarak ayrı tutulur — çünkü iki ajanın optimizasyon hedefleri farklıdır.
+
+Tek ajanlı bir ortamda çalışıyorsan aynı disiplin oturum sınırlarıyla uygulanabilir: **ilk oturum yalnız init yapar**, başka iş yapmaz; kapanışında `init: bootstrap complete` commit'i bırakır; ikinci oturum yalnızca o noktadan feature'a başlar.
+
+## Pratik kontrol listesi
+
+- [ ] İlk oturumun tek amacı init; feature kodu yok.
+- [ ] Bootstrap Sözleşmesi'nin dört koşulu sağlandı.
+- [ ] Beş teslim çıktısının (ortam / test / doküman / feature listesi / commit) hepsi yerinde.
+- [ ] Init kabul kontrol listesinde tek bir kutu boş değil.
+- [ ] AGENTS.md dosyası dev / test / PR bölümlerini içeriyor.
+- [ ] Tek "init: bootstrap complete" commit'i atıldı.
+- [ ] features.json en az üç sıralı kalem içeriyor.
+- [ ] CI yeşil; `make check` lokalde de yeşil.
+
+## Müfredat içindeki yeri
+
+[Ders 05](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder) süreklilik artefaktlarını tanıtmıştı; bu ders onlara bir başlangıç anı verdi. Bootstrap Sözleşmesi'nin dört koşulu sağlanmadan feature ajanı sahaya çıkmaz; init "ilk oturum" değil, ayrı bir mühendislik fazıdır. Bu fazın çıktısı bir feature listesidir; o liste de [Ders 07 — WIP=1 Disiplini](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)'nin başlangıç noktasıdır: aşırıya kaçma ve yarım bırakma simbiyozu, listenin nasıl tüketileceğiyle çözülür.
+
+Pratik karşılığı: [Proje 03 — Çok Oturumlu Süreklilik](/projeler/03-cok-oturumlu-sureklilik). Init + devam desenini gerçek bir repoda kurarsınız; bu dersteki dört koşul ve beş teslim, projenin kabul kapısıdır.

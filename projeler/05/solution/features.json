@@ -1,0 +1,46 @@
+{
+  "features": [
+    {
+      "id": "F-001",
+      "title": "Bearer auth on /notes",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_smoke.py::test_unauthorized_get_returns_401 + e2e auth header"
+    },
+    {
+      "id": "F-002",
+      "title": "Create + get roundtrip",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_smoke.py + tests/test_e2e.py::test_full_crud_flow"
+    },
+    {
+      "id": "F-003",
+      "title": "List notes",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_smoke.py::test_list_after_two_inserts"
+    },
+    {
+      "id": "F-004",
+      "title": "Search notes (parameterized LIKE, title + body)",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_search.py (4 case)"
+    },
+    {
+      "id": "F-005",
+      "title": "Update note via PUT — 404 on missing id",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_e2e.py::test_put_missing_id_returns_404"
+    },
+    {
+      "id": "F-006",
+      "title": "Delete note via DELETE — 404 on missing id",
+      "passes": true,
+      "verifier": "passing",
+      "evidence": "tests/test_e2e.py::test_delete_missing_id_returns_404"
+    }
+  ]
+}

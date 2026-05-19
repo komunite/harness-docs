@@ -1,0 +1,162 @@
+---
+title: "02 — Düzeneğin Anatomisi"
+description: "Düzenek (harness) bir prompt dosyası değil, model ağırlıklarının dışında kalan her şeydir: talimat, araç, ortam, durum ve geri bildirimden oluşan beş katmanlı bir mühendislik birimi."
+---
+
+[Ders 01](/dersler/01-yetkin-ajanlar-neden-basarisiz) "düzeneği sorgula" dedi; bu ders "düzenek tam olarak neden ibarettir" sorusunu cevaplıyor.
+
+## Bir laboratuvar, bir tek tüpten ibaret değildir
+
+Sadece reaktifi olan bir laboratuvar laboratuvar sayılmaz. Çeker ocak yoksa, kalibre edilmiş terazi yoksa, defter yoksa, doğrulama protokolü yoksa, deney "olabilir"; ama tekrarlanamaz. Aynı şey bir ajan için de geçerlidir: model ne kadar güçlü olursa olsun, etrafını saran sistem zayıfsa sonuç güvenilmezdir.
+
+AutoGPT bu durumun en bilinen vakasıdır. 2023 ortasında GPT-4 üzerine kurulmuş, kendi kendine plan yapan bir ajandı; haftalar içinde 150 bin GitHub yıldızı aldı. Ama yapısal **durum** yönetimi ve dış **geri bildirim** kanalları olmadığı için uzun görevlerde döngüye girdi, bağlamı çöpe çevirdi, sonuçsuz kapandı. Mesele "yeteri kadar zeki bir model" değildi; mesele düzeneğin eksikliğiydi.
+
+## Tez
+
+**Düzenek (harness), model ağırlıklarının dışında kalan her şeydir.** LangChain bunu tek bir denklemle ifade eder: _Agent = Model + Harness_; düzenek ise "modelin kendisi olmayan tüm kod, konfigürasyon ve yürütme mantığı"dır ([LangChain — Anatomy of an Agent Harness](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)). Thoughtworks aynı denklemi tekrarlar: düzenek "bir AI ajanında modelin kendisi dışındaki her şeydir" ([Martin Fowler — Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)).
+
+Bu operasyonel bir tanımdır. Promptu içerir ama prompttan ibaret değildir. Bir oturumun ortasında modelin bağlamına giren her bayt, modelin çağırabildiği her komut, modelin koştuğu her sanal ortam, oturumlar arası taşınan her dosya, ajanın çıktısını doğrulayan her test — hepsi düzeneğin parçasıdır.
+
+Bu dersin amacı, "düzenek" kelimesini elle tutulur **beş aparata** ayırmaktır. Müfredatın geri kalanı bu beş aparatı sırayla derinleştirir.
+
+## Anti-örüntü — "düzenek = prompt" yanılgısı
+
+Saha pratiğindeki en yaygın hata, düzeneği tek bir uzun talimat dosyasına indirgemektir. Bir Markdown dosyasına 800 satır kural yazılır, ajana takılır, "harness yaptık" denir. Sonra aynı ajan:
+
+- Üç oturum sonra kararını unutur (durum yok).
+- Kodunu çalıştıramaz, çünkü `make test` hedefi yok (ortam yok).
+- Yazdığı testin geçip geçmediğini ajan değil insan kontrol eder (geri bildirim yok).
+- "İzin verilen" araç listesi prompta gömülüdür, gerçekte hiçbir teknik kısıt yoktur (araç sözleşmesi yok).
+
+Prompt önemlidir ama düzeneğin yalnızca bir aparatıdir. Tek başına tüm yükü taşıyamaz. [Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) bu yanılgının ekonomisini ayrı bir derste ele alır.
+
+## Mekanizma — beş aparat
+
+Düzenek Mühendisliği (Harness Engineering) bu beş aparatı birlikte tasarlamak ve birlikte sürdürmektir. Tek tek değerlendirilebilirler ama tek tek anlam ifade etmezler.
+
+| # | Aparat | Soru cevapladığı | Ana artefakt |
+| --- | --- | --- | --- |
+| 1 | **Talimat (instruction)** | "Ne yapmalıyım, hangi kurallarla?" | `AGENTS.md`, `CLAUDE.md` |
+| 2 | **Araç (tool)** | "Hangi eylemlere iznim var?" | İzinli komut listesi, MCP sözleşmeleri |
+| 3 | **Ortam (environment)** | "Hangi sürümler, hangi komutlar?" | `pyproject.toml`, `.nvmrc`, `Makefile` |
+| 4 | **Durum (state)** | "Daha önce ne yaptım, neden?" | `PROGRESS.md`, `DECISIONS.md` |
+| 5 | **Geri bildirim (feedback)** | "Yaptığım iş gerçekten doğru mu?" | Test, lint, type-check, e2e |
+
+### 1) Talimat — yönlendirici, ansiklopedi değil
+
+Talimat dosyası ajanın projeye girdiğinde okuyacağı **router**'dır: nereye bakacağını söyler, her şeyi içinde anlatmaz. Yığın, mimari sözleşmeler, sıkı kısıtlar, hızlı başlangıç. Bu, LangChain'in "system prompts" katmanına denk düşer ([LangChain — Anatomy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)). [Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) bu dosyanın neden tek başına yetmediğini ölçer.
+
+### 2) Araç — yetki kontratı
+
+Ajanın eline ne tutturduğun, kim olduğunu belirler. Bu sadece bir prompt notu değil; **teknik olarak uygulanabilir** bir kontrat olmalıdır: hangi komutları çağırabileceği, hangi MCP server'larına ulaşabileceği, hangi dizinlere yazabileceği. LangChain bu katmanı "Tools, Skills, MCPs — capabilities with descriptions" olarak adlandırır ([LangChain — Anatomy](https://www.langchain.com/blog/the-anatomy-of-an-agent-harness)). **En az ayrıcalık** (least privilege) burada düzenek için lüks değil zorunluluktur.
+
+### 3) Ortam — kendini açıklayan kurulum
+
+Ortam **kendini açıklayan** olmalıdır. `pyproject.toml`, `package.json`, `.nvmrc`, `.python-version` ajanın "Hangi Python kullanıyorum?" sorusunu sohbete sormadan cevaplayabilmesini sağlar. Thoughtworks bu fikri "harnessability" altında toplar: güçlü tipli diller, net modül sınırları ve framework'ler ne kadar belirgin olursa, üstüne kurulabilecek kontroller o kadar çoğalır ([Martin Fowler — Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)).
+
+Pratik tavsiye: `Makefile` dört temel hedef üzerine kurulmalı.
+
+```makefile
+.PHONY: setup dev test check
+setup:  ## bağımlılıkları kur
+dev:    ## yerel geliştirme ortamını başlat
+test:   ## tüm testleri koş
+check:  ## lint + tip + test (CI'nin de koştuğu hedef)
+```
+
+### 4) Durum — oturumlar arası hafıza
+
+LLM oturumları amneziktir; düzenek onları amnezik olmayan yapana kadar tüm uzun görevler darbeli çalışır. Inngest bu noktayı keskin bir cümleyle koyar: "Beşinci iterasyonda süreç ölürse, birinci ile dördüncü iterasyon zaten kalıcılaştırılmıştır" ([Inngest — Your Agent Needs a Harness](https://www.inngest.com/blog/your-agent-needs-a-harness-not-a-framework)). Bu fikri tek bir repo dosyasına indirdiğimizde `PROGRESS.md` ve `DECISIONS.md` çıkar: "ne kaldım" ve "neden bu yolu seçtim" sohbette değil, dosyada yaşar. [Ders 05](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder) bu mekanizmayı genişletir.
+
+### 5) Geri bildirim — en yüksek getirili katman
+
+Doğrulama olmadan ajan ne yaptığını bilemez; sadece "yaptım" der. Thoughtworks bu katmanı **guides (feedforward)** ve **sensors (feedback)** olarak ikiye ayırır: rehberler ajan davranmadan _önce_ yönlendirir, sensörler davrandıktan _sonra_ doğrular ([Martin Fowler — Harness Engineering](https://martinfowler.com/articles/exploring-gen-ai/harness-engineering.html)). Sensörler iki tipte yürür: hızlı **hesaplamalı** (linter, tip denetimi, test — milisaniyeden saniyeye) ve daha yavaş **çıkarımsal** (semantik analiz). Bu doğrulamalar olmazsa ajanın "erken zafer ilan etme" eğilimi devreye girer; [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder) ve [Ders 10](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir) bu eğilimle başa çıkmaya ayrılmıştır.
+
+## Framework, runtime ve düzenek — temiz bir taksonomi
+
+Üç terim sık karıştırılır. LangChain bunları katmanlı bir taksonomiye oturtur ([LangChain — Frameworks, Runtimes and Harnesses](https://www.langchain.com/blog/agent-frameworks-runtimes-and-harnesses-oh-my)):
+
+- **Framework** — Geliştirme soyutlamaları: içerik blokları, ajan döngüsü, middleware. Örnekler: LangChain, Vercel AI SDK, CrewAI, OpenAI Agents SDK.
+- **Runtime** — Üretim altyapısı: dayanıklı (durable) yürütme, akış, insan müdahalesi, oturum içi ve oturumlar arası kalıcılık. Örnekler: LangGraph, Temporal, Inngest.
+- **Harness (düzenek)** — Yukarıdaki katmanların üstüne oturan, "piller dahil" yüksek seviyeli paket: varsayılan promptlar, planlama araçları, dosya sistemi erişimi, opinionated tool-call davranışı. Örnekler: DeepAgents, Claude Code.
+
+Bu kursta "düzenek" kelimesini bu üç katmanın tamamını kapsayan **operasyonel** anlamıyla kullanıyoruz: senin reponda yaşayan ve _bu_ ajanı _bu_ proje üzerinde işlevsel kılan her şey. Hangi framework'ü ya da runtime'ı seçtiğinden bağımsız olarak, beş aparatı senin somutlaştırman gerekir.
+
+## Ablasyon — darboğazını ölçerek bul
+
+Beş aparat aynı anda mükemmel olmaz. **Hangisinin senin için en kritik olduğunu** ablasyon ile bulursun: her seferinde tek bir aparatı sökersin ve performansa ne olduğunu ölçersin. Bu, Thoughtworks'ün "keep quality left" prensibini ölçülebilir bir karar çerçevesine dönüştürür.
+
+```
+Tam düzenek:                  başarı oranı %85
+- Talimat çıkarıldığında:    %62  (Δ = −23)
+- Araç sözleşmesi yok:       %71  (Δ = −14)
+- Ortam dosyaları yok:       %44  (Δ = −41)  ← darboğaz
+- Durum dosyaları yok:       %58  (Δ = −27)
+- Geri bildirim yok:         %38  (Δ = −47)  ← darboğaz
+```
+
+Yukarıdaki sayılar tekrarlanabilirlik için sentetiktir; ama metodoloji gerçektir. En büyük düşüşü yaratan iki aparata önce yatırım yap. Düzenek iyileştirmesi spekülasyon değil, ölçümle yürür.
+
+## Pratik
+
+20 bin satırlık bir TypeScript + React reposunda, düzeneği dört aşamada inşa ettiğimizde marjinal getiri eğrisi şu şekildedir:
+
+| Aşama | Düzenek içeriği | Başarı |
+| --- | --- | --- |
+| 1 | Sadece README | %20 |
+| 2 | + `AGENTS.md` (talimat) | %60 |
+| 3 | + doğrulama komutları (geri bildirim) | %80 |
+| 4 | + `PROGRESS.md` (durum) | %80–100 |
+
+Talimat ve geri bildirim, getirinin yaklaşık dörtte üçünü açıklar. Tesadüf değil: bu iki aparat ajanın "ne yapayım" ve "ne yaptığımı nasıl bileyim" sorularına cevap verir. Geri kalan iki aparat (araç ve ortam) bu cevapların **uygulanabilir** olduğunu garanti eder; durum ise cevapların **oturumlar arası taşındığını**.
+
+### Doğrulama komutları sözleşmesi
+
+`AGENTS.md` veya `Makefile` içinde yer alacak küçük bir bölüm, geri bildirim aparatının amacını netleştirir:
+
+```markdown
+## Doğrulama komutları
+- Test:           `pytest tests/ -x`
+- Tip denetimi:   `mypy src/ --strict`
+- Lint:           `ruff check src/`
+- Tam doğrulama:  `make check`
+```
+
+Bu blok bir referans değil, bir **sözleşmedir**. Ajan teslim etmeden önce bu komutları koşturmak ve çıktısını rapor etmekle yükümlüdür.
+
+## Sayılarla
+
+- **5** aparat: talimat, araç, ortam, durum, geri bildirim.
+- **4** `Makefile` hedefi yeter: `setup`, `dev`, `test`, `check`.
+- **3** katman: framework / runtime / harness (LangChain).
+- **2** doğrulama tipi: hesaplamalı ve çıkarımsal (Thoughtworks).
+- **1** denklem: _Agent = Model + Harness_ (LangChain).
+
+## Pratik kontrol listesi
+
+<Steps>
+  <Step title="Talimat — router var mı">
+    Repoda `AGENTS.md` veya `CLAUDE.md` var mı? Diğer kaynaklara yönlendiriyor mu, yoksa 800 satırlık bir liste mi?
+  </Step>
+  <Step title="Araç — kontrat teknik mi">
+    İzin verilen komutlar/MCP'ler sadece promptta mı yazıyor, yoksa teknik olarak da kısıtlı mı?
+  </Step>
+  <Step title="Ortam — kendini açıklıyor mu">
+    `pyproject.toml` / `package.json` / `.nvmrc` ve `make check` hedefi yerinde mi?
+  </Step>
+  <Step title="Durum — amnezi çözülmüş mü">
+    `PROGRESS.md` ve `DECISIONS.md` her oturumda güncelleniyor mu?
+  </Step>
+  <Step title="Geri bildirim — ajan kendini doğruluyor mu">
+    Ajan teslimden önce `make check` koşuyor ve çıktısını mı paylaşıyor?
+  </Step>
+  <Step title="Ablasyon — ölçtün mü">
+    Her aparatı en az bir kez kapatıp aynı görevi tekrar koştun mu?
+  </Step>
+</Steps>
+
+## Müfredat içindeki yeri
+
+[Ders 01](/dersler/01-yetkin-ajanlar-neden-basarisiz) başarısızlığın düzenek kaynaklı olduğunu söylemişti; bu ders düzeneği somutlaştırdı: beş aparat, ablasyonla ölçülebilen darboğaz, framework/runtime/harness taksonomisi. [Ders 03 — Repo: Hakikat Kaynağı](/dersler/03-repo-neden-hakikat-kaynagi-olmali) bu beş aparatın neden bir tek mekânda — repoda — yaşaması gerektiğini savunur.
+
+Pratik karşılığı: [Proje 01 — Yalnız Prompt vs Kural Öncelikli](/projeler/01-yalniz-prompt-vs-kural-oncelikli). Her aparatı tek tek kapatıp açarak ablasyon eğrisini kendi reponuzda görürsünüz.

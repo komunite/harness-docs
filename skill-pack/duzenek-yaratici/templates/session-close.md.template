@@ -1,0 +1,42 @@
+# Oturum Çıkış Kontrol Listesi
+
+Bu liste vardiya kapanışında zorunlu doğrulamalardır. Tek bir kalem
+işaretlenmediyse oturum bitmez; push reddedilir.
+
+## Beş boyut
+
+- [ ] **Build** — `make setup` yeşil; bağımlılıklar temiz.
+- [ ] **Test** — `make test` yeşil; flaky yok, atlanan yok.
+- [ ] **Progress** — `PROGRESS.md` son durumu yansıtıyor; tarih bugün.
+- [ ] **Artifact** — bayat artefakt yok (`/tmp/debug-*.log`, yorum içi kod, yarım TODO).
+- [ ] **Startup** — standart açılış (`make dev`) müdahalesiz çalışır.
+
+## Ek doğrulamalar
+
+- [ ] `make check` yeşil (üç katman).
+- [ ] `features.json` güncel — yeni eklenen, kaldırılan, durumu değişen kayıtlar.
+- [ ] `DECISIONS.md` yeni karar varsa eklendi (tarih + başlık + neden + reddedilen alternatif + kısıt).
+- [ ] `Quality.md` modül notları güncel; "← Önce buraya gir" işareti taşınmış olabilir.
+- [ ] CI yeşil (son push'tan sonra tüm job'lar geçti).
+- [ ] `git status --porcelain` boş veya yalnız son commit ile temiz.
+
+## Otomasyon
+
+```bash
+bash scripts/session_close.sh
+```
+
+Bu komut beş boyutun beşini otomatik doğrular. Ek doğrulamalar manuel
+göz kontrolü gerektirir; PR açıklamasına checkbox olarak yapıştır.
+
+## Pre-push hook
+
+```bash
+# .git/hooks/pre-push
+#!/usr/bin/env bash
+set -euo pipefail
+bash scripts/session_close.sh
+```
+
+`chmod +x .git/hooks/pre-push` ile aktif edilir. Beş boyut yeşil değilse
+push reddedilir. Bypass: `git push --no-verify` (izlenebilir bırak).

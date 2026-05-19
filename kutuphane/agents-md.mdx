@@ -1,0 +1,143 @@
+---
+title: "AGENTS.md"
+description: "Repo kökündeki yönlendirici dosya: ajanın iniş sayfası, ansiklopedi değil router."
+---
+
+`AGENTS.md`, ajanın projeye girdiğinde okuduğu ilk dosyadır. Repo kökünde durur, kısa kalır, ayrıntıyı kendi içinde anlatmaz; ihtiyaç anında hangi konu dokümanına bakılacağını söyler. Yeni bir oturumun ilk birkaç saniyesinde okunduğu için, hangi satırın orada olduğu — ve hangisinin olmadığı — proje genelindeki başarı oranını doğrudan belirler.
+
+## Ne işe yarar
+
+`AGENTS.md`, düzenek (harness) mühendisliğinin **talimat aparatının** somut artefaktıdır ([Ders 02](/dersler/02-duzenek-gercekte-nedir)). İşlevi tek cümleyle: ajana "ne yapacağını söyle, ayrıntıyı nereden okuyacağını göster."
+
+- **Konum**: Repo kökü. Bu, `agentsmd/agents.md` açık formatının tanımlı yeridir.
+- **Ne zaman okunur**: Her yeni oturumun başında, ajan tarafından otomatik olarak.
+- **Rol**: Yönlendirici (router). Genel bakış, hızlı başlangıç, sıkı kısıtlar (hard constraints) ve konu dokümanları haritası burada durur. Detay, `docs/` altındaki dosyalara dağılır ([Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz)).
+- **Boy bütçesi**: 50–200 satır. HumanLayer'ın saha kılavuzunun çizdiği üst sınır 300 satırdır; "daha kısası daha iyidir."
+
+Tek bir dev `AGENTS.md` tutmak neden başarısız olur? Cephe modelleri yaklaşık 150–200 talimatı tutarlı biçimde takip eder; Claude Code'un sistem promptu zaten ~50 talimat yer. Geriye kalan bütçe, bir ansiklopediyi değil, bir yönlendiriciyi taşıyabilecek kadardır.
+
+## Şablon
+
+Aşağıdaki iskelet doğrudan repo köküne kopyalanabilir. Köşeli parantezli alanları kendi projenle değiştir.
+
+```markdown
+# AGENTS.md — <Proje adı>
+
+> Bu dosya bir router'dır. Detay konu dokümanlarındadır.
+> Üst sınır: 200 satır. Şu an: <satır sayısı>.
+
+## Proje
+
+<Bir cümle: ne, kimin için, hangi yığın.>
+Örnek: "B2B fatura kesme servisi. Python 3.11 + FastAPI + PostgreSQL 15."
+
+İlgili dosyalar: `ARCHITECTURE.md`, `CONTRIBUTING.md`, `examples/reference-endpoint/`.
+
+---
+
+## Sıkı kısıtlar (ihlal edilemez)
+
+1. Tüm DB sorguları parametreli; ham string concat yasak.
+2. Tüm endpoint'ler OAuth 2.0 ile kimlik doğrular.
+3. Secret'lar yalnız `.env` ve `vault://` üzerinden; repoya commit edilmez.
+4. Her PR `make check` yeşilken açılır.
+5. 300 satırdan büyük yeni dosya kabul edilmez (ratchet kuralı).
+
+---
+
+## Dev Environment Tips
+
+- Kurulum: `make setup`
+- Yerel geliştirme: `make dev`
+- Python sürümü: `.python-version` dosyasında sabit.
+- Node sürümü: `.nvmrc` dosyasında sabit.
+- Bağımlılık ekleme: `uv add <paket>` (pip değil).
+- Yeni modül: `examples/reference-endpoint/` örneğini kopyala, üzerine yaz.
+
+## Testing Instructions
+
+- Tüm testler: `make test`
+- Tek bir dosya: `pytest tests/test_<isim>.py -x`
+- Tip denetimi: `mypy src/ --strict`
+- Lint: `ruff check src/`
+- Tam doğrulama (CI'nin de koştuğu): `make check`
+
+Ajan teslim etmeden önce `make check` koşar ve çıktısını PR açıklamasına yapıştırır. Yeşil olmayan diff teslim edilmez.
+
+## PR Instructions
+
+- Commit mesajı: `[<modül>] <tek mantıksal değişim>`
+- Bir PR = bir mantıksal değişim. Karışık PR reddedilir.
+- `PROGRESS.md` ve `DECISIONS.md` değişiklikle birlikte güncellenir.
+- İlgili konu dokümanı değişti mi? Checkbox işaretle.
+- `make check` çıktısı PR gövdesinde.
+
+---
+
+## Konu dokümanları
+
+Aşağıdaki haritayı oku; ilgili görev geldiğinde **yalnız ilgili dosyayı** aç.
+
+| Görev | Dosya |
+| --- | --- |
+| API uçları eklerken / değiştirirken | `docs/api-patterns.md` |
+| DB şema, migration, sorgu | `docs/database-rules.md` |
+| Yeni test yazarken | `docs/testing-standards.md` |
+| Auth, secrets, input validation | `docs/security.md` |
+| Sürüm çıkışı | `docs/release.md` |
+
+## Durum ve karar
+
+- Aktif iş: `PROGRESS.md`
+- Karar günlüğü (neden, alternatif, sonuç): `DECISIONS.md`
+- Yeni özellikler: `features.json`
+```
+
+## Konvansiyon
+
+- **Ad**: `AGENTS.md` (büyük harf, tek dosya). `agentsmd/agents.md` açık formatı bu adı standartlaştırır; Claude Code projelerinde `CLAUDE.md` ile bire bir aynı role sahiptir. İkisini birden tutuyorsan biri diğerini referans etsin, içerik çatallanmasın.
+- **Konum**: Yalnızca repo kökü. Alt dizinlerdeki `AGENTS.md` dosyaları desteklenir ama opsiyoneldir; köktekiyle çelişmemelidir.
+- **Sahip**: Kod sahibiyle aynı ekip. `CODEOWNERS` içine `/AGENTS.md @platform-team` satırı koyulur. Doküman çürümesinin en yaygın sebebi sahipsizliktir.
+- **Yapı**: Üç ana bölüm — Dev Environment Tips, Testing Instructions, PR Instructions — `agentsmd/agents.md` referans şablonunun çekirdeğidir. Sıkı kısıtlar ve konu dokümanları haritası yerel ekleme olarak üstte/altta durur.
+- **Konum disiplini**: Liu et al. 2023'ün "Lost in the Middle" sonucu nedeniyle sıkı kısıtlar dosyanın **başında veya sonunda** yer alır, asla ortada değil.
+
+## Özelleştirme
+
+Pratikte gelen varyantlar ve dikkat edilecek noktalar.
+
+- **Monorepo**: Kökte ince bir `AGENTS.md`; her paket altında 30–80 satırlık yerel `AGENTS.md`. Kök dosya paket haritasını tutar; paketler kendi sıkı kısıtlarını yazar.
+- **Brownfield**: 600 satırlık şişmiş bir dosya geldiyse, doğrudan kısaltma. Önce her bölümü ilgili `docs/<konu>.md` dosyasına taşı, sonra kökten link bırak. Ratchet: her commit sonrası satır sayısı **yalnızca düşebilir**.
+- **Çoklu ajan**: Cursor, Claude Code ve Codex aynı repoda çalışacaksa tek `AGENTS.md` ve aracın yerel dosyası (örn. `.cursor/rules`) için **sembolik link** kur. İçerik tek yerde yaşasın.
+- **Gotcha — stil kuralları**: "snake_case kullan" gibi maddeleri `AGENTS.md` içinde tutma; linter'a taşı. HumanLayer'ın tavsiyesi net: bütçeni stil için harcama.
+- **Gotcha — kopyala yapıştır şişmesi**: Bir hata olduğunda refleksle kural ekleme. Önce sor: "Bu kural konu dokümanına ait mi?" Cevap genellikle evettir.
+
+## Otomasyona bağlama
+
+`AGENTS.md` ne zaman çürümeye başlar? Kod değiştiği halde dosya değişmediğinde. Birkaç düşük maliyetli kontrol bu çürümeyi geciktirir.
+
+```makefile
+.PHONY: check-agents
+check-agents:
+	@lines=$$(wc -l < AGENTS.md); \
+	if [ $$lines -gt 200 ]; then \
+	  echo "AGENTS.md $$lines satır — üst sınır 200"; exit 1; \
+	fi
+```
+
+`make check` hedefi bu kontrolü içermeli; CI aynı hedefi koştuğunda satır şişmesi PR seviyesinde yakalanır.
+
+Ek kancalar:
+
+- **PR template**: "AGENTS.md veya ilgili `docs/<konu>.md` güncellendi mi?" checkbox'ı zorunlu alan olarak.
+- **CODEOWNERS**: `/AGENTS.md` için review zorunlu.
+- **Pre-commit**: `AGENTS.md` değişirse `PROGRESS.md` üzerinde bir satır değişikliği bekleyen basit bir hook — kararın gerekçesi yazılı kalsın.
+- **Soğuk başlangıç testi**: Ayda bir, yeni bir oturum aç ve [Ders 03](/dersler/03-repo-neden-hakikat-kaynagi-olmali) testindeki beş soruyu yalnız repoya bakarak cevapla. Birine bile cevap veremiyorsan `AGENTS.md` veya bağladığı konu dokümanı eksiktir.
+
+## İlgili dersler
+
+- [Ders 02 — Düzeneğin Anatomisi](/dersler/02-duzenek-gercekte-nedir)
+- [Ders 03 — Repo: Hakikat Kaynağı](/dersler/03-repo-neden-hakikat-kaynagi-olmali)
+- [Ders 04 — Şişmiş Talimat Sendromu](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz)
+- [Kütüphane — PROGRESS.md / DECISIONS.md](/kutuphane/progress-decisions)
+- [Kütüphane — Bootstrap](/kutuphane/bootstrap)
+- [Kütüphane — features.json](/kutuphane/features-json)

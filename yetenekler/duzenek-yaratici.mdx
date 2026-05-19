@@ -1,0 +1,77 @@
+---
+title: "Düzenek Yaratıcı (Harness Creator)"
+description: "Üretim kalitesinde bir AI ajan düzeneği (harness) inşa etmeyi taslaktan iterasyona taşıyan yetenek paketi — beş aparat, üç katmanlı kapı, temiz teslim."
+---
+
+## Ne yapar
+
+`duzenek-yaratici`, Düzenek Mühendisliği (Harness Engineering) çerçevesini herhangi bir repoda canlı bir düzeneğe çeviren bir yetenek paketidir. Boş bir klondan başlasanız da, şişmiş bir 600 satırlık `CLAUDE.md` ile gelseniz de aynı dört fazlı döngüyü işletir: **taslak → test → değerlendir → iyileştir**. Her fazın çıktısı kanıttır — niyet beyanı değil.
+
+Çıktısı kâğıt değil, çalışan artefakt. Pakette ne pasif şablon ne soyut prensip; aktif bir workflow, aktif bir kontrol listesi, idempotent script'ler ve repo köküne kopyalanabilen `.template` dosyaları. Bir ajan çağırıldığında doğrudan beş aparatı — talimat, araç, ortam, durum, geri bildirim — kanıtlı duruma getirir; üstüne gözlemlenebilirlik ve temiz teslim halkalarını ekler.
+
+Hedef şu: bir repoya `cp -r .skill/duzenek-yaratici/templates/* ./` koştuğunuzda, on dakika içinde `make check` yeşilden geçen, soğuk başlangıç testini cevaplayabilen, vardiya devri yapabilen bir düzeneğe sahip olun.
+
+## Yüklemek
+
+İki yol var. Paket yöneticisiyle:
+
+```bash
+npx skills add duzenek-yaratici
+```
+
+Veya doğrudan git klonu — `harness-docs` repoyu zaten klonladıysanız:
+
+```bash
+cp -r harness-docs/skill-pack/duzenek-yaratici .skill/
+```
+
+Skill, çalışma dizininizin `.skill/duzenek-yaratici/` altında yerleşir. İçerideki `SKILL.md` ajanın aktivasyon noktasıdır; Claude Code, Codex veya OpenClaw uyumlu herhangi bir runtime tarafından okunur.
+
+## Pakette ne var
+
+Dosya ağacı, her dosya bir aparata ya da bir fazza bağlı:
+
+- **Manifest**: `skill-pack/duzenek-yaratici/SKILL.md` (yetenek tanımı + aktivasyon), `README.md` (kurulum), `INDEX.md` (dosya haritası).
+- **Workflow** (dört faz): `workflow/01-taslak.md`, `workflow/02-test.md`, `workflow/03-degerlendir.md`, `workflow/04-iyilestir.md`.
+- **Recipes** (somut prosedürler): `recipes/soguk-baslangic.md`, `recipes/vardiya-teslimi.md`, `recipes/verifier-kurulumu.md`, `recipes/gozlemlenebilirlik.md`, `recipes/temiz-teslim.md`.
+- **Templates** (`cp` ile repo köküne koyulur): `templates/AGENTS.md.template`, `PROGRESS.md.template`, `DECISIONS.md.template`, `features.json.template`, `verifier.md.template`, `Makefile.template`, `init.sh.template`, `session-close.md.template`.
+- **Scripts** (idempotent, `set -euo pipefail`): `scripts/verify.sh`, `scripts/three_layer_check.sh`, `scripts/session_close.sh`, `scripts/cleanup.sh`.
+- **Memory**: `memory/PATTERNS.md` — bellek sınırı, compaction kaybı, pause-resume protokolü.
+
+Yirmi beş dosya, dört dilekçeli kategori, bir net iddia: bu paketle kurduğunuz düzenek 12-Factor Agents faktör 5 ve 6'nın somut karşılığını taşır.
+
+## Workflow özeti
+
+Skill çağrıldığında ajan dört fazlı bir döngüye girer. Bir önceki bitmeden sonrakine geçmez.
+
+1. **Taslak** — Repoyu beş aparata göre ablasyona uğrat. Eksik olanlar için iskelet yerleştir. `init: bootstrap complete` commit'i atıl. (`workflow/01-taslak.md`)
+2. **Test** — `bash init.sh` ve `make check` yeşil mi? Soğuk başlangıç testi — yeni bir terminal açıldığında düzenek kendi kendini açıklıyor mu? (`workflow/02-test.md`)
+3. **Değerlendir** — Beş aparat × beş boyutluk rubrik. En düşük puanlı aparatı işaretle. (`workflow/03-degerlendir.md`)
+4. **İyileştir** — En düşük puanlı aparatı bir oturumda yükselt. Geri kalan dördüne dokunma. Test ve değerlendirme adımlarına geri dön. (`workflow/04-iyilestir.md`)
+
+Tek aparat, tek oturum kuralı. Birden fazla aparatı aynı vardiyada yükseltmek yan etkiyi göremezsin yapar; düzeneğin gerçekliği görünmez kalır.
+
+## Önerilen okuma sırası
+
+Ders sıralaması skill'in arka planını oluşturur. Önce derslere bakın, sonra skill'e dönün:
+
+- [Ders 01 — Yetkin ajanlar neden başarısız olur](/dersler/01-yetkin-ajanlar-neden-basarisiz)
+- [Ders 02 — Düzeneğin Anatomisi](/dersler/02-duzenek-gercekte-nedir)
+- [Ders 03 — Repo neden hakikat kaynağı olmalı](/dersler/03-repo-neden-hakikat-kaynagi-olmali)
+- [Ders 04 — Şişmiş talimat sendromu](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz)
+- [Ders 05 — Uzun görevler neden süreklilik kaybeder](/dersler/05-uzun-gorevler-neden-sureklilik-kaybeder)
+- [Ders 06 — Başlangıç fazı](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali)
+- [Ders 07 — WIP=1 disiplini](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)
+- [Ders 08 — Özellik listesi bir primitiftir](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir)
+- [Ders 09 — Erken zafer ilanı](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)
+- [Ders 10 — Üç katmanlı doğrulama kapısı](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir)
+- [Ders 11 — Düzeneğin gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali)
+- [Ders 12 — Temiz teslim](/dersler/12-her-oturum-neden-temiz-durum-birakmali)
+
+İlk kez bakıyorsanız: derslerin tamamı sırayla, sonra `SKILL.md`, sonra `workflow/01-taslak.md`. Mevcut bir düzeneği revize ediyorsanız: doğrudan `workflow/03-degerlendir.md` ve en düşük puanlı aparatın template'ı.
+
+Skill çıktısı her zaman somut. Kâğıttaki sözleşme runtime'da `make check` ile kanıtlanır; runtime'daki başarı OTel span ağacında izlenir; izlenebilirlik `PROGRESS.md` ve `DECISIONS.md` ile bir sonraki oturuma taşınır. Halka kapanır.
+
+## Lisans
+
+CC0. Türetip kullanabilir, ekibinize kapatabilir, ürününüzün bir parçası yapabilirsiniz. Atıf zorunlu değil ama makbul: kaynak `harness-docs` reposu.

@@ -1,0 +1,9 @@
+[project]
+name = "notes-api-capstone"
+version = "0.1.0"
+description = "Capstone Notes API harness"
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

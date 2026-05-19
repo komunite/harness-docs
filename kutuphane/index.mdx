@@ -1,0 +1,60 @@
+---
+title: "Genel Bakış"
+description: "Düzenek Mühendisliği (Harness Engineering) için kopyala-kullan aparat şablonları."
+---
+
+## Bu bölüm ne içerir
+
+Bir düzenek (harness) içerisinde yaşayan **somut aparatların** üretime hazır şablonları. Her sayfa **tek bir aparat** veya **birbirini tamamlayan ikili** üzerinedir; içeriği reponuzun ilgili konumuna olduğu gibi kopyalayıp özelleştirebilirsiniz.
+
+Şablonlar Düzenek Mühendisliği (Harness Engineering) müfredatının somut karşılıklarıdır. Her şablonun başında, hangi dersin teori tarafına denk düştüğü açıkça yazılı.
+
+## Şablon haritası
+
+<CardGroup cols={2}>
+  <Card title="AGENTS.md" icon="file-lines" href="/kutuphane/agents-md">
+    Talimat aparatı. Reponuza ilk gelen ajanın iniş sayfası. Yönlendirici + sıkı kısıtlar + konu dokümanları haritası.
+  </Card>
+  <Card title="PROGRESS.md & DECISIONS.md" icon="clock-rotate-left" href="/kutuphane/progress-decisions">
+    Durum aparatları. Oturumlar arası süreklilik defteri ve gerekçeli karar günlüğü.
+  </Card>
+  <Card title="Makefile & init.sh" icon="hammer" href="/kutuphane/bootstrap">
+    Ortam aparatları. Dört temel hedef (`setup`/`dev`/`test`/`check`) ve init fazını tek komuta bağlayan bootstrap script'i.
+  </Card>
+  <Card title="features.json" icon="list-check" href="/kutuphane/features-json">
+    Geri bildirim aparatının primitifi. Davranış + doğrulama + durum üçlüsü, dört durumlu state machine, WIP=1 kuralı.
+  </Card>
+  <Card title="verifier.md & Definition of Done" icon="circle-check" href="/kutuphane/verifier-dod">
+    Doğrulama sözleşmeleri. Yapan/denetleyen rol ayrımı ve "tamamlandı" tanımının üç katmanı.
+  </Card>
+  <Card title="Sprint Sözleşmesi & Rubrik" icon="ruler" href="/kutuphane/sprint-rubric">
+    Süreç gözlemlenebilirliği. Kodlama öncesi kapsam sözleşmesi ve değerlendirme rubriği.
+  </Card>
+  <Card title="OpenTelemetry İz" icon="diagram-project" href="/kutuphane/otel-trace">
+    Runtime gözlemlenebilirliği. GenAI semconv ile uyumlu span/trace iskelesi.
+  </Card>
+  <Card title="Session Close & Quality Doc" icon="broom" href="/kutuphane/session-close">
+    Kapanış aparatları. Beş boyutlu temiz state kontrol listesi ve modül başına sağlık tablosu.
+  </Card>
+</CardGroup>
+
+## Nasıl kullanılır
+
+<Steps>
+  <Step title="Düzenek haritanızı çıkarın">
+    Reponuzun bugünkü durumunda hangi aparatlar zaten var, hangileri eksik? [Ders 02 — Düzeneğin Anatomisi](/dersler/02-duzenek-gercekte-nedir) bu haritayı çizmenize yardım eder.
+  </Step>
+  <Step title="Ablasyon ile öncelik belirleyin">
+    Yokluğu en çok hissedilecek aparatla başlayın. Talimat ve geri bildirim aparatları çoğu zaman en yüksek marjinal getiriyi verir.
+  </Step>
+  <Step title="Şablonu kopyalayın, özelleştirin">
+    Her şablon sayfasının üst kısmında "Kopyala-yapıştır" şablon bloğu, altında ise projenize özgü ayar notları yer alır.
+  </Step>
+  <Step title="`make check`'e bağlayın">
+    Aparatların çoğu, otomasyonu `make check` veya CI'a bağlandığında devreye girer. Her şablonun "Otomasyona bağlama" bölümünü atlamayın.
+  </Step>
+</Steps>
+
+## Lisans
+
+Şablonların tamamı **CC0**'dır. İhtiyacınız olduğu gibi kopyalayın, kırpın, projenize gömün — atıf gerekmez.

@@ -1,0 +1,252 @@
+---
+title: "Makefile & init.sh"
+description: "Tek komutla başlatan, tek komutla doğrulayan bir ortam aparatı için minimum çalışan iskelet."
+---
+
+## Tek komutla başla
+
+Temiz bir klon. Yeni bir oturum. Düzeneğin (harness) ilk işi, ajanın "buraya nasıl gireceğim" sorusuyla bağlam yakmasını engellemektir. İyi kurulmuş bir ortam aparatı için ajanın ilk komutu hep aynıdır: `make setup`. Sonraki üç komut da sabittir: `make dev`, `make test`, `make check`. Bu dört hedef yerinde değilse her oturum bir keşif turuna başlar ve bağlam penceresi feature işine değil arkeolojiye gider. Bu sayfa, dört hedefli minimum `Makefile`'ı ve bunun yanına oturan idempotent `init.sh` bootstrap scriptini verir; bu ikisinin birlikte ürettiği şeye **sıcak başlangıç (hot-start)** denir.
+
+## Ne işe yarar
+
+İki dosyanın ikisi de farklı zamanlarda koşar.
+
+- **`Makefile`** — her oturumda, her geliştiricide, her CI koşusunda koşar. `make check` düzeneğin **tek komutluk doğrulama sözleşmesidir**: lint + tip denetimi + test sırayla koşar, hepsi geçerse iş "doğrulandı" sayılır. CI'nin koştuğu komutla lokalde koştuğun komut **aynıdır**; sapma yoktur.
+- **`init.sh`** — proje doğduğunda **tek bir kez** koşar. Anthropic'in [Effective harnesses for long-running agents](https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents) yazısında tanımlanan üçlüyü üretir: **`init.sh` + `claude-progress.txt` + ilk git commit**. Bizim Türkçe karşılıklarımızda bu üçlü `init.sh` + `progress.md`/`decisions.md` + `init: bootstrap complete` commit'idir. Idempotenttir: ikinci kez koşulursa hiçbir şey kırmaz; ilk kez koşulursa repo "ajanın çalışabileceği" duruma gelir.
+
+`Makefile` ile `init.sh` bir kuralı paylaşır: ajanın ne yapacağına dair tüm cevap **dosyada** olmalı, sohbette değil. Düzeneği [`/dersler/02-duzenek-gercekte-nedir`](/dersler/02-duzenek-gercekte-nedir) "kendini açıklayan ortam" diye tanımlar; bu sayfa o aparatın somut çıktısıdır.
+
+## Şablon — Makefile
+
+Aşağıdaki `Makefile` olduğu gibi kopyalanır ve repo köküne `Makefile` adıyla konur. Girintiler **sekme** karakteridir (make boşluk kabul etmez).
+
+```makefile
+.PHONY: help setup dev test check clean
+
+help:  ## Komut listesini göster
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-12s\033[0m %s\n", $$1, $$2}'
+
+setup:  ## Bagimliliklari kur ve pre-commit hooklarini takarak ortami hazirla
+	@command -v uv >/dev/null || (echo "uv bulunamadi; bkz https://docs.astral.sh/uv/" && exit 1)
+	uv sync
+	uv run pre-commit install
+
+dev:  ## Yerel gelistirme servisini ayaga kaldir
+	uv run python -m app
+
+test:  ## Tum test suitini koş
+	uv run pytest -q
+
+check:  ## Lint + tip denetimi + test (CI ile ayni komut)
+	uv run ruff check .
+	uv run mypy .
+	uv run pytest -q
+
+clean:  ## Olusan cikti dosyalarini sil
+	rm -rf .pytest_cache .mypy_cache .ruff_cache dist build
+
+.DEFAULT_GOAL := help
+```
+
+Dört zorunlu hedef:
+
+| Hedef | Tek satır görevi |
+| --- | --- |
+| `setup` | Bağımlılıkları kur. Temiz bir klonda hatasız tamamlanmalı. |
+| `dev` | Yerel servisi başlat. Bir tek komut, sıfır manuel parametre. |
+| `test` | Tam test suitini koş. Smoke yetmez; suit tamamı. |
+| `check` | CI'nin tek komutu. `lint && type && test`. Bu komut yeşilse iş teslim edilebilir. |
+
+`help` hedefi öz-belgelidir: `make` yazınca her hedefin yanındaki `## ...` yorumu ekrana basılır. Yeni gelen bir ajan (veya geliştirici) önce `make` yazar, sözleşmeyi okur.
+
+## Şablon — init.sh
+
+Aşağıdaki `init.sh` repo köküne konur ve `chmod +x init.sh` ile çalıştırılabilir yapılır. **Tek kez** koşar; ikinci kez koşulursa hiçbir adımı tekrar etmez (idempotent).
+
+```bash
+#!/usr/bin/env bash
+# init.sh — projeyi sicak baslangic (hot-start) durumuna getirir.
+# Anthropic'in "init.sh + claude-progress.txt + initial commit" uclusunun
+# Turkce karsiligi: init.sh + progress.md/decisions.md + 'init: bootstrap complete'
+
+set -euo pipefail
+
+echo "==> 1/6 Bagimliliklari kuruluyor (make setup)"
+make setup
+
+echo "==> 2/6 Smoke testi kosuluyor"
+if ! make test; then
+  echo "Smoke testi gecmedi. Init durduruldu." >&2
+  exit 1
+fi
+
+echo "==> 3/6 progress.md hazirlaniyor"
+if [ ! -f progress.md ]; then
+  cat > progress.md <<'EOF'
+# Progress
+
+## Durum
+- Init tamamlandi.
+
+## Sonraki adim
+- features.json icindeki ilk "not_started" kalemi al, WIP=1 ile basla.
+
+## Notlar
+- Her oturum kapanisinda bu dosyayi guncelle.
+EOF
+fi
+
+echo "==> 4/6 decisions.md hazirlaniyor"
+if [ ! -f decisions.md ]; then
+  cat > decisions.md <<'EOF'
+# Decisions
+
+## Init kararlari
+- Paket yoneticisi: uv
+- Test cercevesi: pytest
+- Lint: ruff
+- Tip denetimi: mypy --strict
+
+## Sonraki kararlar
+- (bos)
+EOF
+fi
+
+echo "==> 5/6 features.json hazirlaniyor"
+if [ ! -f features.json ]; then
+  cat > features.json <<'EOF'
+[
+  { "id": "F01", "behavior": "ornek: saglik kontrolu ucu 200 doner", "state": "not_started" },
+  { "id": "F02", "behavior": "ornek: kullanici listesi JSON doner",  "state": "not_started" },
+  { "id": "F03", "behavior": "ornek: arama parametresi calisir",     "state": "not_started" }
+]
+EOF
+fi
+
+echo "==> 6/6 Ilk commit atiliyor"
+if [ -z "$(git log --oneline 2>/dev/null || true)" ]; then
+  git add -A
+  git commit -m "init: bootstrap complete" >/dev/null
+  echo "Initial commit atildi: init: bootstrap complete"
+else
+  echo "Repo zaten commitli; init.sh degisiklik yapmadi."
+fi
+
+echo ""
+echo "Bootstrap tamam. Sonraki adim:"
+echo "  cat progress.md && cat features.json"
+```
+
+Bu script üç sözleşmeyi karşılar:
+
+1. `make setup` başarıyla tamamlandı.
+2. `make test` en az bir smoke testi geçirdi.
+3. `progress.md`, `decisions.md`, `features.json` iskelet halinde mevcut **ve** `init: bootstrap complete` commit'i atıldı.
+
+Ayrıntı için bkz. [`/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali`](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali).
+
+## Konvansiyon
+
+- **Konum** — `Makefile` ve `init.sh` her ikisi de repo kökünde. Alt dizinde değil.
+- **İsim** — `Makefile` büyük M, uzantısız. `init.sh` küçük harf, `.sh` uzantısı, çalıştırılabilir bit.
+- **`setup`** — yeni bir klonda tek seferde tamamlanır; manuel müdahale veya tarayıcı adımı içermez.
+- **`dev`** — tek komutla servisi başlatır; ortam değişkeni gerektiriyorsa `.env.example` repoda olur.
+- **`test`** — tam test suitini koşar; alt küme değil.
+- **`check`** — CI ile birebir aynı komutu koşar. `make check` lokalde yeşilse PR yeşil olacaktır.
+- **`init.sh`** — `set -euo pipefail` zorunlu. Her adım idempotent.
+
+## Özelleştirme
+
+Dil sözdizimleri değişir, sözleşme değişmez. Aşağıdaki üç varyant aynı dört hedefi farklı toolchain üstünde verir.
+
+```makefile
+# Node.js — pnpm + vitest + biome
+setup:  ## bagimliliklari kur
+	pnpm install
+	pnpm run prepare
+
+dev:    ## yerel sunucuyu baslat
+	pnpm run dev
+
+test:   ## tum testleri kos
+	pnpm run test
+
+check:  ## lint + tip + test
+	pnpm run lint
+	pnpm run typecheck
+	pnpm run test
+```
+
+```makefile
+# Go — go modules + golangci-lint
+setup:  ## bagimliliklari kur
+	go mod download
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+
+dev:    ## yerel servisi baslat
+	go run ./cmd/server
+
+test:   ## tum testleri kos
+	go test ./... -race -count=1
+
+check:  ## lint + vet + test
+	golangci-lint run
+	go vet ./...
+	go test ./... -race -count=1
+```
+
+**Monorepo** durumunda kök `Makefile` üst düzey hedefleri tutar, alt paketlerin kendi `Makefile`'larına delege eder.
+
+```makefile
+PACKAGES := apps/web apps/api packages/core
+
+check:  ## tum paketlerde check
+	@for p in $(PACKAGES); do $(MAKE) -C $$p check || exit 1; done
+```
+
+Kural: alt paket `make check` koşamıyorsa CI da koşamaz. Her paketin kendi dört hedefi tam olur.
+
+## Otomasyona bağlama
+
+`make check` ve `init.sh` üretildikten sonra otomasyon ucuza biner.
+
+**GitHub Actions** — tek satırlık CI:
+
+```yaml
+name: ci
+on: [push, pull_request]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+      - run: make setup
+      - run: make check
+```
+
+**Pre-commit** — `check` hedefini commit anına asma:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: local
+    hooks:
+      - id: make-check
+        name: make check
+        entry: make check
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+```
+
+`pre-commit` her commit'te bütün suit'i koşmasın diye `stages: [pre-push]` kullanıyoruz; hızlı geri bildirim için lint ve format ayrı hook'lara çıkarılabilir, ama "tam doğrulama" hep `make check`'in arkasında durur.
+
+## İlgili dersler
+
+- [`/dersler/02-duzenek-gercekte-nedir`](/dersler/02-duzenek-gercekte-nedir) — ortam aparatının düzenek içindeki yeri ve beş aparatlı çerçeve.
+- [`/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali`](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali) — başlangıç fazının ayrı bir mühendislik fazı olduğu tezi ve dört koşullu Bootstrap Sözleşmesi.
+- [`/kutuphane/agents-md`](/kutuphane/agents-md) — `make check` sözleşmesini ajanın okuyacağı router'da nasıl yazarsın.
+- [`/kutuphane/progress-decisions`](/kutuphane/progress-decisions) — `init.sh`'in iskeletini attığı durum dosyalarının dolu hali.
+- [`/kutuphane/features-json`](/kutuphane/features-json) — başlangıçta üretilen sıralı feature listesinin şeması.

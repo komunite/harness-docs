@@ -1,0 +1,74 @@
+#!/usr/bin/env bash
+# init.sh — projeyi sicak baslangic (hot-start) durumuna getirir.
+# Anthropic'in "init.sh + claude-progress.txt + initial commit" uclusunun
+# Turkce karsiligi: init.sh + PROGRESS.md/DECISIONS.md + 'init: bootstrap complete'
+# Idempotent: iki kez kosturmak hic kosturmamakla ayni veya daha guvenli.
+
+set -euo pipefail
+
+echo "==> 1/6 Bagimliliklari kuruluyor (make setup)"
+make setup
+
+echo "==> 2/6 Smoke testi kosuluyor"
+if ! make test; then
+  echo "Smoke testi gecmedi. Init durduruldu." >&2
+  exit 1
+fi
+
+echo "==> 3/6 PROGRESS.md hazirlaniyor"
+if [ ! -f PROGRESS.md ]; then
+  cat > PROGRESS.md <<'EOF'
+# Proje Ilerleme
+
+_Son guncelleme: $(date -u +%Y-%m-%d) — init_
+
+## Su anki durum
+- Init tamamlandi.
+
+## Siradaki adim
+- features.json icindeki ilk "not_started" kalemi al, WIP=1 ile basla.
+
+## Notlar
+- Her oturum kapanisinda bu dosyayi guncelle.
+EOF
+fi
+
+echo "==> 4/6 DECISIONS.md hazirlaniyor"
+if [ ! -f DECISIONS.md ]; then
+  cat > DECISIONS.md <<'EOF'
+# Tasarim Kararlari
+
+---
+
+## $(date -u +%Y-%m-%d) — Bootstrap yigini
+
+- **Neden**: Hizli baslangic, dogrulanmis araclar.
+- **Reddedilen alternatif**: (yok — ilk karar)
+- **Kisit**: Toolchain degisirse Makefile ve init.sh es zamanli guncellenir.
+
+---
+EOF
+fi
+
+echo "==> 5/6 features.json hazirlaniyor"
+if [ ! -f features.json ]; then
+  cat > features.json <<'EOF'
+[
+  { "id": "F01", "behavior": "ornek: saglik kontrolu ucu 200 doner", "verification": "bash scripts/verify.sh", "state": "not_started", "depends_on": [], "evidence": null }
+]
+EOF
+fi
+
+echo "==> 6/6 Ilk commit"
+if [ -z "$(git log --oneline 2>/dev/null || true)" ]; then
+  git add -A
+  git commit -m "init: bootstrap complete" >/dev/null
+  echo "Initial commit atildi: init: bootstrap complete"
+else
+  echo "Repo zaten commitli; init.sh degisiklik yapmadi."
+fi
+
+echo ""
+echo "Bootstrap tamam. Sonraki adim:"
+echo "  cat AGENTS.md && cat PROGRESS.md && cat features.json"
+echo "  make check"

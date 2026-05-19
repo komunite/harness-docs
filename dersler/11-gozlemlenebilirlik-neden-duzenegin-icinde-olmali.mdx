@@ -1,0 +1,178 @@
+---
+title: "11 — Düzeneğin Gözleri"
+description: "Gözlemlenebilirlik, Düzenek Mühendisliği (Harness Engineering) için sonradan eklenen bir özellik değil; runtime ve süreç olmak üzere iki paralel katmanda birlikte tasarlanan mimari bir özelliktir."
+---
+
+## Saat 23:47, oturum sonu
+
+Ajan son raporunu yazar:
+
+> Görev tamamlandı. İki entegrasyon testi başarısız. Hata mesajları gevşek; sebebi kestiremedim. Yarın bakılabilir.
+
+Ertesi sabah yeni oturum açılır. "Dün ne oldu?" sorusunun kanıt tabanlı cevabı yok. Hangi modül hangi girdiyle çağrıldı, hangi araç çağrısı kaç saniye sürdü, hangi varsayım yanlış çıktı — kayıp. İlk iki saat dünü yeniden keşfetmeye gider. Anthropic'in saha gözlemleri ve dahili ölçümler, bu "yeniden keşif" kaybının oturum süresinin önemli bir kısmını yiyebildiğini gösteriyor; bizim ölçümlerimizde de kayıp **yüzde otuz ila elli aralığında** seyrediyor.
+
+Sebep tek: düzenek (harness) gözlemlenebilirlik olmadan kurulmuş. Hata gerçekleşti; iz bırakmadı.
+
+## Tez
+
+Gözlemlenebilirlik, Düzenek Mühendisliği (Harness Engineering) için sonradan bağlanan bir eklenti değildir. Düzeneğin **iki paralel katmanı** olarak — runtime ve süreç — başlangıçtan itibaren birlikte tasarlanır. Bu katmanlar yoksa ajan kararları belirsizlikte alır, değerlendirme öznelleşir, tekrarlar kör atışa döner, oturum geçişleri bilgi uçurumuna dönüşür.
+
+## Dört semptom
+
+Gözlemlenebilirliği eksik bir düzenekte dört belirti tekrarlar:
+
+- **Doğru ile "doğru görünüyor" ayırt edilemez.** Test yeşil yandı, ama hangi davranış için? Hangi girdiyle? Belirsiz.
+- **Değerlendirme mistikleşir.** Aynı çıktıya farklı değerlendiriciler farklı not verir; rubrik yoksa kişisel zevk konuşur.
+- **Tekrarlar kör atışa döner.** Başarısız olunca sistematik kök sebep yerine "başka bir şey deneyelim" döngüsüne girilir.
+- **Bilgi uçurumu.** Oturum kapanır; "neden bu yolu seçtik" sorusu sonraki oturum için bir taş yığını olur.
+
+Dördü de aynı mimari boşluktan doğar: düzeneğin gözleri yok.
+
+## İki paralel katman
+
+### Runtime gözlemlenebilirliği — "ne oldu"
+
+Otomatik toplanan veri. Loglar, trace'ler, yaşam döngüsü olayları, kaynak desenleri, tam hata bağlamı. Bu katman beş veri ailesini kapsamalı:
+
+- Yaşam döngüsü fazları: startup, ready, running, shutdown.
+- Feature path girişleri, kontrol noktaları, çıkışları.
+- Bileşenler arası veri akışı — A modülü B'ye ne gönderdi.
+- Kaynak desenleri — bellek büyümesi, açık dosya sayısı, CPU eğrisi.
+- Tam hata bağlamı — stack trace, env, input snapshot, output snapshot.
+
+### Süreç gözlemlenebilirliği — "neden bu yapıldı"
+
+Manuel ya da yarı-otomatik üretilen veri. Sprint sözleşmesi, evaluator rubriği, kabul kriterleri, karar gerekçeleri. Runtime izleri **kuru veridir** — gerekçe süreç katmanında durur.
+
+İki katman birlikte: runtime "ne oldu"yu, süreç "neden bu yolu seçtim"i açıklar. Biri olmadan diğeri yarımdır. Düzenek Mühendisliği (Harness Engineering) ikisini aynı diyagrama çizer.
+
+## Üç enstrüman
+
+Düzenek Mühendisliği (Harness Engineering) bu iki katmanı üç somut enstrümanla hayata geçirir.
+
+### Enstrüman 1 — Sprint sözleşmesi
+
+Kod yazımı başlamadan generator ile evaluator arasında müzakere edilen kısa anlaşma. Ön-tasarım kontratı — generator'ın ürettiğini evaluator'ın hemen reddetmesini önler.
+
+### Enstrüman 2 — Evaluator rubriği
+
+Değerlendirmeyi öznel yargıdan kanıt tabanlı puanlamaya çevirir. A/B/C/D dört sütun; her sütun ölçülebilir bir bant.
+
+### Enstrüman 3 — Standardize trace
+
+Her oturum için tek bir trace; her görev için bir span; her doğrulama adımı için alt span. Tercih edilen standart: **OpenTelemetry GenAI Semantic Conventions** — span, metric, event, attribute ve exception ailelerini bir arada tarifler; Anthropic, OpenAI, AWS Bedrock, Azure AI Inference için teknolojiye özel uzantılar sunar. Spesifikasyon hâlâ "Development" statüsünde; geçiş için `OTEL_SEMCONV_STABILITY_OPT_IN` opt-in mekanizması mevcut. Bu üç enstrüman olmadan düzeneğin gözleri kapalıdır.
+
+## Pratik
+
+### Sprint sözleşmesi şablonu
+
+```markdown
+# Sprint Contract: Dark Mode Desteği
+
+## Kapsam
+- Theme toggle bileşeni
+- Global CSS değişkenleri güncellemesi
+- Dark mode regresyon testleri
+
+## Doğrulama standartları
+- Her bileşen için görsel regresyon testi geçer
+- Ana akış e2e testleri geçer
+- FOUC (Flash Of Unstyled Content) yok
+
+## Dışında bırakılanlar
+- Print stil desteği yok
+- Üçüncü parti bileşen dark mode'u yok
+```
+
+Üç başlık: kapsam, doğrulama standartları, dışlananlar. Daha fazlası sözleşmeyi değil tasarımı şişirir.
+
+### Evaluator rubriği
+
+| Boyut | A | B | C | D |
+| --- | --- | --- | --- | --- |
+| Kod doğruluğu | Tüm testler geçer | Yüzde doksan beş üstü geçer | Yüzde seksen ila doksan beş bandı | Yüzde seksenin altı |
+| Mimari uyum | Sınır ihlali yok | Bir küçük ihlal | İki ila üç ihlal | Üçten fazla ihlal |
+| Test kapsamı | E2E ve birim | E2E var | Sadece birim | Test yok |
+| Doküman | Güncel | Çoğunlukla güncel | Eksik | Yok |
+
+Aynı çıktı, farklı değerlendiriciler — benzer puanlar. Değerlendirme varyansı düşer; mistisizm tükenir.
+
+### OTel span ve trace yapısı
+
+```
+trace: session-2026-05-18-001
+span: feature F03 cart/items
+  span: code_write
+  span: lint            [pass]
+  span: unit_test       [pass]
+  span: integration     [pass]
+  span: e2e             [fail, retry sonrası pass]
+```
+
+Bir oturumun tüm akışı tek bir DAG. Hata noktası tek tıklamayla bulunur. OpenTelemetry GenAI semconv altında her span standart attribute kümesi taşır; bu sayede AgentOps, Inspect AI gibi araçlar arasında trace'ler portatif kalır.
+
+### Hangi aracı seçmeli
+
+<CardGroup cols={2}>
+  <Card title="OpenTelemetry GenAI semconv" href="https://opentelemetry.io/docs/specs/semconv/gen-ai/">
+    Portatif span, metric, event, attribute standardı. Tüm zinciri OTel uyumlu tutarsanız tek satır bağımlılık değişikliği ile araç değiştirebilirsiniz.
+  </Card>
+  <Card title="Inspect AI" href="https://inspect.aisi.org.uk/">
+    UK AISI ve Meridian Labs üretimi açık çerçeve. Solver, scorer, dataset, sandboxing, MCP entegrasyonu ve web tabanlı Inspect View log-viewer'ı bir arada sunar.
+  </Card>
+  <Card title="AgentOps" href="https://github.com/AgentOps-AI/agentops">
+    Python SDK. Session replay, LLM maliyet takibi, otomatik trace yakalama. CrewAI, AG2, OpenAI Agents SDK, LangChain, Anthropic entegrasyonları hazır.
+  </Card>
+  <Card title="OpenAI Trace Grading" href="https://platform.openai.com/docs/guides/trace-grading">
+    Uzun çok adımlı görevlerde sadece nihai çıktıyı değil, ajan trace'inin tamamını doğrudan puanlamak için resmi kılavuz.
+  </Card>
+</CardGroup>
+
+Sıfırdan yazmanız gereken çok az şey kaldı. Standartları benimseyin; özel olan tek şey rubriğiniz ve sözleşmeniz.
+
+## Sayılarla
+
+Anthropic'in "Quantifying infrastructure noise in agentic coding evals" çalışması, çalışma zamanı yapılandırma farklarının çoğu kişinin sandığından çok daha gürültülü olduğunu sayılarla gösterir. Terminal-Bench iki nokta sıfır üzerinde **en katı ve en gevşek kaynak tahsisi arasındaki fark altı puan** ölçülmüş; istatistiksel anlamlılık p küçüktür sıfır nokta sıfır bir. Strict yapılandırmadan uncapped yapılandırmaya geçince altyapı hata oranı **yüzde beş nokta sekizden yüzde sıfır nokta beşe** düşmüş. Yazarların önerisi açık: lider tablosunda **üç puanın altındaki farklara** altyapı yapılandırması belgelenmeden güvenmeyin.
+
+Düzenek seviyesinde tercüme: trace toplamadan ne regresyon tespiti, ne performans karşılaştırması, ne model seçimi güvenilirdir. Gözlemlenebilirlik, model karşılaştırmasının bile ön koşuludur.
+
+Dark mode vaka karşılaştırması — aynı feature, iki kuruluş:
+
+| Kuruluş | İterasyon | Süre | Kalite |
+| --- | --- | --- | --- |
+| Gözlemlenebilirlik yok | Üç ila dört kör deneme | Kırk beş dakika | "Tam iyi değil" |
+| Tam gözlemlenebilirlik | Tek iterasyon | On beş dakika | Yüksek |
+
+Üç kat verimlilik. Tek değişen: sprint sözleşmesi, evaluator rubriği, standardize trace.
+
+## Pratik kontrol listesi
+
+<Steps>
+  <Step title="Tek trace ID">
+    Her oturum başında tek bir trace ID üretilir; tüm spanlar bu trace altına bağlanır.
+  </Step>
+  <Step title="Span hiyerarşisi">
+    Her feature için bir span; her doğrulama adımı için alt span. Hata noktası ağaç içinde tek tıklamayla bulunur.
+  </Step>
+  <Step title="OTel uyumu">
+    Trace'ler OpenTelemetry GenAI semantic conventions uyumlu; attribute isimleri standart.
+  </Step>
+  <Step title="Sprint sözleşmesi">
+    Kapsam, doğrulama standartları, dışlananlar — üç başlık yazılı.
+  </Step>
+  <Step title="Rubrik tablosu">
+    Evaluator rubriği A, B, C, D bantlarıyla görev başlamadan hazır.
+  </Step>
+  <Step title="Tam hata bağlamı">
+    Hata trace'inde input snapshot, output snapshot, stack trace, env birlikte yer alır.
+  </Step>
+  <Step title="Oturumlar arası erişim">
+    Trace verisi sonraki oturumdan okunabilir; "dün ne oldu" sorusu kanıt tabanlı cevaplanır.
+  </Step>
+</Steps>
+
+## Müfredat içindeki yeri
+
+[Ders 10](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir) "geçti mi" sorusunu uçtan uca cevaplamıştı; bu ders "neden geçti, neden geçmedi" sorusunu açtı. Sprint sözleşmesi, evaluator rubriği ve OTel uyumlu trace — üç enstrüman, runtime ile süreç katmanlarını aynı diyagramda buluşturur. [Ders 12 — Temiz Teslim](/dersler/12-her-oturum-neden-temiz-durum-birakmali) müfredatın son halkasıdır: bu kadar zahmetle kurulmuş düzeneğin oturum sonunda nasıl yeniden devredilebilir bırakılacağı.
+
+Pratik karşılığı: [Proje 06 — Bütünleşik Düzenek (Capstone)](/projeler/06-butunlesik-duzenek-capstone). Gözlemlenebilirlik birinci sınıf bileşen olarak — sözleşme, rubrik ve OTel uyumlu trace ile — inşa edilir.

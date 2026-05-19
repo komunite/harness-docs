@@ -1,0 +1,150 @@
+---
+title: "verifier.md & Definition of Done"
+description: "Tamamlanma yargısını yapandan alıp denetleyene veren iki sözleşme: verifier'ın rolü ve AGENTS.md içindeki DoD bloğu."
+---
+
+## Kâğıdı dolu, cevapları yanlış
+
+Ajan "tamamlandı" raporunu gönderir; kâğıt dolu, cevaplar yanlış. Bu karakter zaafı değil, ölçülmüş yanlılıktır — sinir ağlarının kendi çıktısına olan güveni gerçek doğruluk oranından sistemli olarak yüksektir. **Confidence calibration bias** ajanın kendi işini denetlediği her durumda yanlış pozitif üretir. Düzenek Mühendisliği (Harness Engineering) tamamlanma yargısını dışsal sözleşmeye bağlar. İki aparat: `verifier.md` ve `AGENTS.md` içine giren Definition of Done bloğu.
+
+## Ne işe yarar
+
+Tek bir karar: **tamamlanma yargısı yapan ajandan denetleyen ajana taşınır.** Anthropic'in düzenek (harness) rehberi saha gözlemiyle pekiştirir — ajan kod yazıyor ama özelliğin uçtan uca çalışmadığını fark edemiyordu; çözüm, Puppeteer MCP ile "bir insan kullanıcının yapacağı gibi" tarayıcı doğrulaması ve her özellik için dışsal `passes` alanı. OpenHands trajectory critic'i sayıyla destekler: benchmark izleriyle eğitilmiş critic AUC 0.45–0.48, üretim izleriyle eğitilen 0.69.
+
+`verifier.md` denetçinin sözleşmesidir: kod yazmaz, davranış ölçer. Definition of Done bloğu "tamamlandı"nın tek anlamını sabitler.
+
+## Şablon — verifier.md
+
+Repo köküne `verifier.md` adıyla yerleştirilir. Denetleyici ajanın system prompt'u veya yönerge dosyası olarak yüklenir.
+
+```markdown
+# verifier.md — Doğrulayıcı Rolü
+
+## Rol
+- Sen bir doğrulayıcısın. Davranışı ölçer, karar verirsin.
+- Kod yazmazsın. Refactor önermezsin. Mimari yorum yapmazsın.
+- Yapan ajan ile aynı oturumda olmazsın; onun çıktısını dışarıdan değerlendirirsin.
+- Tek çıktın: passing | blocked + gerekçe.
+
+## Yetki
+- Okuyabilirsin: repo'nun tamamı, AGENTS.md, features.json,
+  test sonuçları, log çıktıları, ekran görüntüleri.
+- Çalıştırabilirsin: `make check`, lint/type-check komutları,
+  test koşumları, Puppeteer/Playwright tarayıcı senaryoları,
+  read-only HTTP istekleri.
+- Yazabilirsin: yalnızca rapor dosyası (verification-report.md).
+- Yapamazsın: kaynak kodu değiştirmek, migration üretmek,
+  config yazmak, secret değerlerini okumak.
+
+## Üç katman koşumu (sıra zorunlu)
+1. **Katman 1 — Sözdizimi**: `make lint && make typecheck`.
+   Düşerse Katman 2'ye geçilmez.
+2. **Katman 2 — Davranış**: `make test` (unit + integration).
+   Düşerse Katman 3'e geçilmez.
+3. **Katman 3 — Uçtan uca**: `make e2e` (gerçek HTTP,
+   gerçek veritabanı, gerçek protokol konuşan servisler).
+   Tarayıcı senaryosu varsa Puppeteer/Playwright ile
+   "bir insan kullanıcının yapacağı gibi" koşar.
+
+İlk başarısız katmanda dur. Sonraki katmanları koşma.
+
+## Hata mesajı formatı (ERROR / WHY / FIX)
+Her başarısızlık üç satır üretir:
+- ERROR: ne, nerede, hangi komutta.
+- WHY:   kök neden — mock değil, gerçek sebep.
+- FIX:   somut sonraki adım — dosya, satır, komut.
+
+## Kapanış raporu
+verification-report.md aşağıdaki şemayı doldurur:
+
+  status: passing | blocked
+  layer_reached: 1 | 2 | 3
+  features_checked: [feature-id listesi]
+  failures: [ERROR/WHY/FIX blokları]
+  duration_seconds: <sayı>
+  evidence: [log path, screenshot path, e2e trace]
+
+Karar yalnızca üç katman da geçtiğinde "passing". Aksi halde "blocked".
+```
+
+## Şablon — Definition of Done bloğu (AGENTS.md içine)
+
+`AGENTS.md`'nin üstüne, "Sıkı kısıtlar" bölümünden hemen sonra yapıştırılır.
+
+```markdown
+## Definition of Done
+
+- Feature complete = uçtan uca davranış doğrulandı.
+  "Kod yazıldı" yetmez. "Birim test geçti" yetmez.
+- Üç zorunlu doğrulama seviyesi (sıra atlanamaz):
+  1. Sözdizimi: lint + type-check + derleme.
+  2. Davranış: unit + integration testleri.
+  3. Uçtan uca: gerçek HTTP, gerçek veritabanı,
+     gerçek protokol; tarayıcı varsa headful senaryo.
+- Katman N başarısızken N+1'e geçme.
+- Öncelik sırası: doğruluk > performans > stil.
+  İlk ikisi tamamlanmadan refactor yok, optimizasyon yok.
+- Tamamlanma yargısı verifier'dan gelir, executor'dan değil.
+  "passing" yazma yetkisi yalnız verifier'da.
+- Her özellik için features.json içinde passes alanı
+  verifier tarafından güncellenir; manuel değişiklik yasak.
+- Bir özelliğin "tamamlandı" sayılması için
+  verification-report.md status: passing olmalı.
+```
+
+## Üç katmanlı kapı
+
+Verifier'ın koştuğu sıra sözleşmedir. Her katman bir öncekinin kapsamını içerir.
+
+- **Katman 1 — Lint / type / derleme.** Saniyeler sürer; kelimeler doğru yazılmadan içerik denetlenmez.
+- **Katman 2 — Unit + integration.** Modül sınırları boyunca gerçek veri akıtılır; mock'lar minimum.
+- **Katman 3 — E2E.** Gerçek HTTP, gerçek veritabanı, gerçek protokol; Puppeteer MCP "bir insan kullanıcının yapacağı gibi" davranır.
+
+Katman N düşerse N+1 koşmaz.
+
+## ERROR / WHY / FIX format
+
+Doğrulama başarısızlığında dönen mesaj düzeneğin bir parçasıdır — ajan bu metni okuyup eyleme dökecektir. "Test failed." tek başına kullanışsızdır. Üç satırlık şablon:
+
+```
+ERROR: e2e/test_export.spec.ts:42 başarısız.
+       POST /api/export 500 döndü, beklenen 200.
+WHY:   renderer doğrudan fs.readFileSync çağırıyor —
+       paketlenmiş ortamda izin reddediliyor; IPC köprüsü atlanmış.
+FIX:   Dosya işlemini src/preload/file-ops.ts'e taşı.
+       window.api.readFile() üzerinden çağır.
+       Referans: docs/architecture.md "İzole renderer".
+```
+
+Format: **ERROR** ne ve nerede; **WHY** kök neden (semptom değil); **FIX** somut sonraki adım — dosya yolu, fonksiyon adı, komut.
+
+## Otomasyona bağlama
+
+Verifier el ile çağrılan bir araç değildir; tek komuta indirgenir. `make verify` script'i üç katmanı sırayla koşar, **ilk başarısızlıkta durur**:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Katman 1 — sözdizimi"
+make lint
+make typecheck
+
+echo "Katman 2 — davranış"
+make test
+
+echo "Katman 3 — uçtan uca"
+make e2e
+
+echo "passing" > verification-report.status
+```
+
+`set -euo pipefail` ilk başarısızlıkta script'i durdurur — "Katman N düşerse N+1'e geçme" kuralının bash karşılığıdır. CI yalnız `make verify` çağırır; ajan da yalnız `make verify` çağırır. Aynı kapı, iki taraf için.
+
+## İlgili dersler
+
+- [Ders 09 — Ajanlar Neden Erken Zafer İlan Eder](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)
+- [Ders 10 — Üç Katmanlı Doğrulama Kapısı](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir)
+- [Kütüphane — AGENTS.md](/kutuphane/agents-md)
+- [Kütüphane — features.json](/kutuphane/features-json)
+- [Kütüphane — Sprint Rubric](/kutuphane/sprint-rubric)

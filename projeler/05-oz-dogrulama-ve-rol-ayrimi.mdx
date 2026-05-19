@@ -1,0 +1,27 @@
+---
+title: "Proje 05 — Öz-Doğrulama ve Rol Ayrımı"
+description: "Bağımsız doğrulayıcı rol ile 'erken zafer' eğilimini sistematik biçimde keser."
+---
+
+## Amaç
+
+Yapan (executor) ile doğrulayan (verifier) rollerini ayır; verifier'ın çıktıyı **kod yazmadan** ölçeceği bir sözleşme tanımla. Hedef: testler / e2e davranış doğrulanmadan "tamamlandı" diyemeyen bir düzenek.
+
+## Çıktı
+
+- `verifier.md` rol sözleşmesi
+- Verifier kontrol listesi (ne kontrol edilecek, ne yapılmayacak)
+- E2E davranış doğrulamasının küçük bir örneği
+
+## Yapı
+
+```
+projeler/05/
+├── starter/    # tek rol, doğrulama yok
+└── solution/   # executor + verifier ayrımı, e2e küçük test
+```
+
+## Ön koşul
+
+- [Ders 09](/dersler/09-ajanlar-neden-erken-zafer-ilan-eder)
+- [Ders 10](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir)

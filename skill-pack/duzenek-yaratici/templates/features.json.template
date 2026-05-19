@@ -1,0 +1,26 @@
+[
+  {
+    "id": "F01",
+    "behavior": "ornek: saglik kontrolu ucu 200 doner",
+    "verification": "bash scripts/verify_F01.sh",
+    "state": "not_started",
+    "depends_on": [],
+    "evidence": null
+  },
+  {
+    "id": "F02",
+    "behavior": "ornek: kullanici listesi JSON doner",
+    "verification": "bash scripts/verify_F02.sh",
+    "state": "not_started",
+    "depends_on": ["F01"],
+    "evidence": null
+  },
+  {
+    "id": "F03",
+    "behavior": "ornek: arama parametresi calisir",
+    "verification": "bash scripts/verify_F03.sh",
+    "state": "not_started",
+    "depends_on": ["F02"],
+    "evidence": null
+  }
+]

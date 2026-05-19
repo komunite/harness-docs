@@ -1,0 +1,145 @@
+---
+title: "09 — Erken Zafer İlanı"
+description: "Ajan 'tamamlandı' der; e-posta hiç gönderilmemiştir. Tamamlanma yargısı ajanın değil, Düzenek Mühendisliği (Harness Engineering) sözleşmesinin işidir."
+---
+
+## Şifre sıfırlama oturumu
+
+Görev tek cümleydi: "Şifre sıfırlama akışını ekle." Otuz dakika sonra ajanın raporu geldi:
+
+> Migration eklendi. POST /api/reset-password endpoint'i hazır. E-posta şablonu yazıldı. Birim testler geçiyor. Görev tamamlandı.
+
+Cuma akşamı deploy edildi. Pazartesi sabahı destek kuyruğu doldu: kimse sıfırlama maili almıyor. Loglara bakıldı — SMTP konfigürasyonu hiç yapılmamış. Endpoint 200 dönüyor, kuyruğa atılan e-posta hiçbir worker tarafından alınmıyor, ve migration prod replicalarından birinde yarıda kalmış. Birim testler hâlâ yeşil. Çünkü birim testler e-posta servisini mock'lamıştı.
+
+Bu hata "model dikkatsizdi" diye açıklanamaz. Aynı senaryo farklı ajanlarla, farklı modellerle, farklı görevlerde tekrar tekrar üretilir. Sorun yapısaldır: **ajan kâğıdını doldurdu, kendine baktı, "tamam" dedi.** Kâğıdın dolu olması, cevapların doğru olduğu anlamına gelmez.
+
+## Tez
+
+Ajanlar **sistematik olarak fazla güvenlidir.** Kendi çıktısına bakıp tamamlanma yargısı verdiğinde, insan gözlemcinin "yetersiz" diyeceği durumlarda bile pozitif rapor üretir. Bu yüzden Düzenek Mühendisliği (Harness Engineering) tamamlanma kararını ajandan alır, **dışsal ve katmanlı bir kapıya bağlar.** Yapan ve denetleyen ayrılır.
+
+## Confidence calibration bias
+
+Bu bir karakter zaafı değil, ölçülmüş bir yanlılıktır. Guo et al. (2017) "On Calibration of Modern Neural Networks" yayını derin ağların kendi tahminlerine olan güveninin gerçek doğruluk oranlarından **sistemli olarak yüksek** olduğunu gösterdi. LLM çağında bu özellik ürün davranışına yansıdı: ajan kendi işini değerlendirdiğinde aşırı pozitif kalibrasyon verir.
+
+Anthropic'in uzun süreli ajanlar için düzenek (harness) rehberi aynı tespiti saha gözlemiyle pekiştirir: ajan "kod değişiklikleri yapma eğilimindeydi... ama özelliğin uçtan uca çalışmadığını fark edemiyordu."[^1] Tedavi: tarayıcı otomasyonu (Puppeteer MCP) ile insan benzeri test, ve özellik başına `passes: boolean` alanı taşıyan yapılandırılmış bir özellik listesi. Tamamlanmanın kanıtı ajanın iç sesi değil, **dışarıdan ölçülen bir bool'dur.**
+
+## Birim test geçmek ≠ görev tamam
+
+Birim testler izole çalışır. İzolasyon, gerçek hataların yaşadığı bileşen sınırlarını **mimari olarak yok eder.**
+
+> Her müzisyen tek başına mükemmel pratik yapıyor; ama birlikte çalmaya başladıklarında sopranolar baslara yarım vuruş öndedir.
+
+Birim test bütün sesleri ayrı ayrı duyar. Koroyu birlikte duyamaz. Üç tipik kör nokta:
+
+- **Arayüz uyuşmazlığı** — A modülü tip X bekler, B modülü tip Y verir; mock'lanmış testler iki ucu da kendi mock'larıyla doğrular, ortadaki ihlali görmez.
+- **State / migration sırası** — Migration'lar test ortamında temiz veritabanına uygulanır; prod'daki yarıda kalmış geçişler test mock'unun ufkunda değildir.
+- **Çevre bağımlılığı** — SMTP, env var, file path, secret manager — testte sahte; prod'da gerçek ve sessizce başarısız.
+
+Martin Fowler'ın `ccmenu` deneyimi aynı sınıfı başka bir cepheden raporlar: ajanlar dikkatli denetim olmadan **"teknik borç üretme eğilimi"** gösteriyor; hatayı yakalayan birim test değil, **deneyimli geliştiricinin gözü** oluyor.[^2] Düzenek bu gözü dışsallaştırmalı.
+
+## Üç katmanlı doğrulama kapısı
+
+Düzenek tamamlanma kapısını üç katmana ayırır. Her katmanın sırası ve atlanmazlığı sözleşmedir. **Katman N başarısızken N+1'e geçilmez.**
+
+<Steps>
+  <Step title="Katman 1 — Sözdizimi ve statik analiz">
+    Kelimeler doğru yazılmadan içeriğe bakmayız. Lint, format, type-check, derleme. Saniyeler sürer; geçmeyen kod sonraki katmanlara hiç verilmez.
+  </Step>
+  <Step title="Katman 2 — Çalışma zamanı davranış doğrulaması">
+    Kod sadece **yazılmış değil, koşmuş** olmalı. Birim ve entegrasyon testleri gerçek modüller arasında veri akıtır. Mock'lar burada minimum tutulur — özellikle modül sınırları boyunca.
+  </Step>
+  <Step title="Katman 3 — Sistem düzeyi uçtan uca onayı">
+    Erken zafer ilanına karşı son savunma. Gerçek HTTP, gerçek veritabanı, gerçek e-posta worker'ı (veya MailHog gibi gerçek protokol konuşan bir sahte). "Şifre sıfırla" butonuna basılır, inbox'ta link aranır, link açılır, yeni parola çalışır.
+  </Step>
+</Steps>
+
+OpenHands'in yakın tarihli "Learning to Verify AI-Generated Code" raporu bu katmanlamanın deneysel temelini verir: bir **trajectory critic** modeli ajanın tüm "conversation, tool calls, and actions" izine bakarak devam/dur/yenile kararı verir. Yalnızca benchmark verisinde eğitilmiş critic'ler **AUC 0.45–0.48 (rastgeleden kötü)** sonuç üretirken, prod izlerinde eğitilenler **AUC 0.69**'a çıktı; reranking ile SWE-Bench türevinde **Best@8 73.8% vs Random@8 57.9%** kazanım ölçüldü.[^3] Çıkarım: dışsal doğrulayıcı **mümkün ve karşılığını veriyor**, ama doğru veriyle (gerçek üretim trajektorileri) eğitilmesi şart.
+
+## Tamamlanma önceliği — doğruluk > performans > stil
+
+Bir feature'ın tamamlanma yolunda iş sırası katıdır:
+
+1. **Doğruluk** — Davranış istendiği gibi mi koşuyor?
+2. **Performans** — Yeterince hızlı mı?
+3. **Stil** — Okunabilirlik, kod düzeni, refactor.
+
+**Birinci sıra tamamlanmadan üçüncüye geçilmez.** Çekirdek davranış uçtan uca çalışmadan refactor yasaktır. Knuth'un "vakitsiz iyileştirme tüm kötülüklerin kökenidir" sözü düzenek sınırlarına çevrilir: ajan, kod henüz **passing** değilken stil rötuşu yapmaya başlarsa, sözleşme onu durdurur. Düzenek ajanın enerjisini doğru sıraya zorlar.
+
+## Yapan ve denetleyen ayrılır
+
+Bir öğrenci kendi sınavını okumaz. Kalibrasyon yanlılığı tek başına da yeter, ama yapısal ayrım daha güçlü kararlar üretir. Anthropic'in "Building Effective Agents" çerçevesi **evaluator-optimizer** desenini tam olarak bu sebeple önerir: "bir LLM çağrısı yanıt üretirken, diğeri değerlendirme ve geri bildirim sağlar"[^4]; aynı yazı guardrail'lerin de **ayrı bir model örneği** tarafından çalıştırılmasının "tek çağrının her ikisini birden yapmasından daha iyi" olduğunu söyler.
+
+İç eğitim notu olarak paylaşılan 2D editör deneyi aynı dersi sayılarla verir. Aynı model (Opus 4.5), aynı prompt:
+
+| Kuruluş | Süre | Maliyet | Sonuç |
+| --- | --- | --- | --- |
+| Tek ajan (kendi denetleyici) | 20 dk | 9 $ | Bozuk |
+| Planner + Generator + Playwright Evaluator | 6 saat | 200 $ | Tam oynanır |
+
+Tek değişen: rol ayrımı + dışsal davranış doğrulayıcı. Maliyet 22 kat, süre 18 kat — sonuç ise "çalışmıyor" ile "ürün" arasındaki uçurum. Pahalı görünüyor; bozuk olanı düzeltmenin maliyeti yanında ucuz.
+
+## Pratik
+
+### `AGENTS.md` içinde Definition of Done bloğu
+
+```markdown
+## Definition of Done
+- Feature complete = uçtan uca doğrulama geçti; "kod yazıldı" yetmez.
+- Zorunlu doğrulama seviyeleri:
+  1. Lint + type-check + derleme (Katman 1)
+  2. Birim + entegrasyon testleri (Katman 2)
+  3. Uçtan uca akış doğrulanır (Katman 3)
+- Katman N başarısızken N+1'e geçme.
+- Doğruluk → performans → stil. İlk ikisi tamamlanmadan refactor yok.
+- Tamamlanma yargısı dışsal doğrulayıcı tarafından verilir, ajan tarafından değil.
+```
+
+### Ajan-yönelik hata mesajları — ERROR / WHY / FIX
+
+Doğrulama başarısızlığında dönen mesaj düzeneğin bir parçasıdır. **Kötü:**
+
+```
+Test failed.
+```
+
+**İyi:**
+
+```
+ERROR: POST /api/reset-password 500 döndü.
+WHY:   E-posta servisi yapılandırması env vars'ta bulunamadı.
+       SMTP_HOST tanımsız; worker queue'dan job aldı, gönderemedi.
+FIX:   .env.example'da listelenen SMTP_HOST / SMTP_USER / SMTP_PASS
+       değerlerini .env'e ekleyin. templates/reset-email.html dosyası
+       yok — şablonu oluşturun veya repo'dan geri yükleyin.
+```
+
+Tembel öğretmen kâğıdın üstüne büyük kırmızı çarpı atar. İyi öğretmen "burayı şöyle değiştir" notunu kenara yazar. Düzeneğin ajana cevabı ikincisine benzemeli — çünkü ajan bir sonraki adımda bu metni okuyup eyleme dökecek.
+
+## Sayılarla
+
+- **2017** — Guo et al., sinir ağlarında kalibrasyon yanlılığını ölçülebilir hale getiren temel yayın.
+- **AUC 0.45–0.48 → 0.69** — OpenHands trajectory critic'lerinde benchmark-only eğitimden prod-trace eğitimine geçiş.[^3]
+- **Best@8 73.8% vs Random@8 57.9%** — Critic-yönlendirmeli seçim ile rastgele seçim arasında SWE-Bench türevinde fark.[^3]
+- **+17,7 puan / 1,35 deneme** — Erken durdurma stratejisinin getirisi (aynı çalışma).[^3]
+- **20 dk / 9 $ → 6 saat / 200 $** — 2D editör deneyi: tek ajan vs. üç ajan (Planner + Generator + Playwright Evaluator), Opus 4.5, aynı prompt. Tek ajan bozuk çıkıyor; üç ajan oynanır.
+
+## Pratik kontrol listesi
+
+- [ ] `AGENTS.md`'de Definition of Done bloğu yazılı ve sıkı kısıt olarak işaretli.
+- [ ] Üç katmanlı doğrulama (lint/type → unit/integration → e2e) tek bir `make check` ya da eşdeğer komut ile çalışır.
+- [ ] Katman geçişleri otomatik; ajan elle "passing" işareti atamaz.
+- [ ] Hata mesajları **ERROR / WHY / FIX** formatında, ajan-okunur.
+- [ ] Mümkün olan her yerde executor ve verifier rolleri farklı promptlar / farklı ajanlar.
+- [ ] **Doğruluk → performans → stil** önceliği bilinçli uygulanır; passing olmadan refactor yok.
+- [ ] Özellik listesinde her madde için dışsal `passes: bool` alanı tutulur.
+
+## Müfredat içindeki yeri
+
+[Ders 08](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir) feature primitifini kurmuştu; bu ders en kritik geçişi sözleşmeye bağladı. Tamamlanma yargısı ajandan alınıp dışsal, katmanlı bir kapıya devredildi; üç katman (sözdizimi → çalışma zamanı → uçtan uca) ve evaluator-optimizer rol ayrımı bu kararı yapısal kıldı. [Ders 10 — Üç Katmanlı Doğrulama Kapısı](/dersler/10-uctan-uca-test-neden-sonuclari-degistirir) en üst katmanı — sistem düzeyi uçtan uca testi — derinleştirir: birim testin mimari körlüğü ve doğrulayıcının ajan davranışını şekillendirmesi.
+
+Pratik karşılığı: [Proje 05 — Öz-Doğrulama ve Rol Ayrımı](/projeler/05-oz-dogrulama-ve-rol-ayrimi).
+
+[^1]: Anthropic, "Effective harnesses for long-running agents" — özellik listesi, `passes` alanı ve uçtan uca doğrulama yaklaşımı: https://www.anthropic.com/engineering/effective-harnesses-for-long-running-agents
+[^2]: Martin Fowler, "Exploring Gen AI — ccmenu quality" — denetimsiz ajanların teknik borç üretme eğilimi, hatayı yakalayan insan gözü: https://martinfowler.com/articles/exploring-gen-ai/ccmenu-quality.html
+[^3]: OpenHands, "Learning to Verify AI-Generated Code" — trajectory critic, AUC değerleri, Best@8 ve early-stop sonuçları: https://openhands.dev/blog/20260305-learning-to-verify-ai-generated-code
+[^4]: Anthropic, "Building Effective Agents" — evaluator-optimizer deseni ve ayrı model örneği üzerinden guardrail önerisi: https://www.anthropic.com/engineering/building-effective-agents

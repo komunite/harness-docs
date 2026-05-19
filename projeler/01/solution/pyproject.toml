@@ -1,0 +1,19 @@
+[project]
+name = "notes-api"
+version = "0.1.0"
+description = "Bearer-korumalı minimal Notes API — Proje 01 referans çözümü."
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-x"

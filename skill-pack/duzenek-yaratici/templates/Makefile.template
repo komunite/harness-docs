@@ -1,0 +1,62 @@
+.PHONY: help setup dev test check verify clean session-close
+
+help:  ## Komut listesini göster
+	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
+		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-14s\033[0m %s\n", $$1, $$2}'
+
+# ---------------------------------------------------------------------------
+# Python (uv) varsayılan blok. Diğer toolchain'ler için aşağıdaki alternatif
+# blokları kullan; aynı dört hedef sözleşmesi (setup/dev/test/check) korunur.
+# ---------------------------------------------------------------------------
+
+setup:  ## Bagimliliklari kur ve pre-commit hooklarini takarak ortami hazirla
+	@command -v uv >/dev/null || (echo "uv bulunamadi; bkz https://docs.astral.sh/uv/" && exit 1)
+	uv sync
+	uv run pre-commit install 2>/dev/null || true
+
+dev:  ## Yerel gelistirme servisini ayaga kaldir
+	uv run python -m app
+
+test:  ## Tum test suitini kos
+	uv run pytest -q
+
+check:  ## Uc katman: lint + tip + test (CI ile ayni)
+	bash scripts/three_layer_check.sh
+
+verify:  ## E2E dogrulamasi (gercek HTTP/DB)
+	bash scripts/verify.sh
+
+session-close:  ## Bes boyut dogrulamasi (build/test/progress/artifact/startup)
+	bash scripts/session_close.sh
+
+clean:  ## Olusan cikti dosyalarini sil
+	bash scripts/cleanup.sh
+	rm -rf .pytest_cache .mypy_cache .ruff_cache dist build
+
+.DEFAULT_GOAL := help
+
+# ---------------------------------------------------------------------------
+# Alternatif blok — Node.js (pnpm + vitest + biome)
+# ---------------------------------------------------------------------------
+# setup:
+# 	pnpm install
+# 	pnpm run prepare
+# dev:
+# 	pnpm run dev
+# test:
+# 	pnpm run test
+# check:
+# 	pnpm run lint && pnpm run typecheck && pnpm run test
+
+# ---------------------------------------------------------------------------
+# Alternatif blok — Go (go modules + golangci-lint)
+# ---------------------------------------------------------------------------
+# setup:
+# 	go mod download
+# 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+# dev:
+# 	go run ./cmd/server
+# test:
+# 	go test ./... -race -count=1
+# check:
+# 	golangci-lint run && go vet ./... && go test ./... -race -count=1

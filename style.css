@@ -1,0 +1,212 @@
+/* =========================================================================
+   Düzenek Mühendisliği (Harness Engineering) — Marka Paleti
+   ----------------------------------------------------------------
+   Mintlify, ana yüzey renklerini --background-light ve --background-dark
+   CSS değişkenleri üzerinden RGB triplet'leri olarak yönetiyor
+   (Tailwind v3 modern color syntax). Bu değişkenleri kaynakta override
+   etmek, bg-background-light, bg-background-light/95,
+   from-background-light, data-[is-opaque]:bg-background-light gibi tüm
+   sınıfları tek atışta marka rengine çeker.
+   ========================================================================= */
+
+:root {
+  /* Mintlify temel yüzey değişkenleri (RGB triplet, virgülsüz). */
+  --background-light: 232 232 227;   /* #E8E8E3 — paper */
+  --background-dark:  14 20 23;      /* #0E1417 — dark paper */
+
+  /* Ana yüzeyler */
+  --color-paper:        #E8E8E3;
+  --color-paper-elev:   #F0F0EB;
+
+  /* Metin & vurgu */
+  --color-ink:          #0E1417;
+  --color-slate:        #20333C;
+  --color-accent:       #E5FF59;
+  --color-accent-ink:   #1A2300;
+
+  /* Warm gray ladder (mute) */
+  --color-mute-50:      #EAEAE5;
+  --color-mute-100:     #DCDCD7;
+  --color-mute-200:     #C5C5C0;
+  --color-mute-300:     #A5A59F;
+  --color-mute-400:     #80807A;
+  --color-mute-500:     #5C5C57;
+  --color-mute-600:     #3A3A36;
+
+  /* Hairline divider */
+  --color-rule:         rgba(14, 20, 23, 0.08);
+}
+
+/* Dark mode — paper ↔ ink terslenir, lime aksent korunur. */
+.dark {
+  --color-paper:        #0E1417;
+  --color-paper-elev:   #161E22;
+  --color-ink:          #E8E8E3;
+  --color-rule:         rgba(232, 232, 227, 0.08);
+}
+
+/* -------------------------------------------------------------------------
+   Gövde zemin — Mintlify zaten bg-background-light kullanıyor, ama belirgin
+   olsun diye html/body'ye de aynı değeri verelim.
+   ------------------------------------------------------------------------- */
+html,
+body {
+  background-color: var(--color-paper);
+}
+
+/* -------------------------------------------------------------------------
+   Sidebar üst fade — Mintlify Tailwind v3 gradient'i artık --background-light
+   değişkenini kullandığı için from-background-light otomatik palete döndü.
+   Yine de güvenli olsun diye fallback ile yeniden yazıyoruz.
+   ------------------------------------------------------------------------- */
+.sticky.top-0.h-8.bg-gradient-to-b {
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-paper) 0%,
+    color-mix(in srgb, var(--color-paper) 0%, transparent) 100%
+  ) !important;
+}
+
+/* -------------------------------------------------------------------------
+   Scrollbar — palete uyumlu, ince ve sessiz
+   ------------------------------------------------------------------------- */
+#sidebar-content,
+#content-area,
+#table-of-contents,
+.overflow-auto,
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-mute-200) transparent;
+}
+#sidebar-content::-webkit-scrollbar,
+#content-area::-webkit-scrollbar,
+#table-of-contents::-webkit-scrollbar,
+.overflow-auto::-webkit-scrollbar,
+.overflow-y-auto::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+#sidebar-content::-webkit-scrollbar-track,
+#content-area::-webkit-scrollbar-track,
+#table-of-contents::-webkit-scrollbar-track,
+.overflow-auto::-webkit-scrollbar-track,
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+#sidebar-content::-webkit-scrollbar-thumb,
+#content-area::-webkit-scrollbar-thumb,
+#table-of-contents::-webkit-scrollbar-thumb,
+.overflow-auto::-webkit-scrollbar-thumb,
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: var(--color-mute-200);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+#sidebar-content::-webkit-scrollbar-thumb:hover,
+#content-area::-webkit-scrollbar-thumb:hover,
+.overflow-auto::-webkit-scrollbar-thumb:hover {
+  background: var(--color-mute-300);
+}
+
+/* -------------------------------------------------------------------------
+   Kart / panel / kod blokları — paper-elev
+   ------------------------------------------------------------------------- */
+card,
+.card,
+panel,
+.panel,
+accordion,
+.accordion,
+code-block,
+.code-block,
+pre {
+  background-color: var(--color-paper-elev) !important;
+  border-color: var(--color-rule) !important;
+}
+card-group card,
+.card-group .card {
+  background-color: var(--color-paper-elev) !important;
+  border: 1px solid var(--color-rule) !important;
+}
+
+/* -------------------------------------------------------------------------
+   Tüm ince çizgi/border'lar — hairline rule
+   ------------------------------------------------------------------------- */
+.border-gray-100,
+.border-gray-200,
+.border-gray-500\/5,
+.border-gray-950\/10,
+hr {
+  border-color: var(--color-rule) !important;
+}
+
+/* -------------------------------------------------------------------------
+   Mute gray ladder — sıcak gri override'ları
+   ------------------------------------------------------------------------- */
+.bg-gray-50  { background-color: var(--color-mute-50)  !important; }
+.bg-gray-100 { background-color: var(--color-mute-100) !important; }
+.bg-gray-200 { background-color: var(--color-mute-200) !important; }
+.text-gray-400 { color: var(--color-mute-300) !important; }
+.text-gray-500 { color: var(--color-mute-400) !important; }
+.text-gray-600 { color: var(--color-mute-500) !important; }
+.text-gray-700 { color: var(--color-mute-600) !important; }
+
+/* -------------------------------------------------------------------------
+   Callout (Note / Tip / Warning / Info / Check / Danger)
+   Düz paper-elev zemin, hairline çerçeve, sol şerit yok, iç bg yok.
+   ------------------------------------------------------------------------- */
+.callout {
+  background-color: var(--color-paper-elev) !important;
+  border: 1px solid var(--color-rule) !important;
+}
+.callout .text-blue-800,
+.callout .text-blue-300 {
+  color: var(--color-ink) !important;
+}
+
+/* -------------------------------------------------------------------------
+   Accent — tek sinyal rengi (CTA, vurgu, sidebar aktif)
+   ------------------------------------------------------------------------- */
+
+/* Navbar primary CTA butonu */
+header a[href="/dersler/01-yetkin-ajanlar-neden-basarisiz"],
+#topbar-cta-button,
+.navbar-primary-button {
+  background-color: var(--color-accent) !important;
+  color: var(--color-accent-ink) !important;
+  border-color: var(--color-accent-ink) !important;
+  font-weight: 600;
+}
+header a[href="/dersler/01-yetkin-ajanlar-neden-basarisiz"]:hover {
+  filter: brightness(0.95);
+}
+
+/* Sidebar aktif öğe — yumuşatılmış lime tint */
+.bg-primary\/10 {
+  background-color: color-mix(in srgb, var(--color-accent) 18%, transparent) !important;
+}
+
+/* Metin seçimi */
+::selection {
+  background-color: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+
+/* -------------------------------------------------------------------------
+   Tipografi — ink üzerinde yüksek okunurluk
+   ------------------------------------------------------------------------- */
+body,
+.prose,
+.prose p,
+.prose li {
+  color: var(--color-ink);
+}
+.prose a {
+  color: var(--color-slate);
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-rule);
+}
+.prose a:hover {
+  text-decoration-color: var(--color-accent);
+}

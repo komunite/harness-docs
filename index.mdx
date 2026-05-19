@@ -1,0 +1,68 @@
+---
+title: "Açık kaynak müfredat"
+sidebarTitle: "Genel Bakış"
+description: "AI kod ajanlarını güvenilir kılan çevreyi tasarlamak — repo, durum, geri bildirim, doğrulama ve gözlemlenebilirlik. 12 ders, 6 proje, 8 kopyala-kullan şablon."
+---
+
+## Hoş geldin
+
+Bu doküman, **Düzenek Mühendisliği (Harness Engineering)** disiplinine giriştir. Konu, modeli daha güçlü kılmak değil; modeli kuşatan **çevreyi** — repoyu, durumu, geri bildirim döngülerini, doğrulama mekanizmalarını ve gözlemlenebilirliği — bir mühendislik problemi olarak ele almaktır.
+
+<Note>
+**Terim kullanımı.** Bu dokümanlarda "Düzenek Mühendisliği (Harness Engineering)" terimi her geçtiğinde parantez içinde özgün İngilizce karşılığıyla birlikte yazılır. Tek başına "harness" yerine "düzenek" kullanılır.
+</Note>
+
+## Neden düzenek?
+
+Modern modeller — Claude, GPT, Gemini — bağımsız olarak değil, bir **düzenek (harness)** içinde çalışırken üretkendir. Düzenek olmadığında en yetkin model bile şu hataları yapar:
+
+- Bağlamı kaybeder, oturumlar arasında devam edemez
+- Erken "tamamladım" der; gerçekte yarım bırakır
+- Kendi çıktısını doğrulamadan teslim eder
+- Repo'da iz bırakmaz; sonraki oturum sıfırdan başlar
+
+Düzenek Mühendisliği (Harness Engineering) bu beş aparatı sistematik olarak kurar: **repo**, **durum**, **çalışma zamanı geri bildirimi**, **öz-doğrulama** ve **gözlemlenebilirlik**.
+
+## Ne öğreneceksin
+
+<CardGroup cols={3}>
+  <Card title="12 Ders" icon="book-open" href="/dersler/01-yetkin-ajanlar-neden-basarisiz">
+    Her ders bir **anti-pattern** teşhisi: yetkin ajanların neden başarısız olduğu, neyin işlediği ve hangi mekanizmanın bunu çözdüğü.
+  </Card>
+  <Card title="6 Proje" icon="screwdriver-wrench" href="/projeler/01-yalniz-prompt-vs-kural-oncelikli">
+    Her proje `starter/` ve `solution/` ile hands-on uygulama. Sonunda capstone'da uçtan uca bir düzenek kuruyorsun.
+  </Card>
+  <Card title="Kütüphane" icon="folder-open" href="/kutuphane">
+    Kopyala-kullan şablonlar: `AGENTS.md`, `progress.md`, init script'leri, doğrulama hook'ları.
+  </Card>
+</CardGroup>
+
+## Düzeneğin temel mekanizması
+
+Bir düzenek (harness), modeli **çevre yoluyla** yönlendirir. Beş aparatı vardır:
+
+| Aparat | Sorumluluk |
+| --- | --- |
+| **Repo** | Tek hakikat kaynağı. Talimat, kod ve karar tarihçesi burada yaşar. |
+| **Durum (state)** | Oturumlar arası süreklilik. `progress.md`, `decisions.md`, init script'leri. |
+| **Çalışma zamanı geri bildirimi** | Ajan kendi kodunu test eder, hataları görür, düzeltir. |
+| **Öz-doğrulama** | Bağımsız rol ayrımı; hallucination ve "erken zafer" engellenir. |
+| **Gözlemlenebilirlik** | Her eylem izlenebilir; başarısızlık sessizce gerçekleşmez. |
+
+## Başla
+
+<Steps>
+  <Step title="İlk dersi oku">
+    [Ders 01 — Yetkin Ajanlar Neden Hâlâ Başarısız Oluyor](/dersler/01-yetkin-ajanlar-neden-basarisiz) ile teorik zemini kur.
+  </Step>
+  <Step title="İlk projeyi çalıştır">
+    [Proje 01 — Yalnız Prompt vs Kural Öncelikli](/projeler/01-yalniz-prompt-vs-kural-oncelikli) ile farkı kendi gözünle gör.
+  </Step>
+  <Step title="Şablonları indir">
+    [Kütüphane](/kutuphane) altındaki temel dosyaları kendi reponuza kopyalayın.
+  </Step>
+</Steps>
+
+## Kaynak
+
+Bu müfredat [walkinglabs/learn-harness-engineering](https://walkinglabs.github.io/learn-harness-engineering/en/) temel alınarak Türkçe'ye uyarlanmıştır. Düzenek Mühendisliği (Harness Engineering) terminolojisi orijinal kaynaktaki "harness engineering" söylemine karşılık gelir.

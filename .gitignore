@@ -1,0 +1,27 @@
+# OS
+.DS_Store
+Thumbs.db
+
+# Editors
+.vscode/
+.idea/
+
+# Python / pytest
+__pycache__/
+*.py[cod]
+.pytest_cache/
+projeler/*/*/__pycache__/
+projeler/*/*/.pytest_cache/
+
+# Runtime artifacts in project workspaces
+projeler/*/*/notes.db
+projeler/*/*/notes.db-*
+projeler/*/*/.env
+projeler/*/*/.env.local
+
+# Mint
+.mintlify/
+
+# Logs / temp
+*.log
+tmp/

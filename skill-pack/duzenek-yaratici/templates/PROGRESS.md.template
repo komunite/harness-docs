@@ -1,0 +1,35 @@
+# Proje İlerleme
+
+_Son güncelleme: YYYY-MM-DD HH:MM — vardiya kapanışı_
+
+## Şu anki durum
+
+- Son commit: <hash> (<konu>)
+- Test: <X>/<Y> geçiyor
+- Lint: <durum>
+- Type-check: <durum>
+- `make check`: <YESIL / KIRMIZI>
+- Çalışan dal: <dal-adi>
+
+## Tamamlandı
+
+- [x] <Bu vardiyada biten iş 1>
+- [x] <Bu vardiyada biten iş 2>
+
+## Devam ediyor
+
+- [ ] <Yüzde tahmini ile devam eden iş>
+
+## Bilinen sorunlar
+
+- <Flaky test, açık bug, dış bağımlılık>
+
+## Sıradaki adımlar
+
+1. <Bir sonraki oturumun ilk işi>
+2. <İkinci iş>
+3. <Üçüncü iş>
+
+## Açık sorular (kullanıcıya)
+
+- <Cevap bekleyen soru>

@@ -1,0 +1,130 @@
+---
+title: "05 — Vardiya Defteri"
+description: "Bağlam penceresi sonludur, unutkanlık varsayılandır. Süreklilik ancak dosya sistemine yazılıp vardiya rutinleriyle uygulandığında ayakta kalır."
+---
+
+## Şantiyeden bir analoji
+
+Usta vardiyayı bitirdiğinde işin tamamı bitmiş olmak zorunda değildir. Asıl yükümlülük başkadır: **ertesi gün gelen ustanın işi nereden devam edeceğini bilmesi.** Hangi duvar yarım kaldı, neden mavi yerine kırmızı tuğla seçildi, su tesisatı hangi katta kesildi. Bu yazılı değilse, ertesi gün şantiyeyle yeniden tanışılır. Daha kötüsü: dün takılan pencere bugün sökülür, yarın yine takılır.
+
+AI ajanlarının "vardiyaları" bağlam pencereleridir. 128K, 200K, hatta 1M — sayı önemli değil. Uzun bir görev eninde sonunda pencereyi doldurur. Pencere dolduğunda iki ihtimal vardır: **sıkıştırma (compaction)** ya da **sıfırlama (reset)**. İkisi de düzenek (harness) tarafından açıkça tasarlanmamışsa, süreklilik kaybedilir.
+
+Düzenek Mühendisliği (Harness Engineering)'nin görüşü nettir: unutkanlık varsayılan ayardır, süreklilik mühendislik ürünüdür.
+
+## Tez
+
+Uzun süren görevlerde güvenilirlik **bağlam penceresinin değil, dosya sisteminin** sorumluluğudur. "Ne yapıyordum, neyi neden seçtim, şu an nerede kaldım" soruları `PROGRESS.md` ve `DECISIONS.md` gibi git-izli artefaktlarda yaşar. Bu artefaktlar **vardiya alımı (clock-in)** ve **vardiya teslimi (clock-out)** rutinleriyle dolaşıma sokulur. Düzenek, bu üçlüyü birinci sınıf vatandaş kabul ettiği ölçüde uzun görevleri taşır.
+
+## İki başarısızlık mekanizması
+
+### 1) Bağlam endişesi ve erken yakınsama
+
+Anthropic'in uzun-süreli ajanlar üzerine yayınladığı "Effective harnesses for long-running agents" yazısında belgelenen davranış şudur: pencere limite yaklaştıkça ajan "erken yakınsama (premature convergence)" sergiler. Yazının kendi ifadesiyle, ajanlar "projeyi vakitsizce tamamlanmış ilan eder" ya da her şeyi tek seferde yapmaya çalışıp "özellik ortasında bağlamı tüketir." Sınavın bitmesine az kalmış bir öğrenci gibi kalan soruları rastlantıyla cevaplar; doğrulamayı atlar; "tamamlandı" der.
+
+Bu **model kusuru değil, çevre kusurudur.** Pencere yönetimini düzeneğe bırakırsan baskı stresli son dakikaya taşınır.
+
+### 2) Compaction "neden"i kaybeder
+
+Modern ajanların çoğu pencere dolmadan önce sohbeti otomatik özetler. OpenHands'in context condensation yazısı bu kapsamda iyimser ve dürüsttür: özet **hedefleri, ilerlemeyi, kritik dosyaları ve başarısız testleri** korumaya çalışır; ölçüt olarak da kayda değer kazanımlar gösterir — "etkililikten ödün vermeden tur başına 2x'e varan API maliyet azalması" ve "yoğunlaştırma ile %54 problem çözme oranı, taban %53." Yine de iyi tasarlanmış bir compaction bile bir şeyi tutarlı biçimde kaybeder: **ara muhakeme.** "B seçeneğini A yerine niye seçtim" cevabı genelde gidip gelen düşüncede gizlidir; özet sonunda yalnızca "B yapıldı" kalır.
+
+Compaction "ne"yi tutar; "neden"i kaybeder. Bir gün sonra başka bir oturum "neden A değil B?" sorusunun cevabını repoda bulamazsa, gönül rahatlığıyla yine A'yı önerir.
+
+## Üç süreklilik artefaktı
+
+Manus ekibinin "Context Engineering for AI Agents" yazısı bu noktada açık konuşur: dosya sistemini "Manus'ta nihai bağlam — boyutta sınırsız, doğası gereği kalıcı" sayarlar; sıkıştırma stratejilerinin "geri kazanılabilir (restorable)" olması, yani URL ve dosya yollarının korunması gerektiğini söylerler. Aynı yazıdan ikinci ders: küresel planı yeniden okutmak — todo dosyalarını sürekli güncellemek — "global planı modelin yakın dikkat menzilinin içine iter." Aşağıdaki üç artefakt bu iki ilkenin somutlaşmasıdır.
+
+### 1) `PROGRESS.md` — vardiya defteri
+
+```markdown
+# Proje İlerleme
+
+## Şu anki durum
+- Son commit: abc1234 (feat: kullanıcı tercihleri endpoint'i)
+- Test: 42/43 geçiyor (test_pagination_edge_case başarısız)
+- Lint: temiz
+
+## Tamamlandı
+- [x] User modeli ve migration
+- [x] Temel CRUD endpoint'leri
+- [x] Auth middleware entegrasyonu
+
+## Devam ediyor
+- [ ] Pagination (%90 — edge-case testi başarısız)
+
+## Bilinen sorunlar
+- test_pagination_edge_case boş sonuçta 500 dönüyor
+- Silinmiş kullanıcılar listede görünmeli mi? karar bekliyor
+
+## Sıradaki adımlar
+1. Pagination edge-case bug'ını çöz
+2. "Silinmişleri dahil et" query param ekle
+3. API dokümantasyonunu güncelle
+```
+
+Her oturum sonu güncellenir, her oturum başı okunur. Manus'un "recitation" pratiğiyle aynı işi yapar: hedefi modelin son tokenlarına geri koyar.
+
+### 2) `DECISIONS.md` — gerekçeli karar günlüğü
+
+```markdown
+# Tasarım Kararları
+
+## 2026-05-18 — Kullanıcı tercihleri için Redis cache
+- **Neden**: Yüksek okuma frekansı (her API çağrısında), küçük veri.
+- **Reddedilen alternatif**: PostgreSQL materialized view — değişim frekansı
+  yüksek olduğundan bakım maliyeti karşılığını vermiyor.
+- **Kısıt**: TTL 5 dakika, yazma sırasında aktif invalidation.
+```
+
+Compaction'ın kaybettiği "neden", burada yaşar. Bir karar geri çevrilmek istendiğinde bu dosya, gerekçeli reddetmenin tek dayanağıdır.
+
+### 3) Vardiya rutinleri — `AGENTS.md` içinde
+
+```markdown
+## Vardiya alımı (clock-in)
+1. PROGRESS.md oku — şu anki durum
+2. DECISIONS.md oku — bağlayıcı kararlar
+3. `make check` ile reponun tutarlı olduğunu doğrula
+4. PROGRESS.md "Sıradaki adımlar"dan devam et
+
+## Vardiya teslimi (clock-out)
+1. PROGRESS.md güncelle (şu anki durum + sıradaki adımlar)
+2. `make check` ile temiz state'i kanıtla
+3. Tamamlanmış işi descriptive commit ile kaydet
+4. Açık soruları kullanıcıya ilet
+```
+
+Bu iki rutin **davranış sözleşmeleridir.** 12-Factor Agents'ın 6. faktörü — "agent'ı duraklatmak kolay olmalı… bıraktığı yerden derin entegrasyon olmadan devam etmeli" — somut karşılığını burada bulur. Aynı yazının 5. faktörü ("tek doğruluk kaynağı, önemsiz biçimde serileştirilebilir/deserileştirilebilir bağlam") `PROGRESS.md` + `DECISIONS.md` ikilisini birinci sınıf yapan ilkedir.
+
+## Pratik
+
+Yukarıdaki üç şablon (PROGRESS, DECISIONS, AGENTS rutinleri) repoda **birebir** bu yapıyla durur. Tek kural: her oturum bitişinde `PROGRESS.md`'nin son commit'i tarihliyse, vardiya teslim edilmiştir. Aksi halde teslim alınmamıştır.
+
+Tool dinamizmi için Manus'un kuralı: oturum içinde araç ekleme/çıkarma yerine **araç maskeleme (tool masking).** "Önceki gözlemler artık tanımlı olmayan araçlara referans verdiğinde" model şaşırır; uygun olmayanı kararken kullanılamaz hale getirmek KV-cache'i de korur.
+
+## Sayılarla
+
+| Kaynak | Bulgu | Tutamak |
+| --- | --- | --- |
+| Anthropic, *Effective harnesses for long-running agents* | Initializer ajan **200'den fazla özellikten** oluşan bir feature list üretir; her özellik başlangıçta "failing" işaretlenir. | Özellik başı tek-adım iş bölümü, vardiyalar arası net teslim. |
+| Manus, *Context Engineering* | KV-cache: önbellekli token **0.30 USD/MTok**, önbelleksiz **3 USD/MTok — 10x fark.** Tipik görev **~50 araç çağrısı.** | Stabil prefix + filesystem-as-memory. |
+| OpenHands, *Context Condensation* | Yoğunlaştırma ile **tur başına 2x'e varan API maliyet azalması.** %54 vs %53 problem çözme oranı. Karesel ölçeklenmeye karşı **doğrusal ölçeklenme.** | Hedef + ilerleme + kritik dosyalar + başarısız testler korunur. |
+| Anthropic, *Harness design for long-running apps* | Solo koşu **20 dk / $9**, tam düzeneklı koşu **6 saat / $200** ("20x daha pahalı") ama "esaslı biçimde daha kaliteli çıktı." | Süreklilik bedava değil; görev modelin solo kapasitesini aştığında kazanır. |
+
+Sayıların hepsi tek bir tahta üzerinde aynı şeyi söyler: süreklilik artefaktları **maliyetlidir**, ama yeniden inşa maliyeti, kayıp gerekçe ve erken-yakınsama kusurları onlardan çok daha pahalıdır.
+
+## Pratik kontrol listesi
+
+- [ ] `PROGRESS.md` repo kökünde, son oturum tarihinde güncellenmiş.
+- [ ] `DECISIONS.md` her bağlayıcı kararı **gerekçesi + reddedilen alternatif** ile içerir.
+- [ ] `AGENTS.md` içinde "vardiya alımı" ve "vardiya teslimi" rutinleri yazılı.
+- [ ] Oturum başında `make check` koşturuluyor; başlangıç durumu kanıtlanıyor.
+- [ ] Oturum sonunda `make check` yeşil; commit atılmış.
+- [ ] Açık sorular kullanıcıya iletilmiş (örtük bırakılmamış).
+- [ ] Sıkıştırma stratejisi **restorable**: URL ve dosya yolları özette korunuyor.
+- [ ] Oturum içinde araç ekleme/çıkarma yok; gerektiğinde maskeleme kullanılıyor.
+
+## Müfredat içindeki yeri
+
+[Ders 04](/dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz) talimatı bir yönlendiriciye indirgemişti; bu ders aynı yönlendiricinin altına zamansal bir defter koydu: `PROGRESS.md`, `DECISIONS.md` ve vardiya rutinleri. Unutkanlığı yapısal sorun olarak ele alıp dosya sistemine devrettik. [Ders 06 — Önce Temel, Sonra Duvar](/dersler/06-baslangic-neden-kendi-fazina-sahip-olmali) bu defterlerin *ne zaman* açılacağını sabitler: feature kodu yazılmadan, ayrı bir başlangıç fazında.
+
+Pratik karşılığı: [Proje 03 — Çok Oturumlu Süreklilik](/projeler/03-cok-oturumlu-sureklilik). Aynı görevi iki oturumda — biri rutinsiz, biri rutinli — koşturup farkı belgelersiniz.

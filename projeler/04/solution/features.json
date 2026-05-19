@@ -1,0 +1,42 @@
+[
+  {
+    "id": "F01",
+    "behavior": "Notes CRUD — POST /notes 201 doner, GET /notes/{id} 200 doner, GET /notes liste doner, eksik token 401",
+    "verification": ". .venv/bin/activate && pytest tests/test_smoke.py -q",
+    "state": "passing",
+    "depends_on": [],
+    "evidence": "commit a1b2c3d — tests/test_smoke.py 4 passed in 0.42s"
+  },
+  {
+    "id": "F02",
+    "behavior": "GET /notes/search?q=... eslesn notlari doner, bos sorgu [] doner, quote karakteri SQL injection'a yol acmaz",
+    "verification": ". .venv/bin/activate && pytest tests/test_search.py -q",
+    "state": "passing",
+    "depends_on": ["F01"],
+    "evidence": "commit b2c3d4e — tests/test_search.py 4 passed in 0.31s (proje 04'te parametreli sorguya cevrildi)"
+  },
+  {
+    "id": "F03",
+    "behavior": "POST /notes/{id}/tags ile bir nota etiket eklenir, GET /notes/{id} yanitinda tags dizisi doner",
+    "verification": ". .venv/bin/activate && pytest tests/test_tags.py -q",
+    "state": "not_started",
+    "depends_on": ["F01"],
+    "evidence": ""
+  },
+  {
+    "id": "F04",
+    "behavior": "POST /notes/{id}/favorite ile kullanici notu favoriye alir, GET /favorites kullanici favorilerini listeler",
+    "verification": ". .venv/bin/activate && pytest tests/test_favorites.py -q",
+    "state": "not_started",
+    "depends_on": ["F01"],
+    "evidence": ""
+  },
+  {
+    "id": "F05",
+    "behavior": "GET /notes/{id}/rendered notun body alanini HTML'e cevrilmis sekilde doner (markdown render)",
+    "verification": ". .venv/bin/activate && pytest tests/test_markdown.py -q",
+    "state": "blocked",
+    "depends_on": ["F01"],
+    "evidence": "blocked: markdown render kutuphanesi henuz secilmedi (markdown vs markdown-it-py), DECISIONS.md'ye karar yazilana kadar baslanmaz"
+  }
+]

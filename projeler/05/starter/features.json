@@ -1,0 +1,40 @@
+{
+  "features": [
+    {
+      "id": "F-001",
+      "title": "Bearer auth on /notes",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_unauthorized_get_returns_401"
+    },
+    {
+      "id": "F-002",
+      "title": "Create + get roundtrip",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_create_then_get_roundtrip"
+    },
+    {
+      "id": "F-003",
+      "title": "List notes",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_list_after_two_inserts"
+    },
+    {
+      "id": "F-004",
+      "title": "Search notes (parameterized LIKE)",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_search_finds_inserted_note"
+    },
+    {
+      "id": "F-005",
+      "title": "Update note via PUT",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_update_existing_note"
+    },
+    {
+      "id": "F-006",
+      "title": "Delete note via DELETE",
+      "passes": true,
+      "evidence": "tests/test_smoke.py::test_delete_existing_note"
+    }
+  ]
+}

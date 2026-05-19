@@ -1,0 +1,27 @@
+---
+title: "Proje 01 — Yalnız Prompt vs Kural Öncelikli"
+description: "Bir ajanın yalın prompt ile ve temel kural seti ile davranışını yan yana ölç."
+---
+
+## Amaç
+
+Düzeneğin (harness) varlığının ölçülebilir bir fark yarattığını **kendi gözünle** göstermek. Aynı görevi iki kez çalıştır: önce yalnız prompt ile, sonra minimum bir kural seti (rules-first) ile.
+
+## Çıktı
+
+- İki çalıştırmanın yan yana karşılaştırması
+- Tamamlanma oranı, tekrar gereksinimi, hata türleri
+- "Kural seti" olarak eklenecek minimum kalemler listesi
+
+## Yapı
+
+```
+projeler/01/
+├── starter/    # boş düzenek, sadece prompt
+└── solution/   # minimum kural seti uygulanmış referans
+```
+
+## Ön koşul
+
+- [Ders 01](/dersler/01-yetkin-ajanlar-neden-basarisiz) — neden başarısızlığın yapısal olduğu
+- [Ders 02](/dersler/02-duzenek-gercekte-nedir) — düzeneğin beş aparatı

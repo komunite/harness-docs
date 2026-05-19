@@ -1,0 +1,89 @@
+---
+title: "Sprint Sözleşmesi & Rubrik"
+description: "Üreten ile değerlendiren arasında kod yazımından önce kurulan ön-anlaşma ve değerlendirme varyansını düşüren A/B/C/D bant tablosu."
+---
+
+Bir oturumda kaybedilen zamanın büyük kısmı, üreten ajan ile değerlendiren ajanın aynı şeyi konuşmadığını birkaç tur sonra fark etmekten doğar. Düzenek Mühendisliği (Harness Engineering), bu kaybı iki süreç-aparatı ile sönümler: **sprint sözleşmesi** — kod yazımından önce müzakere edilen ön-anlaşma; **evaluator rubriği** — değerlendirmeyi öznel yargıdan kanıt tabanlı puanlamaya çeviren A/B/C/D tablosu. İkisi birden, üreten ile değerlendirenin ön-anlaşması olarak çalışır.
+
+## Ne işe yarar
+
+**Sprint sözleşmesi** generator ve evaluator arasında implementation başlamadan kurulan kontrattır. Anthropic'in "Designing harnesses for long-running agentic apps" yazısı bu deseni açıkça tarifler: generator ne inşa edeceğini ve başarının nasıl doğrulanacağını önerir; evaluator anlayışı sınar; iki taraf uzlaşana kadar müzakere eder; implementation ancak ondan sonra başlar. Sonuç: generator'ın ürettiğini evaluator'ın hemen reddetmesi ihtimali düşer.
+
+**Evaluator rubriği** ise aynı çıktıya farklı değerlendiricilerin neredeyse aynı notu vermesini sağlar. Anthropic'in "Demystifying Evaluations for AI Agents" çalışması iyi bir görevin tanımını şöyle koyar — iki alan uzmanı bağımsız olarak aynı geç/kal kararına varabilmelidir. Rubrik tam olarak bu izolasyonu sağlar: her boyut ayrı puanlanır, her bant ölçülebilir bir eşiğe bağlanır, değerlendirme varyansı düşer.
+
+## Şablon — Sprint Sözleşmesi
+
+```markdown
+# Sprint Sözleşmesi: Şifre Sıfırlama Akışı
+
+## Kapsam
+- E-posta ile sıfırlama linki üretimi ve gönderimi
+- Tek kullanımlık token üretimi, doğrulama, süre dolumu
+- Yeni şifre belirleme formu ve sunucu tarafı doğrulama
+- Brute-force koruması: oturum başına en fazla beş deneme
+
+## Doğrulama standartları
+- Token tek kullanımlık; ikinci kullanım dört yüz on bir döner
+- Token süresi otuz dakika; süresi dolan token dört yüz on döner
+- Yeni şifre kuralı: en az on iki karakter, en az bir rakam, en az bir sembol
+- E2E test: kullanıcı linke tıklar, yeni şifre belirler, eski şifre reddedilir, yeni şifre geçer
+- Birim test kapsamı yüzde seksen beş üstü
+- Brute-force testi: altıncı deneme dört yüz yirmi dokuz döner
+
+## Dışlananlar
+- SMS ile sıfırlama yok
+- Üçüncü parti SSO sağlayıcılar için sıfırlama yok
+- Eski parolaların arşivi tutulmuyor; "son üç paroladan farklı olsun" kuralı yok
+
+## Zaman bütçesi
+- Tek oturum, doksan dakika üst sınır
+
+## Risk notları
+- E-posta sağlayıcı sandbox modunda; canlı SMTP integration testi dışlandı
+- Token saklama anahtarı .env üzerinden geliyor — secret rotation prosedürü ayrı sprintte
+```
+
+Üç zorunlu başlık — kapsam, doğrulama standartları, dışlananlar — sözleşmenin omurgasıdır. Zaman bütçesi ve risk notları opsiyoneldir; eklenince oturum kapanışında karar gerekçesi olarak işe yarar. Daha fazlası sözleşmeyi değil tasarımı şişirir.
+
+## Şablon — Evaluator Rubriği
+
+| Boyut | A | B | C | D |
+| --- | --- | --- | --- | --- |
+| Kod doğruluğu | Tüm testler geçer | Yüzde doksan beş üstü geçer | Yüzde seksen ila doksan beş bandı | Yüzde seksenin altı |
+| Mimari uyum | Modül sınırı ihlali yok, katman bağımlılıkları tek yönlü | Bir küçük ihlal, dokümante edilmiş | İki ila üç ihlal | Üçten fazla ihlal veya döngüsel bağımlılık |
+| Test kapsamı | E2E ve birim ve sözleşme testi | E2E ve birim | Sadece birim | Test yok veya kapsam yüzde elli altı |
+| Doküman | README, API referansı, karar kaydı güncel | README ve API güncel | Eksik; sadece kod yorumu | Yok |
+| Gözlemlenebilirlik | Span'lar OTel semconv uyumlu, hata bağlamı tam | Span var, attribute eksik | Sadece log var | Trace yok |
+
+Her hücre ölçülebilir bir eşik taşır; "iyi" ya da "yeterli" gibi öznel sözcükler yer almaz. Anthropic'in "Demystifying Evaluations" rehberi bu izolasyona özellikle vurgu yapar: her boyut ayrı puanlanmalı, tek bir nihai puana çökertilmemelidir. Bir boyut D alırsa sprint genel olarak başarısız sayılır — sert eşik (hard threshold) deseni.
+
+## Konvansiyon
+
+Sprint sözleşmesi **kod yazımından önce** yazılır; sonradan retroaktif eklenen sözleşme ön-anlaşma değil, mazerettir. Rubrik **tüm değerlendiriciler için aynıdır** — ister insan ister LLM yargı olsun, aynı tablo kullanılır. İkisi de repoda yaşar; sprint sözleşmesi `sprints/NN-konu.md` altında, rubrik `evals/rubric.md` altında. Oturum kapanırken sözleşme ve rubrik birlikte commit edilir; ileride "neden bu yolu seçtik" sorusu kanıt tabanlı cevaplanabilsin diye.
+
+## Özelleştirme
+
+A/B/C/D dört bant bir varsayılan, kanun değil. Bazı ekipler beşli skala kullanır (1-5); bazıları pass/fail ile yetinir. Anthropic'in tarif ettiği frontend rubriği dört boyutlu olabilir, full-stack rubriği beş; alan değişince boyutlar da değişir. Tipik özelleştirme eksenleri:
+
+- **Skala genişliği** — pass/fail (en katı), A/B/C/D (varsayılan), 1-5 (ince ayrıntı).
+- **Boyut seçimi** — frontend için "tasarım kalitesi" ve "özgünlük"; backend için "veri tutarlılığı" ve "geri-uyum"; ML için "metrik" ve "fairness".
+- **Ağırlıklandırma** — tasarım ve özgünlüğe daha fazla ağırlık vermek modeli estetik risk almaya iter; Anthropic'in açık gözlemi.
+- **Sert eşik** — herhangi bir boyut D alırsa sprint başarısız; ekibe göre eşik C de olabilir.
+
+## Otomasyona bağlama
+
+Rubriğin önemli kısmı deterministik olarak puanlanabilir. Code-based grader'lar LLM yargısından her zaman daha ucuz ve daha tutarlıdır. Tipik bağlamalar:
+
+- **Test geçiş oranı → Kod doğruluğu bandı.** CI çıktısı oran üretir; oran A/B/C/D eşiğine eşlenir.
+- **Lint, dependency-graph ihlal sayısı → Mimari uyum bandı.** ESLint, Ruff, depcheck, madge gibi araçlar sayı üretir; sayı banda çevrilir.
+- **Coverage raporu → Test kapsamı bandı.** Cobertura, lcov, pytest-cov çıktısı doğrudan banda eşlenir.
+- **Docstring kapsamı, broken-link sayısı → Doküman bandı.** interrogate, pydocstyle, markdown-link-check raporları.
+- **Trace span sayısı, OTel semconv uyumluluğu → Gözlemlenebilirlik bandı.** Trace store'a kısa bir sorgu.
+
+LLM yargı yalnız öznel boyutlar için — örneğin kod okunabilirliği ya da karar gerekçesinin kalitesi — devreye alınır. Anthropic'in rehberi açıkça uyarır: LLM yargıyı insan uzman ile kalibre etmeden kullanmayın; tartışmalı görevlerde birden fazla bağımsız yargıcı paralel çalıştırın. Geri kalan her şeyi deterministik bir grader'a devretmek hem maliyeti hem varyansı düşürür.
+
+## İlgili dersler
+
+- [Ders 11 — Düzeneğin Gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali)
+- [Kütüphane — Verifier ve DoD](/kutuphane/verifier-dod)
+- [Kütüphane — OTel Trace](/kutuphane/otel-trace)

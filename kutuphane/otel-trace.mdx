@@ -1,0 +1,126 @@
+---
+title: "OpenTelemetry İz"
+description: "Her oturum için tek bir iz — runtime gerçeğini AgentOps, Inspect AI ve Jaeger arasında taşıyabilen tek standart."
+---
+
+## Her oturum için bir iz
+
+Düzenek Mühendisliği (Harness Engineering) bir oturumun ne yaptığını sözlü rapora değil izlere sorar. Bu aparat — OpenTelemetry GenAI semantic conventions uyumlu trace iskeleti — düzenek (harness) içinde runtime gerçeğinin tek kaynağıdır. Oturum açılır, tek bir trace ID üretilir, her feature span olur, her doğrulama adımı alt span olur. Oturum kapanır; "dün ne oldu" sorusu kanıt tabanlı cevaplanır.
+
+## Ne işe yarar
+
+İz, aracın dışında bir gerçeklik tutar. Generator AgentOps kullanıyor, evaluator Inspect AI üzerinde koşuyor, operasyon ekibi Jaeger'da debug açıyor — üçü de aynı semantik konvansiyonla aynı span ağacını okur. Düzenek araç değiştirebilir; iz değişmez.
+
+- **Portatif kanıt.** Span ve attribute isimleri GenAI semconv standardına bağlı. Aracı değiştirmek tek satır exporter konfigürasyonuna iner.
+- **Tek tıkla kök neden.** Hata noktası ağaç içinde bulunur; hangi araç çağrısı ne kadar sürdü, hangi token bütçesi yandı netleşir.
+- **Oturumlar arası süreklilik.** Sonraki oturum geçmiş trace'leri okur, karar gerekçelerine erişir. Bilgi uçurumu kapanır.
+
+Anthropic'in "Quantifying infrastructure noise" çalışması nettir: runtime yapılandırma farkı altı puan skor farkı doğurabiliyor; trace belgelenmeden üç puanın altındaki farklara güvenilmemeli. İz olmadan ne regresyon tespiti ne model karşılaştırması güvenilirdir.
+
+## Span hiyerarşisi
+
+Kural sade: trace per session, span per feature, sub-span per verification step.
+
+```
+trace: session-2026-05-18-001
+└── span: feature F03 cart/items
+    ├── span: code_write
+    ├── span: lint            [pass]
+    ├── span: unit_test       [pass]
+    └── span: e2e             [fail → retry → pass]
+```
+
+Bir oturumun tüm akışı tek bir DAG. Üst trace oturum katmanını, orta span feature path'ini, alt spanlar doğrulama adımlarını taşır; ağaç hem zaman hem nedensellik kanıtıdır.
+
+## Şablon — OpenTelemetry Python instrumentation
+
+Aşağıdaki iskelet, üç katmanlı span ağacını GenAI semconv attribute isimleriyle kurar. `opentelemetry-api` ve `opentelemetry-sdk` paketlerinin yüklü olduğunu varsayar.
+
+```python
+import os
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.exporter.otlp.proto.grpc.trace_exporter import OTLPSpanExporter
+
+# Stabil olmayan GenAI semconv için opt-in
+os.environ.setdefault("OTEL_SEMCONV_STABILITY_OPT_IN", "gen_ai_latest_experimental")
+
+resource = Resource.create({"service.name": "duzenek-harness"})
+provider = TracerProvider(resource=resource)
+provider.add_span_processor(BatchSpanProcessor(OTLPSpanExporter()))
+trace.set_tracer_provider(provider)
+
+tracer = trace.get_tracer("duzenek.harness", "0.1.0")
+
+SESSION_ID = "session-2026-05-18-001"
+
+with tracer.start_as_current_span("session") as session_span:
+    session_span.set_attribute("gen_ai.conversation.id", SESSION_ID)
+    session_span.set_attribute("harness.session.id", SESSION_ID)
+
+    with tracer.start_as_current_span("chat claude-sonnet-4-7") as feature_span:
+        feature_span.set_attribute("gen_ai.operation.name", "chat")
+        feature_span.set_attribute("gen_ai.provider.name", "anthropic")
+        feature_span.set_attribute("gen_ai.request.model", "claude-sonnet-4-7")
+        feature_span.set_attribute("gen_ai.request.temperature", 0.2)
+        feature_span.set_attribute("gen_ai.request.max_tokens", 4096)
+        feature_span.set_attribute("gen_ai.response.model", "claude-sonnet-4-7")
+        feature_span.set_attribute("gen_ai.response.finish_reasons", ["stop"])
+        feature_span.set_attribute("gen_ai.usage.input_tokens", 1842)
+        feature_span.set_attribute("gen_ai.usage.output_tokens", 612)
+        feature_span.set_attribute("harness.feature.id", "F03-cart-items")
+
+        with tracer.start_as_current_span("verify e2e") as verify_span:
+            verify_span.set_attribute("harness.verify.step", "e2e")
+            verify_span.set_attribute("harness.verify.status", "pass")
+            verify_span.set_attribute("harness.verify.retry_count", 1)
+```
+
+Üç düzey: oturum, feature, doğrulama. `gen_ai.*` attribute'ları GenAI semconv'un sözlüğünden alınır; `harness.*` namespace'i düzeneğe özgü ek alanlardır. Standart isimler aracın işidir, namespace isimleri düzeneğin işidir; ikisi karışmaz.
+
+## GenAI semconv attribute haritası
+
+Kanonik anahtarlar dört kovaya ayrılır:
+
+| Anahtar | Ne taşır |
+| --- | --- |
+| `gen_ai.operation.name` | chat, embeddings, generate_content, execute_tool |
+| `gen_ai.provider.name` | anthropic, openai, aws.bedrock, azure.ai.inference |
+| `gen_ai.request.model` | İstemde belirtilen model adı |
+| `gen_ai.request.temperature` | Örnekleme sıcaklığı |
+| `gen_ai.request.max_tokens` | Üst sınır token sayısı |
+| `gen_ai.response.model` | Servisin gerçekte koştuğu model |
+| `gen_ai.response.finish_reasons` | stop, length, content_filter, tool_calls |
+| `gen_ai.response.id` | Sağlayıcının yanıt kimliği |
+| `gen_ai.usage.input_tokens` | Girdi token sayımı |
+| `gen_ai.usage.output_tokens` | Çıktı token sayımı |
+| `gen_ai.usage.cache_read.input_tokens` | Cache'ten okunan girdi token'ı |
+| `gen_ai.conversation.id` | Oturum/konuşma kimliği |
+| `gen_ai.output.type` | text, json, image, speech |
+
+## Konvansiyon
+
+**Span adı.** Operasyon spanları için `{gen_ai.operation.name} {gen_ai.request.model}` — örneğin `chat claude-sonnet-4-7`. Doğrulama spanları için `verify {step}` — `verify lint`, `verify e2e`.
+
+**Attribute kümesi.** Operasyon spanlarında en az `gen_ai.operation.name`, `gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.response.model`, `gen_ai.usage.input_tokens`, `gen_ai.usage.output_tokens` doldurulur. Düzeneğe özgü her şey `harness.*` altında durur; semconv namespace'i kirlenmez.
+
+**Opt-in.** GenAI semconv hâlâ Development statüsünde. Ortam değişkeni `OTEL_SEMCONV_STABILITY_OPT_IN` virgülle ayrılmış liste alır; `gen_ai_latest_experimental` değeri instrumentation'ı en güncel deneysel sürüme geçirir. Bu mekanizma, attribute adlarındaki kırıcı değişikliklere karşı düzeneği korur.
+
+## Otomasyona bağlama
+
+OTLP protokolü sayesinde aynı SDK farklı backend'lere yazar.
+
+- **Jaeger** — yerel debug için `OTLPSpanExporter` ile `localhost:4317`. Docker compose ile beş dakikada ayağa kalkar.
+- **Tempo** — Grafana yığını içinde uzun süreli saklama. Loki logları ile trace ID üzerinden eşleşir.
+- **Honeycomb** — yüksek kardinaliteli analiz. `gen_ai.request.model` veya `harness.feature.id` üzerinden gruplama tek tıkla yapılır.
+
+Maliyet kontrolü için iki kademeli örnekleme: hata içeren trace'ler her zaman tutulur, başarılı trace'ler `ParentBased(TraceIdRatioBased(0.1))` ile yüzde on oranında örneklenir. Token ve süre toplamları metrik olarak ayrıca yayımlanır; örneklenen trace eksilse de toplam ölçüler bozulmaz.
+
+## İlgili dersler
+
+- [Ders 11 — Düzeneğin Gözleri](/dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali)
+- [Kütüphane — Sprint Rubrik](/kutuphane/sprint-rubric)
+- [Kütüphane — Verifier DoD](/kutuphane/verifier-dod)
+- [Kütüphane — features.json](/kutuphane/features-json)

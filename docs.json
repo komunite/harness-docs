@@ -1,0 +1,130 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "Düzenek Mühendisliği (Harness Engineering)",
+  "colors": {
+    "primary": "#0E1417",
+    "light": "#E5FF59",
+    "dark": "#0E1417"
+  },
+  "favicon": "/favicon.svg",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Müfredat",
+        "groups": [
+          {
+            "group": "Başlangıç",
+            "pages": [
+              "index"
+            ]
+          },
+          {
+            "group": "Dersler",
+            "pages": [
+              "dersler/01-yetkin-ajanlar-neden-basarisiz",
+              "dersler/02-duzenek-gercekte-nedir",
+              "dersler/03-repo-neden-hakikat-kaynagi-olmali",
+              "dersler/04-tek-buyuk-talimat-dosyasi-neden-basarisiz",
+              "dersler/05-uzun-gorevler-neden-sureklilik-kaybeder",
+              "dersler/06-baslangic-neden-kendi-fazina-sahip-olmali",
+              "dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir",
+              "dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir",
+              "dersler/09-ajanlar-neden-erken-zafer-ilan-eder",
+              "dersler/10-uctan-uca-test-neden-sonuclari-degistirir",
+              "dersler/11-gozlemlenebilirlik-neden-duzenegin-icinde-olmali",
+              "dersler/12-her-oturum-neden-temiz-durum-birakmali"
+            ]
+          },
+          {
+            "group": "Projeler",
+            "pages": [
+              "projeler/01-yalniz-prompt-vs-kural-oncelikli",
+              "projeler/02-ajan-okunabilir-calisma-alani",
+              "projeler/03-cok-oturumlu-sureklilik",
+              "projeler/04-calisma-zamani-geri-bildirimi",
+              "projeler/05-oz-dogrulama-ve-rol-ayrimi",
+              "projeler/06-butunlesik-duzenek-capstone"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Kaynaklar",
+        "groups": [
+          {
+            "group": "Kütüphane",
+            "pages": [
+              "kutuphane/index",
+              "kutuphane/agents-md",
+              "kutuphane/progress-decisions",
+              "kutuphane/bootstrap",
+              "kutuphane/features-json",
+              "kutuphane/verifier-dod",
+              "kutuphane/sprint-rubric",
+              "kutuphane/otel-trace",
+              "kutuphane/session-close"
+            ]
+          }
+        ]
+      }
+    ],
+    "global": {
+      "anchors": []
+    }
+  },
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/lokomotifai/harness-docs"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Derslere Başla",
+      "href": "/dersler/01-yetkin-ajanlar-neden-basarisiz"
+    }
+  },
+  "contextual": {
+    "options": [
+      "copy",
+      "view",
+      "chatgpt",
+      "claude",
+      "perplexity"
+    ]
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/lokomotifai"
+    }
+  },
+  "seo": {
+    "indexing": "navigable",
+    "metatags": {
+      "og:site_name": "Düzenek Mühendisliği (Harness Engineering)",
+      "og:type": "website",
+      "og:locale": "tr_TR",
+      "og:image": "/images/og-cover.png",
+      "og:image:width": "1200",
+      "og:image:height": "630",
+      "og:image:alt": "Düzenek Mühendisliği (Harness Engineering) — AI kod ajanlarını güvenilir kılan çevre",
+      "twitter:card": "summary_large_image",
+      "twitter:site": "@lokomotifai",
+      "twitter:image": "/images/og-cover.png",
+      "twitter:image:alt": "Düzenek Mühendisliği (Harness Engineering)",
+      "author": "Lokomotif.ai",
+      "keywords": "harness engineering, düzenek mühendisliği, AI ajan, Claude Code, Codex, agent harness, LLM, AGENTS.md, prompt engineering, AI agent reliability",
+      "theme-color": "#0E1417",
+      "robots": "index, follow",
+      "googlebot": "index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1",
+      "format-detection": "telephone=no",
+      "referrer": "strict-origin-when-cross-origin"
+    }
+  }
+}

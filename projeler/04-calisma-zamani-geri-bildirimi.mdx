@@ -1,0 +1,27 @@
+---
+title: "Proje 04 — Çalışma Zamanı Geri Bildirimi ve Kapsam Kontrolü"
+description: "Ajanın kendi kodunu çalıştırıp hataları görerek düzeltebilmesi için minimum geri bildirim halkasını kur."
+---
+
+## Amaç
+
+Ajanı **kendi koduyla yüzleştir**: test koşturma, lint, type-check, çalıştırma — bu sinyaller ajan kararlarına geri beslenmeli. Aynı zamanda yapılan değişikliklerin kapsam dışına taşmadığını bir kontrol mekanizmasıyla doğrula.
+
+## Çıktı
+
+- Çalıştırma sözleşmesi: "her değişiklikten sonra `make test`"
+- Hook ya da skill ile lint/type-check kapısı
+- Kapsam dışı değişikliği işaretleyen kontrol (örn. izin verilen dosya yolları)
+
+## Yapı
+
+```
+projeler/04/
+├── starter/    # test koşmuyor, kapsam kuralı yok
+└── solution/   # tam runtime feedback halkası
+```
+
+## Ön koşul
+
+- [Ders 07](/dersler/07-ajanlar-neden-asiriya-kacar-ve-yarim-birakir)
+- [Ders 08](/dersler/08-ozellik-listeleri-neden-duzenegin-temel-bilesenleridir)
