@@ -36,15 +36,27 @@ mint broken-links         # tüm iç linkler çözülüyor mu
    - Prose'da raw `{...}` **YASAK**. JSX prop'ları (`cols={2}`) tag
      içinde OK.
    - Code fence (```` ``` ````) ile çevrili her şey güvenli.
-3. **Stil**:
+3. **Mintlify render kısıtları** (sessizce strip eder; HTTP 200 yanıltır):
+   - SVG'de **sadece `<rect>` ve `<path>` render olur**.
+     `<text>/<line>/<circle>/<polygon>` sanitizer tarafından düşürülür.
+     Diyagram için pure HTML + inline CSS tercih et; mecbursan SVG
+     üstüne HTML absolute overlay koy.
+   - MDX expression `{[...].map(...)}` güvenilmez — bir-iki iterasyon
+     basıp kalan satırlar sessiz drop olabilir. Tekrarlayan içeriği
+     **explicit yaz**.
+   - JSX inline style **object syntax** zorunlu: `style={{key:'value'}}`.
+     String `style="..."` HTTP 500 verir. CSS property'leri camelCase
+     (`fontSize`, `backgroundColor`).
+   - Detay: [MEMORY.md — Faz 10](MEMORY.md#10-2026-05-19--diyagram-redesign--readme-cila).
+4. **Stil**:
    - Türkçe profesyonel teknik dil; mizah yok.
    - "Sen" tonu (ikinci tekil).
    - Kısa, yüklü cümleler.
    - Kod identifier'ları İngilizce; prose Türkçe.
-4. **Sayılar**:
+5. **Sayılar**:
    - Bir sayı (örn. `%37`, `$200`) **kaynaklı** olmalı. Doğrulayamadığın
      sayıyı yumuşat ya da kaldır.
-5. **Cross-link slug'ları**:
+6. **Cross-link slug'ları**:
    - Sadece var olan slug'ları kullan; tam liste:
      [docs.json](docs.json) > `navigation.tabs[].groups[].pages`.
 

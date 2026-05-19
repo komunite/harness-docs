@@ -22,6 +22,7 @@ burada yaşar.
 | 7 | 2026-05-19 | [Proje kodları (6 starter/solution)](#7-2026-05-19--proje-kodlari-6-startersolution) |
 | 8 | 2026-05-19 | [Skill paketi + SEO/OG + deploy hazırlığı](#8-2026-05-19--skill-paketi--seoog--deploy-hazirligi) |
 | 9 | 2026-05-19 | [Açık kaynak hijyeni + CLAUDE/MEMORY](#9-2026-05-19--acik-kaynak-hijyeni--claudememory) |
+| 10 | 2026-05-19 | [Diyagram redesign + README cila](#10-2026-05-19--diyagram-redesign--readme-cila) |
 
 ## Terim haritası
 
@@ -58,11 +59,20 @@ sonradan elle düzeltildi.
 
 - [x] Mintlify Cloud üzerinde deploy edildi
   (`harness.lokomotif.ai`); Vercel proxy yaklaşımı bırakıldı.
+- [x] 12 dersin diyagramları yeniden tasarlandı; SVG sanitizer
+  sorunundan dolayı tamamı pure HTML/CSS'e geçirildi.
+- [x] README global standartlarda yeniden yazıldı + OG cover hero
+  olarak eklendi.
 - [ ] OG image production'da çalıştığını kontrol et — `og:image`
   meta'sındaki URL `harness.lokomotif.ai/images/og-cover.png`
   olmalı; debugger: https://www.opengraph.xyz/url/
 - [ ] `mint validate` ve `mint broken-links`'i CI'da koştur (workflow
   bunu yapıyor; ilk PR'da görüleceğiz).
+- [ ] GitHub repo description + topics doldurulacak (öneri sohbette
+  verildi: `harness-engineering`, `ai-agents`, `coding-agents`,
+  `claude-code`, `codex`, `llm-agents`, `context-engineering`,
+  `agent-orchestration`, `turkish`, `turkce`, `curriculum`,
+  `mintlify`).
 - [ ] `yetenekler/duzenek-yaratici` sayfasını ne zaman geri açacağına
   karar ver: skill paketinin Claude Code Skills marketplace'inde
   yayınlanması güzel bir tetikleyici.
@@ -467,3 +477,91 @@ sakladı:
   kaybetmesin diye).
 - **Neden Python MDX safety scan**: 2. fazda yaşadığımız `<%80` bug'ı
   bir daha tekrar etmesin. CI gate.
+
+---
+
+## 10. 2026-05-19 — Diyagram redesign + README cila
+
+**Hedef**: Müfredat içeriği hazır; görsel kalite ve repo karşılama
+deneyimi de aynı seviyeye çıksın.
+
+### 12 dersin diyagramları yeniden tasarlandı
+
+Önce SVG (rect/line/circle/text/polygon karışımı) ile yazılmıştı. Üç
+ders (04, 08, 12) live site'ta tuhaf görünüyordu. Tek tek inceledikçe
+**Mintlify sanitizer'ının** SVG child element'lerini sessizce strip
+ettiği keşfedildi:
+
+- **Survive eden**: `<rect>`, `<path>`
+- **Strip edilen**: `<text>`, `<line>`, `<circle>`, `<polygon>`
+
+`<g>` wrapper'ları kaldırmak, `xmlns` eklemek, top-level taşımak —
+hiçbiri fark etmedi. Sanitizer kuralı bu. HTTP 200 dönüyor ama
+element'ler DOM'da hiç yok.
+
+**Çözüm**: tüm 12 dersin diyagramları **pure HTML + inline CSS**'e
+çevrildi. Her diyagram için bir kompozisyon stratejisi:
+
+| Ders | Diyagram | Strateji |
+| --- | --- | --- |
+| 01 | "9 vs 200" karşılaştırması | grid 1fr-1px-1fr, büyük rakam tipografisi |
+| 02 | 5 aparat spec sheet | 5 satır, her satırda numbered badge + label + artifact pill |
+| 03 | Dağıtık vs repo karşılaştırması | editorial tablo, lime accent kolonu |
+| 04 | Şişme eğrisi (curve) | path-only SVG (curve + zone rect'leri); axis label'ları HTML overlay |
+| 05 | Vardiya defteri timeline | iki oturum box'ı + handoff envelope + token bar |
+| 06 | İki fazlı timeline | bootstrap → init kabul → implementation flow |
+| 07 | Buffet vs tek tabak | iki kolon, Little's Law formülü altta |
+| 08 | Feature durum makinesi | 4 rounded box flow + CSS arrow + lime verifier pill + ✓ rozet |
+| 09 | Üç katmanlı kapı | executor → katman 1/2/3 → verifier flow |
+| 10 | Test piramidi + tally | descending bar + 5'li tally (0/1/5) |
+| 11 | İki paralel katman → KARAR | runtime + süreç katmanları → kanıtlı karar |
+| 12 | Pentagon radar | 5×2 horizontal bar chart (diagonal-stripe vs solid+lime accent) |
+
+### Öğrenilen MDX kısıtları
+
+CLAUDE.md sıkı kısıtlar bölümüne "Mintlify render kısıtları" maddesi
+eklendi (3. madde). Üç sub-rule:
+
+1. SVG'de yalnız `rect`/`path` render olur.
+2. MDX expression `.map()` güvenilmez — bir-iki iterasyon basıp kalan
+   satırlar sessiz drop olabilir (L12 bar chart bunu yaşadı; 5 satır
+   yerine 2 göründü). **Çözüm**: explicit yaz, DRY'ı feda et.
+3. JSX inline style **object syntax** zorunlu: `style={{...}}`.
+   String style `style="..."` HTTP 500 verir; bir kez L01'i 500'e
+   düşürdü, `git checkout` ile geri alındı.
+
+### README cila
+
+Eski README community-doc tarzı klasik bir layout'a sahipti. Global
+açık kaynak müfredat README'leri (Next.js, Astro, Supabase tarzı)
+standardına yakınlaştırıldı:
+
+- **Hero key visual**: `images/og-cover.png` başa centered olarak
+  yerleştirildi (1200×630, full width).
+- **Top-of-page nav**: Tez · İçerik · Hızlı başlangıç · Öğrenme yolu
+  · Kaynaklar · Katkı (anchor linkler).
+- **Badges**: site, lisans, Mintlify, sürüm, dil.
+- **İçindekiler**: 2×2 HTML table — 12 Ders / 6 Proje / 8 Şablon /
+  Skill Pack, her hücrede label + 1-cümle açıklama + path.
+- **Öğrenme yolu**: ASCII flow şeması (teorik zemin → uygulama →
+  capstone).
+- **Mekanizma tablosu**: 5 aparat (Repo, State, Feedback,
+  Self-verification, Observability) Türkçe-İngilizce eşli.
+- **Kaynaklar**: birincil kaynak listesi (Anthropic, OpenAI,
+  HumanLayer, Thoughtworks, Manus, OpenHands, LangChain, OTel,
+  walkinglabs).
+- **AI ajanlar için**: CLAUDE.md / MEMORY.md / skill-pack üçlüsü.
+
+### Commits
+
+- `91aeb10` — feat: dersler için SVG diyagramlar + projeler
+  zenginleştirildi (önceki oturum)
+- `bc7cd30` — feat: 12 dersin diyagramları SVG'den pure HTML/CSS'e
+  geçti
+- `5e7bd54` — docs: README yeniden yazıldı + hero key visual eklendi
+
+### Yan etki: kullanılmayan asset'ler
+
+`images/checks-passed.png`, `images/hero-dark.png`,
+`images/hero-light.png` — hiçbir yerde referans yok, silindi
+(bc7cd30'e dahil).
