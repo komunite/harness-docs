@@ -108,11 +108,15 @@ jobs:
                   # < + digit/%/non-letter (excluding /, !, whitespace)
                   for m in re.finditer(r'<([^a-zA-Z/!\s])', non_code):
                       hazards.append((path, i, f"<{m.group(1)}", line.strip()[:120]))
-                  # raw {…} in prose (allow JSX prop patterns like cols={N})
+                  # Prose lines start with a letter/digit/markdown punctuation
+                  # (#, -, *, >, |, …). Lines whose first meaningful char is
+                  # JSX/code punctuation are not prose — `{...}` there is
+                  # JSX expression syntax, not raw curly in prose.
+                  stripped = non_code.strip()
+                  if not stripped or stripped[0] in '<{}[](),':
+                      continue
+                  # raw {…} in prose
                   for m in re.finditer(r'\{[^}\n]+\}', non_code):
-                      ctx = non_code[max(0, m.start() - 30) : m.end()]
-                      if 'cols=' in ctx or 'href=' in ctx:
-                          continue
                       hazards.append((path, i, f"curly {m.group(0)[:30]}", line.strip()[:120]))
 
           if hazards:
