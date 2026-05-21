@@ -194,6 +194,73 @@ header a[href="/dersler/01-yetkin-ajanlar-neden-basarisiz"]:hover {
 }
 
 /* -------------------------------------------------------------------------
+   Lesson diyagramları — mobil uyum
+   ----------------------------------------------------------------
+   Ders sayfalarındaki ".lesson-diagram" wrapper'ı sabit pixel ölçülü,
+   çok kolonlu grid'lerle desktop'a göre tasarlanmıştır. Mobilde:
+   - Outer padding daralır, margin kenarlara taşar (full-bleed hissi).
+   - Tüm iç gridler tek kolona düşer; sütun ayırıcı 1px stripler gizlenir.
+   - Büyük rakamlar küçülür, flex satırları wrap olur, inner padding sıfırlanır.
+   Inline style'ları override etmek için !important şart.
+   ------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .lesson-diagram {
+    padding: 24px 18px !important;
+    margin: 20px 0 !important;
+    border-radius: 16px !important;
+  }
+  .lesson-diagram [style*="grid-template-columns"] {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .lesson-diagram [style*="display: flex"],
+  .lesson-diagram [style*="display:flex"] {
+    flex-wrap: wrap;
+  }
+  .lesson-diagram [style*="width: 1px"],
+  .lesson-diagram [style*="width:1px"] {
+    display: none !important;
+  }
+  .lesson-diagram [style*="padding: 0 28px"],
+  .lesson-diagram [style*="padding:0 28px"],
+  .lesson-diagram [style*="padding: 0 24px"],
+  .lesson-diagram [style*="padding:0 24px"],
+  .lesson-diagram [style*="padding: 0 32px"],
+  .lesson-diagram [style*="padding:0 32px"] {
+    padding: 0 !important;
+  }
+  .lesson-diagram [style*="font-size: 128px"],
+  .lesson-diagram [style*="font-size:128px"] {
+    font-size: 64px !important;
+    line-height: 1 !important;
+  }
+  .lesson-diagram [style*="font-size: 34px"],
+  .lesson-diagram [style*="font-size:34px"] {
+    font-size: 26px !important;
+  }
+  .lesson-diagram [style*="font-size: 26px"],
+  .lesson-diagram [style*="font-size:26px"] {
+    font-size: 20px !important;
+  }
+  .lesson-diagram [style*="font-size: 22px"],
+  .lesson-diagram [style*="font-size:22px"] {
+    font-size: 17px !important;
+  }
+  .lesson-diagram [style*="font-size: 19px"],
+  .lesson-diagram [style*="font-size:19px"] {
+    font-size: 16px !important;
+  }
+  .lesson-diagram [style*="letter-spacing: 0.22em"],
+  .lesson-diagram [style*="letter-spacing:0.22em"],
+  .lesson-diagram [style*="letter-spacing: 0.2em"],
+  .lesson-diagram [style*="letter-spacing:0.2em"],
+  .lesson-diagram [style*="letter-spacing: 0.18em"],
+  .lesson-diagram [style*="letter-spacing:0.18em"] {
+    letter-spacing: 0.12em !important;
+  }
+}
+
+/* -------------------------------------------------------------------------
    Tipografi — ink üzerinde yüksek okunurluk
    ------------------------------------------------------------------------- */
 body,

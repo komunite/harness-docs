@@ -565,3 +565,42 @@ standardına yakınlaştırıldı:
 `images/checks-passed.png`, `images/hero-dark.png`,
 `images/hero-light.png` — hiçbir yerde referans yok, silindi
 (bc7cd30'e dahil).
+
+## 11. 2026-05-21 — Diyagram mobil uyumu + dark logo
+
+**Hedef**: Ders sayfalarındaki diyagramlar desktop'ta iyi
+görünüyordu; mobilde sabit pixel grid'ler ve 128px rakamlar
+viewport'u taşırıyordu. Dark mode'da ise logo kontrastsız kaldı.
+
+### Diyagram mobil override pattern
+
+Diyagramlar inline `style={{...}}` ile yazılı; sabit pixel ölçüleri
+ve `gridTemplateColumns:'1fr 1px 1fr'` gibi çok kolonlu yapılar
+mobilde kırılıyor. Iki adımlık çözüm:
+
+1. Tüm 12 outer wrapper'a `className="lesson-diagram"` eklendi.
+   (Borderradius 20px outer-wrapper'a özel olduğundan Edit ile
+   unique substring match'lendi.)
+2. `style.css`'e `@media (max-width: 768px)` bloğu eklendi:
+   - Outer padding 24px 18px'e iniyor.
+   - Tüm iç `[style*="grid-template-columns"]` → `1fr` (tek kolon).
+   - 1px-genişlikteki vertical divider'lar `display:none`.
+   - `font-size:128px` → 64px, 34px → 26px, 22px → 17px, vs.
+   - Flex satırları wrap.
+
+Inline style'ı override etmek için `!important` zorunlu. Mintlify
+inline style serializer'ı **boşluksuz** form (`font-size:128px`)
+kullanıyor — curl ile doğrulandı. Yine de iki varyantı (boşluklu +
+boşluksuz) ekledim, ileride bir React sürüm değişikliği olursa
+break olmasın.
+
+### Dark mode logo
+
+`logo/dark.svg` beyaz versiyonla değiştirildi (kullanıcının
+gönderdiği `logo-white.svg`). Light versiyon (`logo/light.svg`)
+korundu. Mintlify zaten `docs.json` > `logo.light` / `logo.dark`
+swap'ını otomatik yapıyor; ek config gerekmedi.
+
+### Commits
+
+- (bu commit) — `fix:` mobil diyagram override + dark logo.
