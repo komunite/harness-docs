@@ -680,6 +680,15 @@ statik çıktısını kendi Vercel team'inde host et.
 - `vercel.json`: `buildCommand` = build-static.sh, `outputDirectory`
   = dist, `installCommand` boş (repo'da package.json yok), host-bazlı
   301: `harness.lokomotif.ai/*` → `harness.komunite.com.tr/*`.
+- **Redirect tuzağı**: `vercel.json` `redirects` + `has: host` kuralı
+  statik deployment'ta dosya sisteminden SONRA değerlendiriliyor —
+  var olan sayfalar eski host'ta 200 dönüyordu, sadece olmayan
+  path'ler 308 oluyordu. Kalıcı çözüm: **domain seviyesi redirect**
+  (`PATCH /v9/projects/{id}/domains/harness.lokomotif.ai` ile
+  `redirect: harness.komunite.com.tr, redirectStatusCode: 308`;
+  dashboard'daki "Redirect to" özelliğinin API karşılığı). Path'i
+  koruyor ve dosya sisteminden önce çalışıyor. vercel.json'daki kural
+  backstop olarak duruyor.
 - Vercel projesi `harness-docs` (komunite team), GitHub
   `komunite/harness-docs`'a bağlı; `main`'e push → otomatik deploy.
 - DNS (Cloudflare): `harness.komunite.com.tr` ve
