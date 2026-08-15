@@ -22,3 +22,8 @@ CODE_OF_CONDUCT.md
 CLAUDE.md
 MEMORY.md
 .github/
+
+# Statik export build çıktıları — export'a sızmasın
+dist/
+export.zip
+scripts/
