@@ -136,11 +136,16 @@ mint broken-links     # iç linkler çözülüyor mu
 
 ## Deploy
 
-Site **Mintlify Cloud** üzerinde host edilir. Üretim deploy'ı yalnızca `main` dalına push olduğunda tetiklenir (otomatik).
+Site, Mintlify'ın açık CLI'ındaki `mint export` komutuyla **statik siteye
+çevrilir ve Vercel üzerinde self-host edilir**. `main` dalına push olduğunda
+Vercel, [`scripts/build-static.sh`](scripts/build-static.sh) betiğini koşar
+(bkz. [`vercel.json`](vercel.json)) ve çıktıyı yayınlar.
 
 - Özel alan adı: **[harness.komunite.com.tr](https://harness.komunite.com.tr)**
-- TLS sertifikası Mintlify tarafından otomatik yönetilir
-- Search ve AI assistant entegre çalışır
+- TLS sertifikası Vercel tarafından otomatik yönetilir
+- Eski adres `harness.lokomotif.ai` kalıcı (301) olarak yeni adrese yönlenir
+- Statik modda Mintlify'ın hosted search ve AI assistant özellikleri
+  çalışmaz; arama UI'ı build sırasında gizlenir
 
 Mintlify yapılandırması [`docs.json`](docs.json) dosyasındadır; SEO ve Open Graph yapılandırması aynı dosyadaki `seo.metatags` bloğundadır.
 

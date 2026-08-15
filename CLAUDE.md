@@ -8,9 +8,11 @@ gerektiğini söyler.
 
 **Düzenek Mühendisliği (Harness Engineering)** — AI kod ajanlarını
 güvenilir kılan çevreyi tasarlayan Türkçe açık kaynak müfredat.
-12 ders + 6 proje + 8 şablon + skill paketi. **Mintlify Cloud** üzerinde
-[harness.komunite.com.tr](https://harness.komunite.com.tr) adresinde host
-edilir; `main`'e push → otomatik deploy.
+12 ders + 6 proje + 8 şablon + skill paketi. İçerik Mintlify formatında
+yazılır, `mint export` ile statik siteye çevrilip **Vercel** üzerinde
+[harness.komunite.com.tr](https://harness.komunite.com.tr) adresinde
+self-host edilir; `main`'e push → Vercel otomatik build + deploy
+(`vercel.json` + `scripts/build-static.sh`).
 
 ## Hızlı başlangıç
 

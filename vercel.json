@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bash scripts/build-static.sh",
+  "outputDirectory": "dist",
+  "installCommand": "",
+  "framework": null,
+  "trailingSlash": false,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "harness.lokomotif.ai" }],
+      "destination": "https://harness.komunite.com.tr/:path*",
+      "permanent": true
+    }
+  ]
+}
