@@ -16,6 +16,11 @@ Format [Keep a Changelog](https://keepachangelog.com/) ve sürümleme
   [github.com/komunite/harness-docs](https://github.com/komunite/harness-docs).
 - Yayın adresi `harness.lokomotif.ai` → `harness.komunite.com.tr`
   olarak değişti; repo içindeki tüm URL referansları güncellendi.
+- Hosting Mintlify Cloud'dan çıkarıldı: site artık `mint export` ile
+  üretilen statik build olarak **Vercel** üzerinde self-host ediliyor
+  (`vercel.json` + `scripts/build-static.sh`). Eski adres 301 ile yeni
+  adrese yönlenir. Statik modda hosted search ve AI assistant
+  bulunmadığından arama UI'ı build sırasında gizlenir.
 - Vercel proxy yaklaşımı bırakıldı; Mintlify Cloud doğrudan host eder.
 
 ### Düzeltmeler

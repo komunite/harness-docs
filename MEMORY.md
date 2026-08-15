@@ -25,6 +25,7 @@ burada yaşar.
 | 10 | 2026-05-19 | [Diyagram redesign + README cila](#10-2026-05-19--diyagram-redesign--readme-cila) |
 | 11 | 2026-05-21 | [Diyagram mobil uyumu + dark logo](#11-2026-05-21--diyagram-mobil-uyumu--dark-logo) |
 | 12 | 2026-08-15 | [komunite org'una taşınma + yeni domain](#12-2026-08-15--komunite-orguna-tasinma--yeni-domain) |
+| 13 | 2026-08-15 | [Mintlify Cloud'dan çıkış: Vercel'de statik self-host](#13-2026-08-15--mintlify-clouddan-cikis-vercelde-statik-self-host) |
 
 ## Terim haritası
 
@@ -61,13 +62,14 @@ sonradan elle düzeltildi.
 
 - [x] Mintlify Cloud üzerinde deploy edildi; Vercel proxy yaklaşımı
   bırakıldı.
-- [ ] Mintlify dashboard'da custom domain'i
-  `harness.komunite.com.tr` olarak değiştir + deployment'ın
-  `komunite/harness-docs` repo'suna bağlı olduğunu doğrula
-  (dashboard login gerektirdiği için manuel; DNS CNAME hazır).
-- [ ] Yeni domain canlıya alındıktan sonra `harness.lokomotif.ai` →
-  `harness.komunite.com.tr` 301 redirect kur (Cloudflare Redirect
-  Rule; eski kayıt proxied'a çevrilmeli). SEO için önemli.
+- [x] ~~Mintlify dashboard'da custom domain değişikliği~~ — geçersiz:
+  Faz 13'te hosting tamamen Mintlify Cloud'dan çıkarıldı, site Vercel'de
+  self-host ediliyor. 301 redirect `vercel.json` içinde.
+- [ ] Mintlify Cloud aboneliği/projesi artık kullanılmıyor — dashboard
+  üzerinden kapat/iptal et (kullanıcı; billing erişimi gerekir).
+- [ ] Statik modda arama yok (arama UI'ı build'de gizleniyor).
+  İstenirse Pagefind ile client-side arama eklenebilir:
+  build-static.sh sonunda `npx pagefind --site dist` + UI entegrasyonu.
 - [x] 12 dersin diyagramları yeniden tasarlandı; SVG sanitizer
   sorunundan dolayı tamamı pure HTML/CSS'e geçirildi.
 - [x] README global standartlarda yeniden yazıldı + OG cover hero
@@ -651,3 +653,48 @@ sonrasında eski domain'den 301 redirect ("Sıradaki adımlar"da).
 ### Commits
 
 - (bu commit) — `chore:` org taşınması + domain migration.
+
+## 13. 2026-08-15 — Mintlify Cloud'dan çıkış: Vercel'de statik self-host
+
+**Hedef**: Repo transferi Mintlify Cloud'un GitHub bağlantısını
+kopardı (deploy tetiklenmiyordu, dashboard login'i gerekiyordu).
+Kullanıcı kararı: Mintlify Cloud'dan tamamen çık, `mint export`
+statik çıktısını kendi Vercel team'inde host et.
+
+### Mimari
+
+- `mint export` (ücretsiz CLI, login gerektirmiyor — izole HOME ile
+  doğrulandı) 29 sayfayı `dizin/index.html` yapısında tamamen statik
+  export ediyor; Next.js asset'leri dahil ~50 MB.
+- `scripts/build-static.sh`: export → `dist/`'e aç → post-process:
+  1. `https://undefined.mintlify.app` → gerçek domain (export,
+     custom domain'i bilmediği için OG/canonical URL'lerini böyle
+     basıyor).
+  2. Arama UI'ı gizleyen `<style>` inject (`#search-bar-entry`,
+     `#search-bar-entry-mobile`, `[aria-label="Open search"]`) —
+     statik modda arama Mintlify backend'i istiyor, modal ziyaretçiye
+     "Run mint login" gösteriyordu. Not: repo'daki `style.css` export
+     HTML'inde referans edilmiyor (stil inline gömülü), o yüzden
+     inject `</head>` öncesine yapılıyor.
+  3. `serve.js` / `Start Docs.*` local önizleme dosyaları silinir.
+- `vercel.json`: `buildCommand` = build-static.sh, `outputDirectory`
+  = dist, `installCommand` boş (repo'da package.json yok), host-bazlı
+  301: `harness.lokomotif.ai/*` → `harness.komunite.com.tr/*`.
+- Vercel projesi `harness-docs` (komunite team), GitHub
+  `komunite/harness-docs`'a bağlı; `main`'e push → otomatik deploy.
+- DNS (Cloudflare): `harness.komunite.com.tr` ve
+  `harness.lokomotif.ai` CNAME → `cname.vercel-dns.com` (DNS only).
+
+### Bilinen kısıtlar
+
+- Export, FontAwesome ikonlarını ve KaTeX CSS'ini Mintlify'ın public
+  CloudFront CDN'inden çeker — çalışıyor ama tam air-gap değil.
+  Gerekirse asset'ler bundle edilebilir.
+- Hosted search + AI assistant statik modda yok. Pagefind ile arama
+  geri getirilebilir ("Sıradaki adımlar").
+- `mint dev` / `mint validate` / CI workflow'u aynen çalışmaya devam
+  ediyor; içerik formatı değişmedi, sadece hosting değişti.
+
+### Commits
+
+- (bu commit) — `feat:` Vercel statik self-host pipeline.
