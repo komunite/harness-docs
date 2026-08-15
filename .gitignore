@@ -32,3 +32,4 @@ export.zip
 # Logs / temp
 *.log
 tmp/
+.env*
