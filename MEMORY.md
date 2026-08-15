@@ -23,6 +23,8 @@ burada yaşar.
 | 8 | 2026-05-19 | [Skill paketi + SEO/OG + deploy hazırlığı](#8-2026-05-19--skill-paketi--seoog--deploy-hazirligi) |
 | 9 | 2026-05-19 | [Açık kaynak hijyeni + CLAUDE/MEMORY](#9-2026-05-19--acik-kaynak-hijyeni--claudememory) |
 | 10 | 2026-05-19 | [Diyagram redesign + README cila](#10-2026-05-19--diyagram-redesign--readme-cila) |
+| 11 | 2026-05-21 | [Diyagram mobil uyumu + dark logo](#11-2026-05-21--diyagram-mobil-uyumu--dark-logo) |
+| 12 | 2026-08-15 | [komunite org'una taşınma + yeni domain](#12-2026-08-15--komunite-orguna-tasinma--yeni-domain) |
 
 ## Terim haritası
 
@@ -57,14 +59,21 @@ sonradan elle düzeltildi.
 
 ## Sıradaki adımlar
 
-- [x] Mintlify Cloud üzerinde deploy edildi
-  (`harness.lokomotif.ai`); Vercel proxy yaklaşımı bırakıldı.
+- [x] Mintlify Cloud üzerinde deploy edildi; Vercel proxy yaklaşımı
+  bırakıldı.
+- [ ] Mintlify dashboard'da custom domain'i
+  `harness.komunite.com.tr` olarak değiştir + deployment'ın
+  `komunite/harness-docs` repo'suna bağlı olduğunu doğrula
+  (dashboard login gerektirdiği için manuel; DNS CNAME hazır).
+- [ ] Yeni domain canlıya alındıktan sonra `harness.lokomotif.ai` →
+  `harness.komunite.com.tr` 301 redirect kur (Cloudflare Redirect
+  Rule; eski kayıt proxied'a çevrilmeli). SEO için önemli.
 - [x] 12 dersin diyagramları yeniden tasarlandı; SVG sanitizer
   sorunundan dolayı tamamı pure HTML/CSS'e geçirildi.
 - [x] README global standartlarda yeniden yazıldı + OG cover hero
   olarak eklendi.
 - [ ] OG image production'da çalıştığını kontrol et — `og:image`
-  meta'sındaki URL `harness.lokomotif.ai/images/og-cover.png`
+  meta'sındaki URL `harness.komunite.com.tr/images/og-cover.png`
   olmalı; debugger: https://www.opengraph.xyz/url/
 - [ ] `mint validate` ve `mint broken-links`'i CI'da koştur (workflow
   bunu yapıyor; ilk PR'da görüleceğiz).
@@ -604,3 +613,41 @@ swap'ını otomatik yapıyor; ek config gerekmedi.
 ### Commits
 
 - (bu commit) — `fix:` mobil diyagram override + dark logo.
+
+## 12. 2026-08-15 — komunite org'una taşınma + yeni domain
+
+**Hedef**: Repo `lokomotifai` → `komunite` GitHub org'una, yayın
+adresi `harness.lokomotif.ai` → `harness.komunite.com.tr`.
+
+### Yapılanlar
+
+- GitHub transfer: `gh api repos/lokomotifai/harness-docs/transfer
+  -f new_owner=komunite`. Eski URL'ler GitHub tarafından otomatik
+  redirect ediliyor; local remote yine de güncellendi.
+- Repo içindeki tüm `github.com/lokomotifai` ve
+  `harness.lokomotif.ai` referansları güncellendi (docs.json,
+  README, CONTRIBUTING, LICENSE, SECURITY, CLAUDE.md, issue
+  template, skill-pack). CHANGELOG'daki tarihsel satırlar
+  bilinçli olarak korundu.
+- `images/og-cover.html` içindeki URL değişti;
+  `og-cover.png` chrome-headless-shell ile yeniden render edildi
+  (1200×630). Sol üstteki lokomotif.ai logosu marka kararı
+  netleşene kadar korundu.
+- Cloudflare `komunite.com.tr` zone'una CNAME eklendi:
+  `harness` → `cname.mintlify.builders`, **DNS only** (Mintlify
+  proxy istemiyor; eski lokomotif.ai kaydı da DNS only idi).
+- GitHub repo metadata: homepage `harness.komunite.com.tr`,
+  description + 12 topic dolduruldu (eski "Sıradaki adımlar"
+  maddesiydi).
+- Mintlify GitHub App'in `komunite` org'unda **zaten kurulu**
+  olduğu doğrulandı (`gh api orgs/komunite/installations`).
+
+### Bekleyenler
+
+Mintlify dashboard login gerektirdiği için iki adım manuel kaldı:
+custom domain değişikliği + repo bağlantısı doğrulaması ve
+sonrasında eski domain'den 301 redirect ("Sıradaki adımlar"da).
+
+### Commits
+
+- (bu commit) — `chore:` org taşınması + domain migration.

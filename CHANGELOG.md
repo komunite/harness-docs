@@ -12,18 +12,16 @@ Format [Keep a Changelog](https://keepachangelog.com/) ve sürümleme
   özel alan adı.
 
 ### Değişenler
+- Repo `lokomotifai` org'undan `komunite` org'una taşındı:
+  [github.com/komunite/harness-docs](https://github.com/komunite/harness-docs).
+- Yayın adresi `harness.lokomotif.ai` → `harness.komunite.com.tr`
+  olarak değişti; repo içindeki tüm URL referansları güncellendi.
 - Vercel proxy yaklaşımı bırakıldı; Mintlify Cloud doğrudan host eder.
 
 ### Düzeltmeler
 - CI: MDX safety scan ve broken-links artık `skill-pack/` ile
   `projeler/*/{starter,solution}/` workspace dosyalarını atlıyor;
   bu dizinler Mintlify tarafından sunulmuyor.
-
-### Değişenler
-- _henüz yok_
-
-### Düzeltmeler
-- _henüz yok_
 
 ---
 
@@ -83,5 +81,5 @@ Format [Keep a Changelog](https://keepachangelog.com/) ve sürümleme
 Bu sürüm tamamen Türkçe içerikle gönderildi. İngilizce çeviri sonraki
 sürümlerin konusu.
 
-[Unreleased]: https://github.com/lokomotifai/harness-docs/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/lokomotifai/harness-docs/releases/tag/v1.0.0
+[Unreleased]: https://github.com/komunite/harness-docs/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/komunite/harness-docs/releases/tag/v1.0.0

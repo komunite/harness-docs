@@ -9,7 +9,7 @@ gerektiğini söyler.
 **Düzenek Mühendisliği (Harness Engineering)** — AI kod ajanlarını
 güvenilir kılan çevreyi tasarlayan Türkçe açık kaynak müfredat.
 12 ders + 6 proje + 8 şablon + skill paketi. **Mintlify Cloud** üzerinde
-[harness.lokomotif.ai](https://harness.lokomotif.ai) adresinde host
+[harness.komunite.com.tr](https://harness.komunite.com.tr) adresinde host
 edilir; `main`'e push → otomatik deploy.
 
 ## Hızlı başlangıç

@@ -81,7 +81,7 @@
     "links": [
       {
         "label": "GitHub",
-        "href": "https://github.com/lokomotifai/harness-docs"
+        "href": "https://github.com/komunite/harness-docs"
       }
     ],
     "primary": {
@@ -101,7 +101,7 @@
   },
   "footer": {
     "socials": {
-      "github": "https://github.com/lokomotifai"
+      "github": "https://github.com/komunite"
     }
   },
   "seo": {
