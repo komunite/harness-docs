@@ -11,7 +11,7 @@
 </p>
 
 <p>
-  <a href="https://harness.lokomotif.ai"><img alt="Site" src="https://img.shields.io/badge/site-harness.lokomotif.ai-0E1417?style=flat-square&labelColor=20333C"></a>
+  <a href="https://harness.komunite.com.tr"><img alt="Site" src="https://img.shields.io/badge/site-harness.komunite.com.tr-0E1417?style=flat-square&labelColor=20333C"></a>
   <a href="LICENSE"><img alt="Lisans CC0-1.0" src="https://img.shields.io/badge/lisans-CC0--1.0-E5FF59?style=flat-square&labelColor=1A2300"></a>
   <a href="https://www.mintlify.com"><img alt="Mintlify" src="https://img.shields.io/badge/built%20with-Mintlify-20333C?style=flat-square"></a>
   <img alt="Sürüm 1.0.0" src="https://img.shields.io/badge/s%C3%BCr%C3%BCm-1.0.0-20333C?style=flat-square">
@@ -85,7 +85,7 @@ Bir düzenek, modeli **çevre yoluyla** yönlendirir. Beş aparatı vardır:
 ## Hızlı başlangıç
 
 ```bash
-git clone https://github.com/lokomotifai/harness-docs.git
+git clone https://github.com/komunite/harness-docs.git
 cd harness-docs
 
 # Mintlify CLI ile yerel önizleme
@@ -138,7 +138,7 @@ mint broken-links     # iç linkler çözülüyor mu
 
 Site **Mintlify Cloud** üzerinde host edilir. Üretim deploy'ı yalnızca `main` dalına push olduğunda tetiklenir (otomatik).
 
-- Özel alan adı: **[harness.lokomotif.ai](https://harness.lokomotif.ai)**
+- Özel alan adı: **[harness.komunite.com.tr](https://harness.komunite.com.tr)**
 - TLS sertifikası Mintlify tarafından otomatik yönetilir
 - Search ve AI assistant entegre çalışır
 
@@ -170,7 +170,7 @@ Hata raporu, geliştirme önerisi, çeviri — her şey memnuniyetle karşılan�
 
 | Konu | Yer |
 | --- | --- |
-| Hata raporu / öneri | [GitHub Issues](https://github.com/lokomotifai/harness-docs/issues) |
+| Hata raporu / öneri | [GitHub Issues](https://github.com/komunite/harness-docs/issues) |
 | Pull request kuralları | [CONTRIBUTING.md](CONTRIBUTING.md) |
 | Davranış kuralları | [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) |
 | Güvenlik bildirimi | [SECURITY.md](SECURITY.md) |
@@ -181,13 +181,13 @@ Hata raporu, geliştirme önerisi, çeviri — her şey memnuniyetle karşılan�
 
 ```
 Düzenek Mühendisliği (Harness Engineering) — Lokomotif.ai
-https://harness.lokomotif.ai
+https://harness.komunite.com.tr
 ```
 
 ## Bağlantılar
 
-- **Site:** [harness.lokomotif.ai](https://harness.lokomotif.ai)
-- **GitHub:** [github.com/lokomotifai/harness-docs](https://github.com/lokomotifai/harness-docs)
+- **Site:** [harness.komunite.com.tr](https://harness.komunite.com.tr)
+- **GitHub:** [github.com/komunite/harness-docs](https://github.com/komunite/harness-docs)
 - **İlham veren müfredat:** [walkinglabs/learn-harness-engineering](https://github.com/walkinglabs/learn-harness-engineering) (CC0)
 - **İlgili koleksiyon:** [walkinglabs/awesome-harness-engineering](https://github.com/walkinglabs/awesome-harness-engineering) (CC0)
 

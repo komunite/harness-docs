@@ -4,7 +4,7 @@ display_name: Düzenek Yaratıcı (Harness Creator)
 description: Üretim kalitesinde bir AI ajan düzeneği (harness) inşa etmeyi taslaktan iterasyona taşıyan yetenek paketi.
 version: 1.0.0
 language: tr
-homepage: https://github.com/lokomotifai/harness-docs
+homepage: https://github.com/komunite/harness-docs
 tags: [harness-engineering, claude-code, codex, agents]
 compatibility:
   - claude-code

@@ -15,7 +15,7 @@ Bir güvenlik açığı bulduysan **kamuya açık issue açma**. Şu kanallardan
 gizli ulaş:
 
 - **E-posta**: `security@lokomotif.ai`
-- **GitHub Security Advisory**: [Yeni özel rapor](https://github.com/lokomotifai/harness-docs/security/advisories/new)
+- **GitHub Security Advisory**: [Yeni özel rapor](https://github.com/komunite/harness-docs/security/advisories/new)
 - **PGP** (isteğe bağlı): anahtar `https://lokomotif.ai/.well-known/pgp.txt`
 
 Raporunda en azından şunlar olsun:

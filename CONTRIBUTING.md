@@ -13,7 +13,7 @@ ve **terim/stil rehberine uyuyorsa** memnuniyetle karşılanır.
 ## Hızlı başlangıç
 
 ```bash
-git clone https://github.com/lokomotifai/harness-docs.git
+git clone https://github.com/komunite/harness-docs.git
 cd harness-docs
 npm install -g mint
 mint dev                  # http://localhost:3000
@@ -132,7 +132,7 @@ Bir güvenlik açığı bulduysan **kamuya açık issue açma**.
 ## Deploy
 
 Site **Mintlify Cloud**'da host edilir. Özel alan adı:
-[harness.lokomotif.ai](https://harness.lokomotif.ai). Üretim deploy'ı
+[harness.komunite.com.tr](https://harness.komunite.com.tr). Üretim deploy'ı
 yalnızca `main` dalına push olunca tetiklenir (otomatik).
 
 Production'a doğrudan dokunma; her zaman PR.
