@@ -6,9 +6,12 @@ set -euo pipefail
 
 SITE_URL="${SITE_URL:-https://harness.komunite.com.tr}"
 
+# Önceki build kalıntıları export'a "statik asset" olarak sızmasın
+# diye temizlik export'tan ÖNCE yapılır (dist/dist kontaminasyonu).
+rm -rf dist export.zip
+
 npx -y mint export --output export.zip
 
-rm -rf dist
 mkdir dist
 if command -v unzip >/dev/null 2>&1; then
   unzip -oq export.zip -d dist
@@ -21,6 +24,15 @@ rm -f export.zip
 
 # Local önizleme yardımcıları hosting'de gereksiz.
 rm -f dist/serve.js "dist/Start Docs.bat" "dist/Start Docs.command"
+rm -rf dist/scripts
+
+# Mintlify "slug/index" sayfalarını "/slug" URL'inde sunar; export ise
+# sadece "slug/index/index.html" üretir ve iç linkler "/slug"a işaret
+# eder. Sayfayı bir üst dizine kopyalayarak iki URL'i de çalıştır.
+find dist -mindepth 2 -type d -name index | while IFS= read -r d; do
+  parent=$(dirname "$d")
+  [ -f "$parent/index.html" ] || cp "$d/index.html" "$parent/index.html"
+done
 
 # Export, custom domain'i bilmediği için OG/canonical URL'lerini
 # undefined.mintlify.app olarak basıyor; gerçek domain ile değiştir.
